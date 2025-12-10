@@ -20,18 +20,18 @@ This MVP focuses on capture → inference → review → dashboard workflow with
 - **Success criteria**: Capture completes in under 3 seconds; no fields required beyond the thought itself
 
 ### 2. Intelligent Processing
-- **Functionality**: LLM-powered inference determines item type (note/reminder/action), collection, priority, dates, and context
+- **Functionality**: LLM-powered inference determines item type (note/reminder/action), collection, priority, dates, and context. Natural language date parsing handles expressions like "tomorrow", "next Tuesday", "in 3 days", "next week", month/day formats, etc.
 - **Purpose**: Eliminate manual categorization that ADHD users struggle with
 - **Trigger**: Immediately upon capture submission
-- **Progression**: Raw capture stored → LLM analyzes text → Extracts type, collection, attributes → If type+collection known, migrates to structured item → Stores inference results for learning
-- **Success criteria**: 70%+ captures successfully inferred; processing feels instant (< 2s); failed inferences route to review queue
+- **Progression**: Raw capture stored → Date parser extracts dates from text → LLM analyzes text → Extracts type, collection, attributes → If type+collection known, migrates to structured item → Stores inference results for learning
+- **Success criteria**: 70%+ captures successfully inferred; date parsing handles 15+ common natural language patterns; processing feels instant (< 2s); failed inferences route to review queue
 
 ### 3. ADHD Review Queue
-- **Functionality**: Displays 3-5 highest-priority items needing human input
+- **Functionality**: Displays 3-5 highest-priority items needing human input. Includes natural language date input field for actions and reminders.
 - **Purpose**: Handle edge cases where inference failed, without overwhelming the user
 - **Trigger**: Items appear when: inference failed on type/collection, or key attributes missing
-- **Progression**: Review item appears → User reads context → Provides missing info (type/collection/priority/dates) → Item migrates → Next review item surfaces
-- **Success criteria**: Never shows more than 5 items; prioritizes un-migrated captures first; updates in real-time
+- **Progression**: Review item appears → User reads context → Provides missing info (type/collection/priority/dates using natural language) → Item migrates → Next review item surfaces
+- **Success criteria**: Never shows more than 5 items; prioritizes un-migrated captures first; date input accepts natural language; updates in real-time
 
 ### 4. Inference Learning
 - **Functionality**: Stores user corrections from review queue to improve future inference accuracy
@@ -59,7 +59,8 @@ This MVP focuses on capture → inference → review → dashboard workflow with
 - **Network Failures**: LLM calls fail gracefully; items queue for retry; user can still capture offline
 - **Ambiguous Captures**: Single word or vague entries route to review queue rather than guessing incorrectly
 - **Duplicate Prevention**: Similar recent captures flagged during inference to avoid clutter
-- **Date Parsing Failures**: Partial date understanding (e.g., "tomorrow", "next week") should still work
+- **Date Parsing Failures**: Natural language date parser handles 15+ patterns (today, tomorrow, next [day], in X days/weeks, month day, MM/DD, etc.). Unparseable dates show helpful error message in review queue.
+- **Overdue Items**: Items with past due dates are highlighted in red to draw attention
 
 ## Design Direction
 The design should feel like a trusted external brain - calm, organized, and always ready. It should reduce cognitive load through generous whitespace, clear visual hierarchy, and confidence-inspiring feedback. The aesthetic should be modern but warm, professional but not corporate, focused but not sterile.

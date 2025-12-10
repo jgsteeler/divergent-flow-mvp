@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Question } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
+import { parseNaturalDate, formatDate } from '@/lib/dateParser'
 
 interface ReviewQueueProps {
   items: ReviewQueueItem[]
@@ -17,10 +18,30 @@ interface ReviewQueueProps {
 export function ReviewQueue({ items, onReview }: ReviewQueueProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [formData, setFormData] = useState<InferredAttributes>({})
+  const [dateInput, setDateInput] = useState('')
+  const [dateError, setDateError] = useState<string | null>(null)
 
   if (items.length === 0) return null
 
   const currentItem = items[currentIndex]
+
+  const handleDateChange = (value: string) => {
+    setDateInput(value)
+    setDateError(null)
+    
+    if (!value.trim()) {
+      setFormData({ ...formData, dueDate: undefined })
+      return
+    }
+    
+    const parsedDate = parseNaturalDate(value)
+    if (parsedDate !== null) {
+      setFormData({ ...formData, dueDate: parsedDate })
+      setDateError(null)
+    } else {
+      setDateError('Could not parse date')
+    }
+  }
 
   const handleSubmit = () => {
     const attributes: InferredAttributes = {
@@ -30,6 +51,8 @@ export function ReviewQueue({ items, onReview }: ReviewQueueProps) {
     
     onReview(currentItem.captureId, attributes)
     setFormData({})
+    setDateInput('')
+    setDateError(null)
     
     if (currentIndex < items.length - 1) {
       setCurrentIndex(currentIndex + 1)
@@ -41,6 +64,7 @@ export function ReviewQueue({ items, onReview }: ReviewQueueProps) {
   const needsType = currentItem.missingFields.includes('type')
   const needsCollection = currentItem.missingFields.includes('collection')
   const needsPriority = currentItem.missingFields.includes('priority')
+  const showDate = formData.type === 'action' || formData.type === 'reminder' || currentItem.inferredAttributes?.type === 'action' || currentItem.inferredAttributes?.type === 'reminder'
 
   return (
     <motion.div
@@ -107,6 +131,27 @@ export function ReviewQueue({ items, onReview }: ReviewQueueProps) {
                     <SelectItem value="high">High</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            )}
+
+            {showDate && (
+              <div className="space-y-2">
+                <Label htmlFor="due-date">Due Date (optional)</Label>
+                <Input
+                  id="due-date"
+                  value={dateInput}
+                  onChange={(e) => handleDateChange(e.target.value)}
+                  placeholder="e.g., tomorrow, next Tuesday, in 3 days, 3/20"
+                  className={dateError ? 'border-destructive' : ''}
+                />
+                {dateError && (
+                  <p className="text-sm text-destructive">{dateError}</p>
+                )}
+                {formData.dueDate && !dateError && (
+                  <p className="text-sm text-muted-foreground">
+                    Parsed as: {formatDate(formData.dueDate)}
+                  </p>
+                )}
               </div>
             )}
           </div>

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { CheckCircle, Tag, Calendar } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { formatDate } from '@/lib/dateParser'
 
 interface ItemCardProps {
   item: Item
@@ -31,23 +32,8 @@ export function ItemCard({ item, onComplete, showComplete = true }: ItemCardProp
     note: 'bg-secondary text-secondary-foreground'
   }
 
-  const formatDate = (timestamp: number) => {
-    const date = new Date(timestamp)
-    const today = new Date()
-    const tomorrow = new Date(today)
-    tomorrow.setDate(tomorrow.getDate() + 1)
-
-    if (date.toDateString() === today.toDateString()) return 'Today'
-    if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow'
-    
-    const diff = date.getTime() - today.getTime()
-    const daysAway = Math.ceil(diff / (1000 * 60 * 60 * 24))
-    
-    if (daysAway < 0) return `${Math.abs(daysAway)} days overdue`
-    if (daysAway < 7) return `In ${daysAway} days`
-    
-    return date.toLocaleDateString()
-  }
+  const isOverdue = item.dueDate && item.dueDate < Date.now() && !item.completed
+  const dueDateDisplay = item.dueDate ? formatDate(item.dueDate) : null
 
   return (
     <motion.div
@@ -84,9 +70,12 @@ export function ItemCard({ item, onComplete, showComplete = true }: ItemCardProp
             {(item.dueDate || item.context || item.tags) && (
               <div className="flex items-center gap-3 text-sm text-muted-foreground font-mono">
                 {item.dueDate && (
-                  <span className="flex items-center gap-1">
+                  <span className={cn(
+                    "flex items-center gap-1",
+                    isOverdue && "text-destructive font-semibold"
+                  )}>
                     <Calendar size={14} />
-                    {formatDate(item.dueDate)}
+                    {dueDateDisplay}
                   </span>
                 )}
                 {item.context && (
