@@ -68,19 +68,19 @@ This MVP starts with pure capture to build a blank slate foundation. The system 
 - Completion history for learning
 
 ## Edge Case Handling (Phase 1)
-- **Empty State**: Encouraging header and helpful placeholder; system feels welcoming even with zero data
-- **First Capture**: Instant feedback with toast notification builds confidence
-- **Capture Counter**: Shows system is working and building history
-
-## Edge Case Handling (Future Phases)
-- **Network Failures**: LLM calls fail gracefully; items queue for retry
-- **Ambiguous Captures**: Route to review queue rather than guessing
-- **Duplicate Prevention**: Similar recent captures flagged during inference
-- **Date Parsing Failures**: Helpful error messages with examples
-- **Overdue Items**: Visual highlights for past-due dates
+- **Empty States**: Show encouraging prompts when no captures exist; never show empty lists without context
+- **Network Failures**: LLM calls fail gracefully; items queue for retry; user can still capture offline
+- **Ambiguous Captures**: Single word or vague entries route to review queue rather than guessing incorrectly
+- **Duplicate Prevention**: Similar recent captures flagged during inference to avoid clutter
+- **Date Parsing Failures**: Natural language date/time parser handles 20+ patterns (today, tomorrow, next [day], in X days/weeks, month day, MM/DD, times like 3pm, 5:30am, noon, midnight, etc.). Combines dates with times intelligently (e.g., "tomorrow at 3pm"). Unparseable dates/times show helpful error message in review queue.
+- **Overdue Items**: Items with past due dates are highlighted in red to draw attention
 
 ## Design Direction
 The design should feel like a trusted external brain - calm, organized, and always ready. It should reduce cognitive load through generous whitespace, clear visual hierarchy, and confidence-inspiring feedback. The aesthetic should be modern but warm, professional but not corporate, focused but not sterile.
+
+## Color Selection
+A calming yet energizing palette that promotes focus without feeling clinical.
+
 
 ## Color Selection
 A calming yet energizing palette that promotes focus without feeling clinical.
