@@ -70,6 +70,7 @@ function App() {
       ...capture,
       inferredType: confirmedType,
       typeConfidence: 100,
+      typeConfirmed: true,
       needsTypeConfirmation: false,
       lastReviewedAt: Date.now()
     }

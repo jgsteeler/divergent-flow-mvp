@@ -18,9 +18,14 @@ export interface Capture {
   createdAt: number
   inferredType?: ItemType
   typeConfidence?: number
+  typeConfirmed?: boolean
   needsTypeConfirmation?: boolean
   processedAt?: number
   lastReviewedAt?: number
+  priority?: Priority
+  dueDate?: number
+  context?: string
+  tags?: string[]
 }
 
 export interface Item {

@@ -28,7 +28,9 @@ This MVP starts with pure capture to build a blank slate foundation. The system 
 
 ### Phase 3: Review Queue (Current)
 - Priority-based review queue surfacing top 5 items needing attention
-- Priority algorithm: no type > needs confirmation > confidence < 90% > staleness (last review date)
+- Priority algorithm: no type > needs confirmation > confidence < 90% (unconfirmed) > missing properties > staleness (last review date)
+- Type confirmation sets typeConfirmed=true and typeConfidence=100
+- Property validation checks for missing key attributes based on type
 - Visual indicators for review priority and reasons
 - One-click review initiation from queue
 
@@ -90,9 +92,24 @@ This MVP starts with pure capture to build a blank slate foundation. The system 
 - **Progression**: 
   1. Items without type: Priority 1000 (highest)
   2. Items needing type confirmation: Priority 900
-  3. Items with confidence < 90%: Priority 800-889 (inversely proportional to confidence)
-  4. Items by staleness: Priority 700 (30+ days), 600 (14+ days), 500 (7+ days), 400 (routine)
-- **Success criteria**: Critical items always surface first; staleness prevents items from being forgotten; priority scores are consistent and logical
+  3. Items with unconfirmed type AND confidence < 90%: Priority 900 (same as confirmation needed)
+  4. Items with missing properties (priority for actions, due date for reminders, context for actions): Priority 900
+  5. Items by staleness: Priority 700 (30+ days), 600 (14+ days), 500 (7+ days), 400 (routine)
+- **Success criteria**: Critical items always surface first; unconfirmed low-confidence types treated same as explicit confirmation requests; property validation ensures completeness; staleness prevents items from being forgotten; priority scores are consistent and logical
+
+### 9. Type Confirmation Flow
+- **Functionality**: User confirms or corrects item type through interactive dialog
+- **Purpose**: Build confidence in the system and train the learning model
+- **Trigger**: When review item is clicked from queue
+- **Progression**: Review button clicked → Type confirmation dialog opens → User selects type → Type is set with typeConfirmed=true and typeConfidence=100 → Learning data saved → Item marked as reviewed
+- **Success criteria**: Confirmed types have 100% confidence; typeConfirmed flag prevents re-review of already-confirmed items; learning improves future accuracy
+
+### 10. Property Validation
+- **Functionality**: Check that items have required properties based on their type
+- **Purpose**: Ensure items have necessary context to be actionable
+- **Trigger**: During review priority calculation
+- **Progression**: Type confirmed → System checks for required properties → Missing properties trigger review priority 900 → User prompted to add properties through review
+- **Success criteria**: Action items flagged when missing priority; Reminders flagged when missing due date; Actions flagged when missing both due date and context; Clear messaging shows what's missing
 
 ## Future Features (Phase 4+)
 
