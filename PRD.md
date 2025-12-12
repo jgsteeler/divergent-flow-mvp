@@ -1,66 +1,83 @@
 # Divergent Flow MVP - ADHD Brain Management Tool
 
-An intelligent capture-first productivity system designed specifically for ADHD brains that eliminates configuration overhead and provides just-in-time task surfacing.
+An intelligent capture-first productivity system designed specifically for ADHD brains that starts with zero configuration and learns with the user.
 
 **Experience Qualities**: 
 1. **Frictionless** - Zero-barrier capture means thoughts are preserved before they evaporate
-2. **Intelligent** - The system learns and categorizes without requiring manual setup or rules
-3. **Calm** - Single-screen, distraction-free interface that surfaces only what matters right now
+2. **Learns with You** - The system starts blank and builds its intelligence as you use it
+3. **Calm** - Single-screen, distraction-free interface that grows organically with your needs
 
 **Complexity Level**: Light Application (multiple features with basic state)
-This MVP focuses on capture → inference → review → dashboard workflow with persistent state, but avoids the complexity of multi-view navigation, heavy configuration, or advanced ML features planned for future phases.
+This MVP starts with pure capture to build a blank slate foundation. The system will learn patterns and build inference models based on user behavior, not pre-configured rules.
 
-## Essential Features
+## Development Phases
+
+### Phase 1: Blank Slate Foundation (Current)
+- Pure capture interface
+- Persistent storage of raw text captures
+- Zero configuration, zero assumptions
+- Helpful prompts to guide discovery
+- Simple capture counter to show the system is working
+
+## Essential Features (Phase 1)
 
 ### 1. Quick Capture
-- **Functionality**: Large, always-accessible text input that accepts natural language brain dumps
-- **Purpose**: Preserve fleeting thoughts before ADHD causes them to vanish
+- **Functionality**: Large, always-accessible text input that accepts any natural language text with zero processing
+- **Purpose**: Preserve fleeting thoughts instantly without any categorization overhead
 - **Trigger**: User focuses on capture input (default focus on load)
-- **Progression**: Focus input → Type thought → Press Enter/Submit → Visual confirmation → Input clears → Ready for next capture
-- **Success criteria**: Capture completes in under 3 seconds; no fields required beyond the thought itself
+- **Progression**: Focus input → Type thought → Press Cmd/Ctrl+Enter or click Capture → Visual confirmation → Input clears → Capture count updates → Ready for next capture
+- **Success criteria**: Capture completes in under 1 second; no processing, no inference, just pure storage; helpful placeholder suggests asking about the app itself
 
-### 2. Intelligent Processing
-- **Functionality**: LLM-powered inference determines item type (note/reminder/action), collection, priority, dates, and context. Natural language date and time parsing handles expressions like "tomorrow at 3pm", "next Tuesday at noon", "in 3 days", "5:30pm", "at midnight", month/day formats with times, etc.
-- **Purpose**: Eliminate manual categorization that ADHD users struggle with
-- **Trigger**: Immediately upon capture submission
-- **Progression**: Raw capture stored → Date/time parser extracts dates and times from text → LLM analyzes text → Extracts type, collection, attributes → If type+collection known, migrates to structured item → Stores inference results for learning
-- **Success criteria**: 70%+ captures successfully inferred; date/time parsing handles 20+ common natural language patterns including times of day; processing feels instant (< 2s); failed inferences route to review queue
+### 2. Persistent Storage
+- **Functionality**: All captures are automatically saved to browser storage
+- **Purpose**: Build trust that thoughts won't be lost
+- **Trigger**: Immediately on capture
+- **Progression**: Capture created → Saved to KV store → UI updates to show count
+- **Success criteria**: Captures persist across page refreshes; storage is transparent to user
 
-### 3. ADHD Review Queue
-- **Functionality**: Displays 3-5 highest-priority items needing human input. Includes natural language date and time input field for actions and reminders.
-- **Purpose**: Handle edge cases where inference failed, without overwhelming the user
-- **Trigger**: Items appear when: inference failed on type/collection, or key attributes missing
-- **Progression**: Review item appears → User reads context → Provides missing info (type/collection/priority/dates/times using natural language) → Item migrates → Next review item surfaces
-- **Success criteria**: Never shows more than 5 items; prioritizes un-migrated captures first; date/time input accepts natural language (e.g., "tomorrow at 3pm"); updates in real-time
+### 3. Discovery Guidance
+- **Functionality**: Helpful placeholder text that encourages users to ask about the app
+- **Purpose**: Guide new users through discovering how to use the system organically
+- **Trigger**: On first load
+- **Progression**: User sees suggestion → Captures question about app → (Future: AI responds with guidance)
+- **Success criteria**: Placeholder text invites exploration without overwhelming with instructions
 
-### 4. Inference Learning
-- **Functionality**: Stores user corrections from review queue to improve future inference accuracy
-- **Purpose**: System gets smarter over time without explicit training
-- **Trigger**: User completes a review item
-- **Progression**: User correction captured → Paired with original text → Stored in learning dataset → Future inferences reference past patterns
-- **Success criteria**: Learning data persists; similar future captures show improved inference accuracy
+## Future Features (Phase 2+)
 
-### 5. ADHD Dashboard
-- **Functionality**: Smart surface showing: Review Queue (top 5), Next Action (single most important task), Quick Wins (3 easy completions), Recent Captures
-- **Purpose**: Answer "what should I do right now?" without overwhelming choice paralysis
-- **Trigger**: Always visible; updates reactively
-- **Progression**: Dashboard loads → Algorithms calculate priorities → Surfaces 1 next action + 3 quick wins + review items → User acts → Dashboard recalculates
-- **Success criteria**: Never more than 10 total items visible; "Next Action" is always singular; updates feel instant
+### Intelligent Processing (Phase 2)
+- LLM-powered inference that learns from user patterns
+- Natural language date/time parsing
+- Automatic item type detection (note/action/reminder)
+- Collection inference based on learned patterns
+- Confidence scoring for all inferences
 
-### 6. Item Completion
-- **Functionality**: Mark actions/reminders complete with single tap/click
-- **Purpose**: Provide dopamine hit and reduce visual clutter
-- **Trigger**: User clicks/taps completion indicator on any action or reminder
-- **Progression**: User taps item → Completion animation → Item fades out → Dashboard recalculates → New item surfaces if available
-- **Success criteria**: Completion feels satisfying (animation); completed items removed from view; total count updates
+### ADHD Review Queue (Phase 3)
+- Surface items needing clarification
+- Learn from user corrections
+- Build inference model over time
 
-## Edge Case Handling
-- **Empty States**: Show encouraging prompts when no captures exist; never show empty lists without context
-- **Network Failures**: LLM calls fail gracefully; items queue for retry; user can still capture offline
-- **Ambiguous Captures**: Single word or vague entries route to review queue rather than guessing incorrectly
-- **Duplicate Prevention**: Similar recent captures flagged during inference to avoid clutter
-- **Date Parsing Failures**: Natural language date/time parser handles 20+ patterns (today, tomorrow, next [day], in X days/weeks, month day, MM/DD, times like 3pm, 5:30am, noon, midnight, etc.). Combines dates with times intelligently (e.g., "tomorrow at 3pm"). Unparseable dates/times show helpful error message in review queue.
-- **Overdue Items**: Items with past due dates are highlighted in red to draw attention
+### ADHD Dashboard (Phase 4)
+- Next Action (single focus point)
+- Quick Wins (easy completions)
+- Review Queue integration
+- Adaptive algorithms that learn user patterns
+
+### Item Completion (Phase 5)
+- Mark items complete
+- Satisfying animations
+- Completion history for learning
+
+## Edge Case Handling (Phase 1)
+- **Empty State**: Encouraging header and helpful placeholder; system feels welcoming even with zero data
+- **First Capture**: Instant feedback with toast notification builds confidence
+- **Capture Counter**: Shows system is working and building history
+
+## Edge Case Handling (Future Phases)
+- **Network Failures**: LLM calls fail gracefully; items queue for retry
+- **Ambiguous Captures**: Route to review queue rather than guessing
+- **Duplicate Prevention**: Similar recent captures flagged during inference
+- **Date Parsing Failures**: Helpful error messages with examples
+- **Overdue Items**: Visual highlights for past-due dates
 
 ## Design Direction
 The design should feel like a trusted external brain - calm, organized, and always ready. It should reduce cognitive load through generous whitespace, clear visual hierarchy, and confidence-inspiring feedback. The aesthetic should be modern but warm, professional but not corporate, focused but not sterile.

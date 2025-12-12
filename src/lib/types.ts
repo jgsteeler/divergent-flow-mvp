@@ -15,9 +15,6 @@ export interface Capture {
   id: string
   text: string
   createdAt: number
-  processed: boolean
-  inferredAttributes?: InferredAttributes
-  migratedTo?: string
 }
 
 export interface Item {

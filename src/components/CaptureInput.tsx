@@ -44,7 +44,7 @@ export function CaptureInput({ onCapture, isProcessing }: CaptureInputProps) {
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Capture anything... Try: 'Call dentist tomorrow' or 'Submit report next Friday' (Cmd/Ctrl+Enter to save)"
+          placeholder="Capture anything... Try: 'How do I use this app?' or 'What can this do?' (Cmd/Ctrl+Enter to save)"
           className="min-h-[100px] resize-none text-base border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
           disabled={isProcessing}
         />
