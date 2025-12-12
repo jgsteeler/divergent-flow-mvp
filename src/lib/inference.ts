@@ -1,11 +1,11 @@
 import { InferredAttributes, ItemType, Priority, LearningData } from './types'
-import { extractDateFromText } from './dateParser'
+import { extractDateTimeFromText } from './dateParser'
 
 export async function inferAttributes(
   text: string,
   learningData: LearningData[] = []
 ): Promise<InferredAttributes> {
-  const { date: extractedDate, cleanText } = extractDateFromText(text)
+  const { dateTime: extractedDate, cleanText } = extractDateTimeFromText(text)
   
   const examples = learningData.slice(-10).map(ld => ({
     input: ld.originalText,
@@ -20,13 +20,18 @@ export async function inferAttributes(
 
   const now = Date.now()
   const dateExamples = `
-Examples of natural language dates (current time: ${now}):
+Examples of natural language dates and times (current time: ${now}):
 - "tomorrow" = ${now + 86400000}
+- "tomorrow at 3pm" = (tomorrow's date + 15:00)
 - "next Tuesday" = (calculate next occurrence of Tuesday)
+- "next Tuesday at noon" = (next Tuesday + 12:00)
 - "in 3 days" = ${now + (3 * 86400000)}
+- "5:30pm" or "5:30 pm" = (today or tomorrow + 17:30)
+- "at noon" = (today or tomorrow + 12:00)
+- "midnight" = (today or tomorrow + 00:00)
 - "next week" = ${now + (7 * 86400000)}
-- "January 15th" = (timestamp for next January 15th)
-- "3/20" or "3/20/24" = (timestamp for that date)
+- "January 15th at 2pm" = (timestamp for next January 15th at 14:00)
+- "3/20 at 9am" or "3/20/24 at 9:00am" = (timestamp for that date at 09:00)
 `
 
   const promptText = `You are an intelligent assistant helping users with ADHD capture and organize their thoughts.
