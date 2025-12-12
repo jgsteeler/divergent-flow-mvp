@@ -16,9 +16,12 @@ export function getReviewQueue(
   const reviewItems: ReviewQueueItem[] = []
   
   for (const capture of captures) {
-    if (!capture.processed || capture.migratedTo) continue
+    if (!capture.needsTypeConfirmation) continue
     
-    const attributes: InferredAttributes = capture.inferredAttributes || {}
+    const attributes: InferredAttributes = {
+      type: capture.inferredType,
+      typeConfidence: capture.typeConfidence
+    }
     const missingFields = getMissingFields(attributes)
     
     if (missingFields.length > 0) {
@@ -95,7 +98,7 @@ export function getRecentCaptures(
   limit: number = 5
 ): Capture[] {
   return [...captures]
-    .filter(c => !c.migratedTo)
+    .filter(c => !c.needsTypeConfirmation)
     .sort((a, b) => b.createdAt - a.createdAt)
     .slice(0, limit)
 }

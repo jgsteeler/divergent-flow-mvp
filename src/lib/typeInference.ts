@@ -1,0 +1,199 @@
+import { ItemType, ConfidenceLevel, TypeLearningData } from './types'
+
+interface TypePattern {
+  patterns: RegExp[]
+  type: ItemType
+  weight: number
+}
+
+const REMINDER_PATTERNS: TypePattern = {
+  patterns: [
+    /remind\s+me(\s+to)?/i,
+    /follow\s+up(\s+on)?/i,
+    /check\s+in(\s+on)?/i,
+    /don't\s+forget/i,
+    /remember\s+to/i,
+    /ping\s+me/i,
+    /alert\s+me/i,
+    /notify\s+me/i,
+    /schedule\s+(a\s+)?reminder/i,
+  ],
+  type: 'reminder',
+  weight: 1.0
+}
+
+const ACTION_PATTERNS: TypePattern = {
+  patterns: [
+    /^(i\s+)?need\s+to/i,
+    /^(i\s+)?(have\s+to|must)/i,
+    /^(i\s+)?should/i,
+    /^create\s+(a\s+)?/i,
+    /^make\s+(a\s+)?/i,
+    /^write\s+(a\s+)?/i,
+    /^send\s+(a\s+)?/i,
+    /^call\s+/i,
+    /^email\s+/i,
+    /^buy\s+/i,
+    /^fix\s+/i,
+    /^update\s+/i,
+    /^finish\s+/i,
+    /^complete\s+/i,
+    /^schedule\s+/i,
+    /^book\s+(a\s+)?/i,
+    /^prepare\s+/i,
+    /^review\s+/i,
+    /^research\s+/i,
+    /^organize\s+/i,
+    /^plan\s+/i,
+    /^draft\s+/i,
+  ],
+  type: 'action',
+  weight: 0.9
+}
+
+const NOTE_PATTERNS: TypePattern = {
+  patterns: [
+    /^note:/i,
+    /^idea:/i,
+    /^thought:/i,
+    /interesting\s+that/i,
+    /learned\s+(that|about)/i,
+    /found\s+out/i,
+    /discovered/i,
+    /realized/i,
+    /noticed/i,
+    /observation:/i,
+    /insight:/i,
+  ],
+  type: 'note',
+  weight: 0.8
+}
+
+function calculatePatternScore(text: string, patterns: TypePattern): number {
+  let score = 0
+  for (const pattern of patterns.patterns) {
+    if (pattern.test(text)) {
+      score += patterns.weight
+      break
+    }
+  }
+  return score
+}
+
+function applyLearningData(
+  text: string,
+  learningData: TypeLearningData[]
+): { type: ItemType; confidence: number } | null {
+  const recentLearning = learningData
+    .filter(ld => ld.wasCorrect !== false)
+    .slice(-50)
+
+  for (const learning of recentLearning.reverse()) {
+    const patternWords = learning.pattern.toLowerCase().split(/\s+/)
+    const textWords = text.toLowerCase().split(/\s+/)
+    
+    const matchingWords = patternWords.filter(word => 
+      textWords.some(tw => tw.includes(word) || word.includes(tw))
+    )
+    
+    if (matchingWords.length >= Math.min(2, patternWords.length)) {
+      const confidenceBoost = learning.confidence === 'high' ? 0.3 : 0.2
+      return {
+        type: learning.type,
+        confidence: 0.7 + confidenceBoost
+      }
+    }
+  }
+  
+  return null
+}
+
+export function inferType(
+  text: string,
+  learningData: TypeLearningData[] = []
+): { type: ItemType | null; confidence: ConfidenceLevel } {
+  const learned = applyLearningData(text, learningData)
+  if (learned && learned.confidence >= 0.8) {
+    return {
+      type: learned.type,
+      confidence: 'high'
+    }
+  }
+
+  const reminderScore = calculatePatternScore(text, REMINDER_PATTERNS)
+  const actionScore = calculatePatternScore(text, ACTION_PATTERNS)
+  const noteScore = calculatePatternScore(text, NOTE_PATTERNS)
+
+  const maxScore = Math.max(reminderScore, actionScore, noteScore)
+
+  if (learned) {
+    const learnedBoost = learned.confidence
+    if (learned.type === 'reminder') reminderScore + learnedBoost
+    if (learned.type === 'action') actionScore + learnedBoost
+    if (learned.type === 'note') noteScore + learnedBoost
+  }
+
+  if (maxScore === 0) {
+    return { type: null, confidence: 'low' }
+  }
+
+  let inferredType: ItemType
+  if (reminderScore > actionScore && reminderScore > noteScore) {
+    inferredType = 'reminder'
+  } else if (actionScore > noteScore) {
+    inferredType = 'action'
+  } else {
+    inferredType = 'note'
+  }
+
+  let confidence: ConfidenceLevel
+  if (maxScore >= 1.0) {
+    confidence = 'high'
+  } else if (maxScore >= 0.8) {
+    confidence = 'medium'
+  } else {
+    confidence = 'low'
+  }
+
+  return { type: inferredType, confidence }
+}
+
+export function shouldPromptUser(confidence: ConfidenceLevel): boolean {
+  return confidence === 'low' || confidence === 'medium'
+}
+
+export async function saveTypeLearning(
+  text: string,
+  inferredType: ItemType | null,
+  actualType: ItemType,
+  confidence: ConfidenceLevel
+): Promise<void> {
+  const learningData: TypeLearningData = {
+    pattern: text.toLowerCase().substring(0, 100),
+    type: actualType,
+    confidence,
+    timestamp: Date.now(),
+    wasCorrect: inferredType === actualType
+  }
+
+  const existing = await window.spark.kv.get<TypeLearningData[]>('type-learning') || []
+  await window.spark.kv.set('type-learning', [...existing, learningData])
+}
+
+export function getTypeLabel(type: ItemType): string {
+  const labels: Record<ItemType, string> = {
+    note: 'Note',
+    action: 'Action Item',
+    reminder: 'Reminder'
+  }
+  return labels[type]
+}
+
+export function getTypeDescription(type: ItemType): string {
+  const descriptions: Record<ItemType, string> = {
+    note: 'Information to remember',
+    action: 'Something to do',
+    reminder: 'Time-sensitive prompt'
+  }
+  return descriptions[type]
+}

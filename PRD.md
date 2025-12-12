@@ -12,12 +12,19 @@ This MVP starts with pure capture to build a blank slate foundation. The system 
 
 ## Development Phases
 
-### Phase 1: Blank Slate Foundation (Current)
+### Phase 1: Blank Slate Foundation (Complete)
 - Pure capture interface
 - Persistent storage of raw text captures
 - Zero configuration, zero assumptions
 - Helpful prompts to guide discovery
 - Simple capture counter to show the system is working
+
+### Phase 2: Type Inference (Current)
+- Basic inference engine using keyword/phrase pattern matching
+- Confidence scoring (high/medium/low) for inferences
+- User prompts for type confirmation when needed
+- Learning storage to improve future inferences
+- Support for three item types: note, action, reminder
 
 ## Essential Features (Phase 1)
 
@@ -42,16 +49,37 @@ This MVP starts with pure capture to build a blank slate foundation. The system 
 - **Progression**: User sees suggestion → Captures question about app → (Future: AI responds with guidance)
 - **Success criteria**: Placeholder text invites exploration without overwhelming with instructions
 
-## Future Features (Phase 2+)
+### 4. Type Inference (Phase 2)
+- **Functionality**: Analyze capture text using keyword/phrase patterns to determine if it's a note, action item, or reminder
+- **Purpose**: Automatically categorize captures without manual user configuration
+- **Trigger**: Immediately after capture is saved
+- **Progression**: Capture saved → Pattern matching analysis → Confidence scoring → User prompt if needed → Type confirmation → Learning storage updated
+- **Success criteria**: High confidence inferences (90%+) auto-confirm; medium/low confidence prompt user; learning improves accuracy over time
 
-### Intelligent Processing (Phase 2)
-- LLM-powered inference that learns from user patterns
+### 5. Type Confirmation Dialog
+- **Functionality**: Interactive UI prompting user to confirm or correct inferred item type
+- **Purpose**: Validate inferences and collect training data for learning system
+- **Trigger**: When inference confidence is medium or low, or no type could be inferred
+- **Progression**: Prompt appears → Shows inferred type (if any) with confidence badge → User selects correct type → Learning data saved → Capture updated
+- **Success criteria**: Clear explanation of each type; easy single-click confirmation; dismissable without blocking workflow
+
+### 6. Learning System
+- **Functionality**: Store patterns from user confirmations to improve future type inference
+- **Purpose**: System becomes smarter with each correction, reducing need for manual confirmation over time
+- **Trigger**: When user confirms or corrects a type
+- **Progression**: User confirms type → Pattern extracted from text → Stored with type and confidence → Applied to future inferences
+- **Success criteria**: Learning data persists; patterns influence future inferences; accuracy improves with usage
+
+## Future Features (Phase 3+)
+
+### Intelligent Processing (Phase 3)
+- LLM-powered inference for collection/priority/context
 - Natural language date/time parsing
-- Automatic item type detection (note/action/reminder)
 - Collection inference based on learned patterns
-- Confidence scoring for all inferences
+- Priority inference
+- Context and tag extraction
 
-### ADHD Review Queue (Phase 3)
+### ADHD Review Queue (Phase 4)
 - Surface items needing clarification
 - Learn from user corrections
 - Build inference model over time
