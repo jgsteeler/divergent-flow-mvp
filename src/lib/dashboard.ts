@@ -26,7 +26,7 @@ export function getReviewQueue(
         captureId: capture.id,
         text: capture.text,
         inferredAttributes: attributes,
-        missingFields,
+        missingFields: missingFields || [],
         priority: calculateReviewPriority(attributes, capture.createdAt)
       })
     }

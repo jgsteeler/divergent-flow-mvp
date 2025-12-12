@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ReviewQueueItem } from '@/lib/dashboard'
 import { ItemType, Priority, InferredAttributes } from '@/lib/types'
 import { Card } from '@/components/ui/card'
@@ -21,9 +21,19 @@ export function ReviewQueue({ items, onReview }: ReviewQueueProps) {
   const [dateInput, setDateInput] = useState('')
   const [dateError, setDateError] = useState<string | null>(null)
 
+  useEffect(() => {
+    if (currentIndex >= items.length && items.length > 0) {
+      setCurrentIndex(0)
+    }
+  }, [items.length, currentIndex])
+
   if (items.length === 0) return null
 
   const currentItem = items[currentIndex]
+  
+  if (!currentItem) {
+    return null
+  }
 
   const handleDateChange = (value: string) => {
     setDateInput(value)
@@ -45,7 +55,7 @@ export function ReviewQueue({ items, onReview }: ReviewQueueProps) {
 
   const handleSubmit = () => {
     const attributes: InferredAttributes = {
-      ...currentItem.inferredAttributes,
+      ...(currentItem.inferredAttributes || {}),
       ...formData
     }
     
@@ -61,9 +71,9 @@ export function ReviewQueue({ items, onReview }: ReviewQueueProps) {
     }
   }
 
-  const needsType = currentItem.missingFields.includes('type')
-  const needsCollection = currentItem.missingFields.includes('collection')
-  const needsPriority = currentItem.missingFields.includes('priority')
+  const needsType = currentItem.missingFields?.includes('type') || false
+  const needsCollection = currentItem.missingFields?.includes('collection') || false
+  const needsPriority = currentItem.missingFields?.includes('priority') || false
   const showDate = formData.type === 'action' || formData.type === 'reminder' || currentItem.inferredAttributes?.type === 'action' || currentItem.inferredAttributes?.type === 'reminder'
 
   return (
