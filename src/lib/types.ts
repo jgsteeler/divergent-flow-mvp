@@ -19,7 +19,6 @@ export interface Capture {
   inferredType?: ItemType
   typeConfidence?: number
   typeConfirmed?: boolean
-  needsTypeConfirmation?: boolean
   processedAt?: number
   lastReviewedAt?: number
   priority?: Priority

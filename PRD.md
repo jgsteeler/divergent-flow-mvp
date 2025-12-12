@@ -27,12 +27,14 @@ This MVP starts with pure capture to build a blank slate foundation. The system 
 - Support for three item types: note, action, reminder
 
 ### Phase 3: Review Queue (Current)
-- Priority-based review queue surfacing top 5 items needing attention
-- Priority algorithm: no type > needs confirmation > confidence < 90% (unconfirmed) > missing properties > staleness (last review date)
-- Type confirmation sets typeConfirmed=true and typeConfidence=100
-- Property validation checks for missing key attributes based on type
+- Priority-based review queue surfacing top 3 items needing attention
+- Priority algorithm: no type > invalid/low confidence (< 90% or invalid data) > staleness (last review date)
+- Items disappear from queue after review and confirmation (typeConfirmed=true)
+- Queue only shows unconfirmed items, keeping focus on what needs attention
+- Maximum 3 items shown to avoid overwhelming ADHD users
+- Queue refills naturally as new captures come in or on page load
+- Type confirmation sets typeConfirmed=true, typeConfidence=100, and lastReviewedAt
 - Visual indicators for review priority and reasons
-- One-click review initiation from queue
 
 ## Essential Features (Phase 1)
 

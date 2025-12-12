@@ -18,7 +18,7 @@ function App() {
   const capturesArray = captures || []
   const learningArray = typeLearning || []
 
-  const reviewItems = getTopReviewItems(capturesArray, 5)
+  const reviewItems = getTopReviewItems(capturesArray, 3)
 
   const handleCapture = async (text: string) => {
     setIsProcessing(true)
@@ -41,11 +41,12 @@ function App() {
   const processCapture = async (capture: Capture) => {
     const { type, confidence } = inferType(capture.text, learningArray)
     
+    const needsConfirmation = !type || confidence < 90 || isNaN(confidence)
+    
     const updatedCapture: Capture = {
       ...capture,
       inferredType: type || undefined,
       typeConfidence: confidence,
-      needsTypeConfirmation: !type || shouldPromptUser(confidence),
       processedAt: Date.now()
     }
     
@@ -53,7 +54,7 @@ function App() {
       (current || []).map(c => c.id === capture.id ? updatedCapture : c)
     )
 
-    if (updatedCapture.needsTypeConfirmation) {
+    if (needsConfirmation) {
       setPendingConfirmation(updatedCapture)
     } else if (type) {
       await saveTypeLearning(capture.text, type, type, confidence)
@@ -71,7 +72,6 @@ function App() {
       inferredType: confirmedType,
       typeConfidence: 100,
       typeConfirmed: true,
-      needsTypeConfirmation: false,
       lastReviewedAt: Date.now()
     }
 

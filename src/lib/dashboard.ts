@@ -16,7 +16,14 @@ export function getReviewQueue(
   const reviewItems: ReviewQueueItem[] = []
   
   for (const capture of captures) {
-    if (!capture.needsTypeConfirmation) continue
+    if (capture.typeConfirmed) continue
+    
+    const needsReview = !capture.inferredType || 
+                       !capture.typeConfidence || 
+                       isNaN(capture.typeConfidence) || 
+                       capture.typeConfidence < 90
+    
+    if (!needsReview) continue
     
     const attributes: InferredAttributes = {
       type: capture.inferredType,
@@ -24,7 +31,7 @@ export function getReviewQueue(
     }
     const missingFields = getMissingFields(attributes)
     
-    if (missingFields.length > 0) {
+    if (missingFields.length > 0 || needsReview) {
       reviewItems.push({
         captureId: capture.id,
         text: capture.text,
@@ -37,7 +44,7 @@ export function getReviewQueue(
   
   return reviewItems
     .sort((a, b) => b.priority - a.priority)
-    .slice(0, 5)
+    .slice(0, 3)
 }
 
 export function getNextAction(items: Item[]): Item | null {
@@ -98,7 +105,7 @@ export function getRecentCaptures(
   limit: number = 5
 ): Capture[] {
   return [...captures]
-    .filter(c => !c.needsTypeConfirmation)
+    .filter(c => c.typeConfirmed)
     .sort((a, b) => b.createdAt - a.createdAt)
     .slice(0, limit)
 }

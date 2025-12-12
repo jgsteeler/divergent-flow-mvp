@@ -24,10 +24,15 @@ function hasInvalidProperties(capture: Capture): { invalid: boolean; missingProp
   }
 }
 
+function isValidConfidence(confidence: number | undefined): boolean {
+  return typeof confidence === 'number' && !isNaN(confidence) && confidence >= 0 && confidence <= 100
+}
+
 export function calculateReviewPriority(captures: Capture[]): ReviewItem[] {
   const now = Date.now()
   
   const reviewItems: ReviewItem[] = captures
+    .filter(capture => !capture.typeConfirmed)
     .map(capture => {
       let priority = 0
       let reason = ''
@@ -36,39 +41,29 @@ export function calculateReviewPriority(captures: Capture[]): ReviewItem[] {
         priority = 1000
         reason = 'No type assigned'
       }
-      else if (capture.needsTypeConfirmation) {
+      else if (!isValidConfidence(capture.typeConfidence) || (capture.typeConfidence !== undefined && capture.typeConfidence < 90)) {
         priority = 900
-        reason = 'Type needs confirmation'
-      }
-      else if (!capture.typeConfirmed && capture.typeConfidence !== undefined && capture.typeConfidence < 90) {
-        priority = 900
-        reason = `Low confidence (${capture.typeConfidence}%) - needs confirmation`
+        const confDisplay = isValidConfidence(capture.typeConfidence) ? `${capture.typeConfidence}%` : 'invalid'
+        reason = `Low confidence (${confDisplay})`
       }
       else {
-        const { invalid, missingProps } = hasInvalidProperties(capture)
-        
-        if (invalid) {
-          priority = 900
-          reason = `Missing: ${missingProps.join(', ')}`
-        } else {
-          const daysSinceCreated = (now - capture.createdAt) / ONE_DAY
-          const daysSinceReview = capture.lastReviewedAt 
-            ? (now - capture.lastReviewedAt) / ONE_DAY 
-            : daysSinceCreated
+        const daysSinceCreated = (now - capture.createdAt) / ONE_DAY
+        const daysSinceReview = capture.lastReviewedAt 
+          ? (now - capture.lastReviewedAt) / ONE_DAY 
+          : daysSinceCreated
 
-          if (daysSinceReview > 30) {
-            priority = 700
-            reason = 'Not reviewed in 30+ days'
-          } else if (daysSinceReview > 14) {
-            priority = 600
-            reason = 'Not reviewed in 14+ days'
-          } else if (daysSinceReview > 7) {
-            priority = 500
-            reason = 'Not reviewed in 7+ days'
-          } else {
-            priority = 400 - Math.floor(daysSinceReview * 10)
-            reason = 'Routine review'
-          }
+        if (daysSinceReview > 30) {
+          priority = 700
+          reason = 'Not reviewed in 30+ days'
+        } else if (daysSinceReview > 14) {
+          priority = 600
+          reason = 'Not reviewed in 14+ days'
+        } else if (daysSinceReview > 7) {
+          priority = 500
+          reason = 'Not reviewed in 7+ days'
+        } else {
+          priority = 400 - Math.floor(daysSinceReview * 10)
+          reason = 'Routine review'
         }
       }
 
@@ -78,12 +73,19 @@ export function calculateReviewPriority(captures: Capture[]): ReviewItem[] {
         reason
       }
     })
-    .sort((a, b) => b.reviewPriority - a.reviewPriority)
+    .sort((a, b) => {
+      if (b.reviewPriority !== a.reviewPriority) {
+        return b.reviewPriority - a.reviewPriority
+      }
+      const aReview = a.capture.lastReviewedAt || a.capture.createdAt
+      const bReview = b.capture.lastReviewedAt || b.capture.createdAt
+      return aReview - bReview
+    })
 
   return reviewItems
 }
 
-export function getTopReviewItems(captures: Capture[], limit: number = 5): ReviewItem[] {
+export function getTopReviewItems(captures: Capture[], limit: number = 3): ReviewItem[] {
   const prioritized = calculateReviewPriority(captures)
   return prioritized.slice(0, limit)
 }
