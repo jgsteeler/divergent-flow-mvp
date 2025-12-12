@@ -1,3 +1,64 @@
+export function parseTimeOfDay(text: string): { hours: number; minutes: number } | null {
+  const lowerText = text.toLowerCase().trim()
+  
+  if (lowerText === 'noon' || lowerText === 'midday') {
+    return { hours: 12, minutes: 0 }
+  }
+  
+  if (lowerText === 'midnight') {
+    return { hours: 0, minutes: 0 }
+  }
+  
+  if (lowerText === 'morning') {
+    return { hours: 9, minutes: 0 }
+  }
+  
+  if (lowerText === 'afternoon') {
+    return { hours: 14, minutes: 0 }
+  }
+  
+  if (lowerText === 'evening') {
+    return { hours: 18, minutes: 0 }
+  }
+  
+  if (lowerText === 'night') {
+    return { hours: 20, minutes: 0 }
+  }
+  
+  const time12Match = lowerText.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/)
+  if (time12Match) {
+    let hours = parseInt(time12Match[1], 10)
+    const minutes = time12Match[2] ? parseInt(time12Match[2], 10) : 0
+    const meridiem = time12Match[3]
+    
+    if (hours < 1 || hours > 12 || minutes < 0 || minutes > 59) {
+      return null
+    }
+    
+    if (meridiem === 'pm' && hours !== 12) {
+      hours += 12
+    } else if (meridiem === 'am' && hours === 12) {
+      hours = 0
+    }
+    
+    return { hours, minutes }
+  }
+  
+  const time24Match = lowerText.match(/^(\d{1,2}):(\d{2})$/)
+  if (time24Match) {
+    const hours = parseInt(time24Match[1], 10)
+    const minutes = parseInt(time24Match[2], 10)
+    
+    if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+      return null
+    }
+    
+    return { hours, minutes }
+  }
+  
+  return null
+}
+
 export function parseNaturalDate(text: string): number | null {
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -133,6 +194,29 @@ export function parseNaturalDate(text: string): number | null {
   return null
 }
 
+export function extractTimeFromText(text: string): { time: { hours: number; minutes: number } | null; cleanText: string } {
+  const timePatterns = [
+    /\b(\d{1,2}(?::\d{2})?\s*(?:am|pm))\b/i,
+    /\b(\d{1,2}:\d{2})\b/,
+    /\b(at )?(noon|midday|midnight|morning|afternoon|evening|night)\b/i,
+  ]
+  
+  for (const pattern of timePatterns) {
+    const match = text.match(pattern)
+    if (match) {
+      const timeString = match[match.length - 1]
+      const parsedTime = parseTimeOfDay(timeString)
+      
+      if (parsedTime !== null) {
+        const cleanText = text.replace(match[0], '').replace(/\s+/g, ' ').trim()
+        return { time: parsedTime, cleanText }
+      }
+    }
+  }
+  
+  return { time: null, cleanText: text }
+}
+
 export function extractDateFromText(text: string): { date: number | null; cleanText: string } {
   const patterns = [
     /\b(today|tomorrow|yesterday)\b/i,
@@ -160,34 +244,78 @@ export function extractDateFromText(text: string): { date: number | null; cleanT
   return { date: null, cleanText: text }
 }
 
+export function extractDateTimeFromText(text: string): { dateTime: number | null; cleanText: string } {
+  const { date, cleanText: textAfterDate } = extractDateFromText(text)
+  const { time, cleanText: textAfterTime } = extractTimeFromText(textAfterDate)
+  
+  if (date !== null && time !== null) {
+    const dateObj = new Date(date)
+    dateObj.setHours(time.hours, time.minutes, 0, 0)
+    return { dateTime: dateObj.getTime(), cleanText: textAfterTime }
+  }
+  
+  if (date !== null) {
+    return { dateTime: date, cleanText: textAfterDate }
+  }
+  
+  if (time !== null) {
+    const now = new Date()
+    const dateObj = new Date(now.getFullYear(), now.getMonth(), now.getDate(), time.hours, time.minutes, 0, 0)
+    
+    if (dateObj < now) {
+      dateObj.setDate(dateObj.getDate() + 1)
+    }
+    
+    return { dateTime: dateObj.getTime(), cleanText: textAfterTime }
+  }
+  
+  return { dateTime: null, cleanText: text }
+}
+
 export function formatDate(timestamp: number): string {
   const date = new Date(timestamp)
   const today = new Date()
   const tomorrow = new Date(today)
   tomorrow.setDate(tomorrow.getDate() + 1)
   
-  today.setHours(0, 0, 0, 0)
-  tomorrow.setHours(0, 0, 0, 0)
-  date.setHours(0, 0, 0, 0)
+  const dateOnly = new Date(date)
+  const todayOnly = new Date(today)
+  const tomorrowOnly = new Date(tomorrow)
   
-  if (date.getTime() === today.getTime()) {
-    return 'Today'
+  todayOnly.setHours(0, 0, 0, 0)
+  tomorrowOnly.setHours(0, 0, 0, 0)
+  dateOnly.setHours(0, 0, 0, 0)
+  
+  const hasTime = date.getHours() !== 0 || date.getMinutes() !== 0
+  
+  let dateStr = ''
+  
+  if (dateOnly.getTime() === todayOnly.getTime()) {
+    dateStr = 'Today'
+  } else if (dateOnly.getTime() === tomorrowOnly.getTime()) {
+    dateStr = 'Tomorrow'
+  } else {
+    const diffDays = Math.round((dateOnly.getTime() - todayOnly.getTime()) / (1000 * 60 * 60 * 24))
+    
+    if (diffDays > 0 && diffDays <= 7) {
+      dateStr = `in ${diffDays} day${diffDays > 1 ? 's' : ''}`
+    } else {
+      const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
+      if (date.getFullYear() !== today.getFullYear()) {
+        options.year = 'numeric'
+      }
+      dateStr = date.toLocaleDateString('en-US', options)
+    }
   }
   
-  if (date.getTime() === tomorrow.getTime()) {
-    return 'Tomorrow'
+  if (hasTime) {
+    const timeStr = date.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    })
+    return `${dateStr} at ${timeStr}`
   }
   
-  const diffDays = Math.round((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-  
-  if (diffDays > 0 && diffDays <= 7) {
-    return `in ${diffDays} day${diffDays > 1 ? 's' : ''}`
-  }
-  
-  const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
-  if (date.getFullYear() !== today.getFullYear()) {
-    options.year = 'numeric'
-  }
-  
-  return date.toLocaleDateString('en-US', options)
+  return dateStr
 }
