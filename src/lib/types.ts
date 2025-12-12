@@ -2,11 +2,9 @@ export type ItemType = 'note' | 'action' | 'reminder'
 
 export type Priority = 'low' | 'medium' | 'high'
 
-export type ConfidenceLevel = 'high' | 'medium' | 'low'
-
 export interface InferredAttributes {
   type?: ItemType
-  typeConfidence?: ConfidenceLevel
+  typeConfidence?: number
   collection?: string
   priority?: Priority
   dueDate?: number
@@ -19,9 +17,10 @@ export interface Capture {
   text: string
   createdAt: number
   inferredType?: ItemType
-  typeConfidence?: ConfidenceLevel
+  typeConfidence?: number
   needsTypeConfirmation?: boolean
   processedAt?: number
+  lastReviewedAt?: number
 }
 
 export interface Item {
@@ -36,12 +35,13 @@ export interface Item {
   completed: boolean
   createdAt: number
   completedAt?: number
+  lastReviewedAt?: number
 }
 
 export interface TypeLearningData {
   pattern: string
   type: ItemType
-  confidence: ConfidenceLevel
+  confidence: number
   timestamp: number
   wasCorrect?: boolean
 }
@@ -54,9 +54,7 @@ export interface LearningData {
 }
 
 export interface ReviewItem {
-  captureId: string
-  text: string
-  inferredAttributes: InferredAttributes
-  missingFields: string[]
-  priority: number
+  capture: Capture
+  reviewPriority: number
+  reason: string
 }

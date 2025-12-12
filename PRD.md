@@ -19,12 +19,18 @@ This MVP starts with pure capture to build a blank slate foundation. The system 
 - Helpful prompts to guide discovery
 - Simple capture counter to show the system is working
 
-### Phase 2: Type Inference (Current)
+### Phase 2: Type Inference (Complete)
 - Basic inference engine using keyword/phrase pattern matching
-- Confidence scoring (high/medium/low) for inferences
-- User prompts for type confirmation when needed
+- Confidence scoring (0-100% numeric) for inferences
+- User prompts for type confirmation when confidence < 90%
 - Learning storage to improve future inferences
 - Support for three item types: note, action, reminder
+
+### Phase 3: Review Queue (Current)
+- Priority-based review queue surfacing top 5 items needing attention
+- Priority algorithm: no type > needs confirmation > confidence < 90% > staleness (last review date)
+- Visual indicators for review priority and reasons
+- One-click review initiation from queue
 
 ## Essential Features (Phase 1)
 
@@ -70,27 +76,40 @@ This MVP starts with pure capture to build a blank slate foundation. The system 
 - **Progression**: User confirms type → Pattern extracted from text → Stored with type and confidence → Applied to future inferences
 - **Success criteria**: Learning data persists; patterns influence future inferences; accuracy improves with usage
 
-## Future Features (Phase 3+)
+### 7. Review Queue (Phase 3)
+- **Functionality**: Display top 5 items needing attention based on priority algorithm
+- **Purpose**: Surface items requiring user input in a manageable, non-overwhelming way
+- **Trigger**: After type confirmation dialog is dismissed and when items need attention
+- **Progression**: Algorithm calculates priorities → Top 5 items displayed → Visual indicators show priority and reason → User clicks Review → Opens type confirmation dialog → Item updated and marked as reviewed
+- **Success criteria**: Priority algorithm correctly identifies urgent items; queue shows helpful context; doesn't overwhelm with too many items; items update after review
 
-### Intelligent Processing (Phase 3)
+### 8. Priority Algorithm
+- **Functionality**: Score all captures based on multiple factors to determine review priority
+- **Purpose**: Ensure most important items get attention first using ADHD-friendly prioritization
+- **Trigger**: Runs whenever review queue is displayed
+- **Progression**: 
+  1. Items without type: Priority 1000 (highest)
+  2. Items needing type confirmation: Priority 900
+  3. Items with confidence < 90%: Priority 800-889 (inversely proportional to confidence)
+  4. Items by staleness: Priority 700 (30+ days), 600 (14+ days), 500 (7+ days), 400 (routine)
+- **Success criteria**: Critical items always surface first; staleness prevents items from being forgotten; priority scores are consistent and logical
+
+## Future Features (Phase 4+)
+
+### Intelligent Processing (Phase 4)
 - LLM-powered inference for collection/priority/context
 - Natural language date/time parsing
 - Collection inference based on learned patterns
 - Priority inference
 - Context and tag extraction
 
-### ADHD Review Queue (Phase 4)
-- Surface items needing clarification
-- Learn from user corrections
-- Build inference model over time
-
-### ADHD Dashboard (Phase 4)
+### ADHD Dashboard (Phase 5)
 - Next Action (single focus point)
 - Quick Wins (easy completions)
 - Review Queue integration
 - Adaptive algorithms that learn user patterns
 
-### Item Completion (Phase 5)
+### Item Completion (Phase 6)
 - Mark items complete
 - Satisfying animations
 - Completion history for learning

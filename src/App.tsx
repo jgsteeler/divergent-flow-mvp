@@ -3,9 +3,11 @@ import { useKV } from '@github/spark/hooks'
 import { Capture, ItemType, TypeLearningData } from '@/lib/types'
 import { CaptureInput } from '@/components/CaptureInput'
 import { TypeConfirmation } from '@/components/TypeConfirmation'
+import { ReviewQueue } from '@/components/ReviewQueue'
 import { toast } from 'sonner'
 import { Toaster } from '@/components/ui/sonner'
 import { inferType, shouldPromptUser, saveTypeLearning } from '@/lib/typeInference'
+import { getTopReviewItems } from '@/lib/reviewPriority'
 
 function App() {
   const [captures, setCaptures] = useKV<Capture[]>('captures', [])
@@ -15,6 +17,8 @@ function App() {
 
   const capturesArray = captures || []
   const learningArray = typeLearning || []
+
+  const reviewItems = getTopReviewItems(capturesArray, 5)
 
   const handleCapture = async (text: string) => {
     setIsProcessing(true)
@@ -65,8 +69,9 @@ function App() {
     const updatedCapture: Capture = {
       ...capture,
       inferredType: confirmedType,
-      typeConfidence: 'high',
-      needsTypeConfirmation: false
+      typeConfidence: 100,
+      needsTypeConfirmation: false,
+      lastReviewedAt: Date.now()
     }
 
     setCaptures((current) =>
@@ -77,7 +82,7 @@ function App() {
       capture.text,
       capture.inferredType || null,
       confirmedType,
-      capture.typeConfidence || 'low'
+      capture.typeConfidence || 0
     )
     
     setTypeLearning((current) => [...(current || [])])
@@ -93,6 +98,13 @@ function App() {
 
   const handleDismiss = (captureId: string) => {
     setPendingConfirmation(null)
+  }
+
+  const handleReviewItem = (captureId: string) => {
+    const capture = capturesArray.find(c => c.id === captureId)
+    if (capture) {
+      setPendingConfirmation(capture)
+    }
   }
 
   return (
@@ -115,9 +127,16 @@ function App() {
             captureId={pendingConfirmation.id}
             text={pendingConfirmation.text}
             inferredType={pendingConfirmation.inferredType || null}
-            confidence={pendingConfirmation.typeConfidence || 'low'}
+            confidence={pendingConfirmation.typeConfidence || 0}
             onConfirm={handleTypeConfirm}
             onDismiss={handleDismiss}
+          />
+        )}
+
+        {!pendingConfirmation && reviewItems.length > 0 && (
+          <ReviewQueue
+            items={reviewItems}
+            onReviewItem={handleReviewItem}
           />
         )}
 

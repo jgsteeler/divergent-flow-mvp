@@ -1,4 +1,4 @@
-import { ItemType, ConfidenceLevel } from '@/lib/types'
+import { ItemType } from '@/lib/types'
 import { getTypeLabel, getTypeDescription } from '@/lib/typeInference'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -10,7 +10,7 @@ interface TypeConfirmationProps {
   captureId: string
   text: string
   inferredType: ItemType | null
-  confidence: ConfidenceLevel
+  confidence: number
   onConfirm: (captureId: string, confirmedType: ItemType) => void
   onDismiss: (captureId: string) => void
 }
@@ -31,10 +31,16 @@ export function TypeConfirmation({
 }: TypeConfirmationProps) {
   const types: ItemType[] = ['note', 'action', 'reminder']
   
-  const getConfidenceBadgeColor = (conf: ConfidenceLevel) => {
-    if (conf === 'high') return 'bg-primary/10 text-primary border-primary/20'
-    if (conf === 'medium') return 'bg-accent/10 text-accent-foreground border-accent/20'
+  const getConfidenceBadgeColor = (conf: number) => {
+    if (conf >= 90) return 'bg-primary/10 text-primary border-primary/20'
+    if (conf >= 70) return 'bg-accent/10 text-accent-foreground border-accent/20'
     return 'bg-muted text-muted-foreground border-border'
+  }
+
+  const getConfidenceLabel = (conf: number) => {
+    if (conf >= 90) return 'High'
+    if (conf >= 70) return 'Medium'
+    return 'Low'
   }
 
   return (
@@ -54,7 +60,7 @@ export function TypeConfirmation({
                     {inferredType ? 'Confirm Type' : 'What type is this?'}
                   </h3>
                   <Badge variant="outline" className={getConfidenceBadgeColor(confidence)}>
-                    {confidence} confidence
+                    {confidence}% {getConfidenceLabel(confidence)}
                   </Badge>
                 </div>
                 <p className="text-sm text-muted-foreground line-clamp-2">

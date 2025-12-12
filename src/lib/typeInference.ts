@@ -1,4 +1,4 @@
-import { ItemType, ConfidenceLevel, TypeLearningData } from './types'
+import { ItemType, TypeLearningData } from './types'
 
 interface TypePattern {
   patterns: RegExp[]
@@ -97,10 +97,10 @@ function applyLearningData(
     )
     
     if (matchingWords.length >= Math.min(2, patternWords.length)) {
-      const confidenceBoost = learning.confidence === 'high' ? 0.3 : 0.2
+      const confidenceBoost = learning.confidence >= 80 ? 30 : 20
       return {
         type: learning.type,
-        confidence: 0.7 + confidenceBoost
+        confidence: 70 + confidenceBoost
       }
     }
   }
@@ -111,30 +111,30 @@ function applyLearningData(
 export function inferType(
   text: string,
   learningData: TypeLearningData[] = []
-): { type: ItemType | null; confidence: ConfidenceLevel } {
+): { type: ItemType | null; confidence: number } {
   const learned = applyLearningData(text, learningData)
-  if (learned && learned.confidence >= 0.8) {
+  if (learned && learned.confidence >= 80) {
     return {
       type: learned.type,
-      confidence: 'high'
+      confidence: learned.confidence
     }
   }
 
-  const reminderScore = calculatePatternScore(text, REMINDER_PATTERNS)
-  const actionScore = calculatePatternScore(text, ACTION_PATTERNS)
-  const noteScore = calculatePatternScore(text, NOTE_PATTERNS)
+  let reminderScore = calculatePatternScore(text, REMINDER_PATTERNS)
+  let actionScore = calculatePatternScore(text, ACTION_PATTERNS)
+  let noteScore = calculatePatternScore(text, NOTE_PATTERNS)
 
   const maxScore = Math.max(reminderScore, actionScore, noteScore)
 
   if (learned) {
-    const learnedBoost = learned.confidence
-    if (learned.type === 'reminder') reminderScore + learnedBoost
-    if (learned.type === 'action') actionScore + learnedBoost
-    if (learned.type === 'note') noteScore + learnedBoost
+    const learnedBoost = learned.confidence / 100
+    if (learned.type === 'reminder') reminderScore += learnedBoost
+    if (learned.type === 'action') actionScore += learnedBoost
+    if (learned.type === 'note') noteScore += learnedBoost
   }
 
   if (maxScore === 0) {
-    return { type: null, confidence: 'low' }
+    return { type: null, confidence: 0 }
   }
 
   let inferredType: ItemType
@@ -146,27 +146,27 @@ export function inferType(
     inferredType = 'note'
   }
 
-  let confidence: ConfidenceLevel
+  let confidence: number
   if (maxScore >= 1.0) {
-    confidence = 'high'
+    confidence = 95
   } else if (maxScore >= 0.8) {
-    confidence = 'medium'
+    confidence = 75
   } else {
-    confidence = 'low'
+    confidence = 50
   }
 
   return { type: inferredType, confidence }
 }
 
-export function shouldPromptUser(confidence: ConfidenceLevel): boolean {
-  return confidence === 'low' || confidence === 'medium'
+export function shouldPromptUser(confidence: number): boolean {
+  return confidence < 90
 }
 
 export async function saveTypeLearning(
   text: string,
   inferredType: ItemType | null,
   actualType: ItemType,
-  confidence: ConfidenceLevel
+  confidence: number
 ): Promise<void> {
   const learningData: TypeLearningData = {
     pattern: text.toLowerCase().substring(0, 100),
