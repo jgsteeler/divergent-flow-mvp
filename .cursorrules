@@ -1,0 +1,22 @@
+This is Divergent Flow, an ADHD productivity tool.
+
+CRITICAL CONTEXT:
+- Read PRD.md for all requirements
+- Follow patterns in existing code
+- Optimize for ADHD users (low friction, calm UI)
+- TypeScript strict mode
+- React 19 functional components
+- Tailwind CSS + Radix UI
+- Framer Motion animations (200-300ms)
+
+CURRENT PRIORITY:
+- Complete Phase 3: Property validation
+- Implement Phase 4: LLM integration
+- Add testing infrastructure
+
+NEVER:
+- Change color scheme
+- Add complex workflows
+- Remove animations
+- Use any instead of proper types
+- Commit secrets

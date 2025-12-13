@@ -24,7 +24,13 @@ dist-ssr
 *.sln
 *.sw?
 
+# Environment variables (CRITICAL: Never commit API keys!)
 .env
+.env.local
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
 **/agent-eval-report*
 packages
 pids
