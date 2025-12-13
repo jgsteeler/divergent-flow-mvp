@@ -28,12 +28,14 @@ This MVP starts with pure capture to build a blank slate foundation. The system 
 
 ### Phase 3: Review Queue (Current)
 - Priority-based review queue surfacing top 3 items needing attention
-- Priority algorithm: no type > invalid/low confidence (< 90% or invalid data) > staleness (last review date)
+- Review criteria based purely on confidence percentage: no type OR confidence < 90% OR invalid confidence data
+- Priority algorithm: no type (highest priority) > invalid/low confidence (< 90% or invalid data) > oldest unreviewed (by lastReviewedAt or createdAt)
 - Items disappear from queue after review and confirmation (typeConfirmed=true)
 - Queue only shows unconfirmed items, keeping focus on what needs attention
 - Maximum 3 items shown to avoid overwhelming ADHD users
-- Queue refills naturally as new captures come in or on page load
+- Queue appears on page load and when there are unreviewed items (not when type confirmation dialog is open)
 - Type confirmation sets typeConfirmed=true, typeConfidence=100, and lastReviewedAt
+- High confidence items (≥90%) are auto-confirmed with typeConfirmed=true and never appear in review queue
 - Visual indicators for review priority and reasons
 
 ## Essential Features (Phase 1)
@@ -81,23 +83,23 @@ This MVP starts with pure capture to build a blank slate foundation. The system 
 - **Success criteria**: Learning data persists; patterns influence future inferences; accuracy improves with usage
 
 ### 7. Review Queue (Phase 3)
-- **Functionality**: Display top 5 items needing attention based on priority algorithm
+- **Functionality**: Display top 3 items needing attention based on confidence-based priority algorithm
 - **Purpose**: Surface items requiring user input in a manageable, non-overwhelming way
-- **Trigger**: After type confirmation dialog is dismissed and when items need attention
-- **Progression**: Algorithm calculates priorities → Top 5 items displayed → Visual indicators show priority and reason → User clicks Review → Opens type confirmation dialog → Item updated and marked as reviewed
-- **Success criteria**: Priority algorithm correctly identifies urgent items; queue shows helpful context; doesn't overwhelm with too many items; items update after review
+- **Trigger**: On page load and when not showing type confirmation dialog
+- **Progression**: Algorithm calculates priorities → Top 3 items displayed → Visual indicators show priority and reason → User clicks Review → Opens type confirmation dialog → Item updated with typeConfirmed=true and removed from queue
+- **Success criteria**: Priority algorithm correctly identifies items needing review; queue shows helpful context; limited to 3 items to avoid overwhelming; items disappear after confirmation and don't reappear
 
 ### 8. Priority Algorithm
-- **Functionality**: Score all captures based on multiple factors to determine review priority
-- **Purpose**: Ensure most important items get attention first using ADHD-friendly prioritization
+- **Functionality**: Score all captures based on type confidence to determine review priority
+- **Purpose**: Ensure items needing user input get attention, using simple confidence-based prioritization
 - **Trigger**: Runs whenever review queue is displayed
 - **Progression**: 
   1. Items without type: Priority 1000 (highest)
-  2. Items needing type confirmation: Priority 900
-  3. Items with unconfirmed type AND confidence < 90%: Priority 900 (same as confirmation needed)
-  4. Items with missing properties (priority for actions, due date for reminders, context for actions): Priority 900
-  5. Items by staleness: Priority 700 (30+ days), 600 (14+ days), 500 (7+ days), 400 (routine)
-- **Success criteria**: Critical items always surface first; unconfirmed low-confidence types treated same as explicit confirmation requests; property validation ensures completeness; staleness prevents items from being forgotten; priority scores are consistent and logical
+  2. Items with invalid confidence data (NaN, undefined, <0, >100): Priority 900
+  3. Items with confidence < 90%: Priority 900
+  4. Items with typeConfirmed=true are excluded from review queue entirely
+  5. Within same priority level, older items (by lastReviewedAt or createdAt) appear first
+- **Success criteria**: Critical items always surface first; confidence percentage is the sole determinant; confirmed items never reappear; maximum 3 items shown at once
 
 ### 9. Type Confirmation Flow
 - **Functionality**: User confirms or corrects item type through interactive dialog
@@ -106,12 +108,11 @@ This MVP starts with pure capture to build a blank slate foundation. The system 
 - **Progression**: Review button clicked → Type confirmation dialog opens → User selects type → Type is set with typeConfirmed=true and typeConfidence=100 → Learning data saved → Item marked as reviewed
 - **Success criteria**: Confirmed types have 100% confidence; typeConfirmed flag prevents re-review of already-confirmed items; learning improves future accuracy
 
-### 10. Property Validation
-- **Functionality**: Check that items have required properties based on their type
+### 10. Property Validation (Future Phase)
+- **Functionality**: Check that items have required properties based on their type (deferred to future phase)
 - **Purpose**: Ensure items have necessary context to be actionable
-- **Trigger**: During review priority calculation
-- **Progression**: Type confirmed → System checks for required properties → Missing properties trigger review priority 900 → User prompted to add properties through review
-- **Success criteria**: Action items flagged when missing priority; Reminders flagged when missing due date; Actions flagged when missing both due date and context; Clear messaging shows what's missing
+- **Status**: Not yet implemented - Phase 3 focuses purely on type confirmation
+- **Future Implementation**: Action items will be checked for priority; Reminders for due date; Actions for context when missing due date
 
 ## Future Features (Phase 4+)
 

@@ -158,10 +158,6 @@ export function inferType(
   return { type: inferredType, confidence }
 }
 
-export function shouldPromptUser(confidence: number): boolean {
-  return confidence < 90
-}
-
 export async function saveTypeLearning(
   text: string,
   inferredType: ItemType | null,

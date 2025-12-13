@@ -6,7 +6,7 @@ import { TypeConfirmation } from '@/components/TypeConfirmation'
 import { ReviewQueue } from '@/components/ReviewQueue'
 import { toast } from 'sonner'
 import { Toaster } from '@/components/ui/sonner'
-import { inferType, shouldPromptUser, saveTypeLearning } from '@/lib/typeInference'
+import { inferType, saveTypeLearning } from '@/lib/typeInference'
 import { getTopReviewItems } from '@/lib/reviewPriority'
 
 function App() {
@@ -41,20 +41,22 @@ function App() {
   const processCapture = async (capture: Capture) => {
     const { type, confidence } = inferType(capture.text, learningArray)
     
-    const needsConfirmation = !type || confidence < 90 || isNaN(confidence)
+    const needsReview = !type || confidence < 90 || isNaN(confidence)
     
     const updatedCapture: Capture = {
       ...capture,
       inferredType: type || undefined,
       typeConfidence: confidence,
-      processedAt: Date.now()
+      processedAt: Date.now(),
+      typeConfirmed: !needsReview,
+      lastReviewedAt: !needsReview ? Date.now() : undefined
     }
     
     setCaptures((current) => 
       (current || []).map(c => c.id === capture.id ? updatedCapture : c)
     )
 
-    if (needsConfirmation) {
+    if (needsReview) {
       setPendingConfirmation(updatedCapture)
     } else if (type) {
       await saveTypeLearning(capture.text, type, type, confidence)
