@@ -13,6 +13,9 @@ An ADHD-friendly brain management tool that helps you capture thoughts instantly
 
 **If you're looking for guidance on transitioning from Spark to AI coding agents**, start here:
 
+### 🎯 Quick Reference (2 minutes)
+→ **[QUICK-REFERENCE.md](./QUICK-REFERENCE.md)** - Cheat sheet with timelines, prompts, and key info
+
 ### 📖 Quick Start (5 minutes)
 → **[SPARK-TRANSITION-SUMMARY.md](./SPARK-TRANSITION-SUMMARY.md)** - Executive summary answering your key questions
 
