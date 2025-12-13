@@ -11,6 +11,7 @@ interface TypeConfirmationProps {
   text: string
   inferredType: ItemType | null
   confidence: number
+  reasoning?: string
   onConfirm: (itemId: string, confirmedType: ItemType) => void
   onDismiss: (itemId: string) => void
 }
@@ -26,6 +27,7 @@ export function TypeConfirmation({
   text,
   inferredType,
   confidence,
+  reasoning,
   onConfirm,
   onDismiss,
 }: TypeConfirmationProps) {
@@ -66,6 +68,11 @@ export function TypeConfirmation({
                 <p className="text-sm text-muted-foreground line-clamp-2">
                   "{text}"
                 </p>
+                {reasoning && confidence > 0 && (
+                  <p className="text-xs text-muted-foreground/80 italic">
+                    {reasoning}
+                  </p>
+                )}
               </div>
               <Button
                 variant="ghost"

@@ -40,28 +40,20 @@ function App() {
   }
 
   const processItem = async (item: Item) => {
-    const { type, confidence } = inferType(item.text, learningArray)
-    
-    const needsReview = !type || confidence < 85 || isNaN(confidence)
+    const { type, confidence, reasoning } = inferType(item.text, learningArray)
     
     const updatedItem: Item = {
       ...item,
       inferredType: type || undefined,
       typeConfidence: confidence,
-      lastReviewedAt: needsReview ? undefined : Date.now()
+      confidenceReasoning: reasoning
     }
     
     setItems((current) => 
       (current || []).map(i => i.id === item.id ? updatedItem : i)
     )
 
-    if (needsReview) {
-      setPendingConfirmation(updatedItem)
-    } else if (type) {
-      await saveTypeLearning(item.text, type, type, confidence)
-      setTypeLearning((current) => [...(current || [])])
-      toast.success(`Saved as ${type}!`)
-    }
+    setPendingConfirmation(updatedItem)
   }
 
   const handleTypeConfirm = async (itemId: string, confirmedType: ItemType) => {
@@ -129,6 +121,7 @@ function App() {
             text={pendingConfirmation.text}
             inferredType={pendingConfirmation.inferredType || null}
             confidence={pendingConfirmation.typeConfidence || 0}
+            reasoning={pendingConfirmation.confidenceReasoning}
             onConfirm={handleTypeConfirm}
             onDismiss={handleDismiss}
           />

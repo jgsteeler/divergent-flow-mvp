@@ -8,6 +8,7 @@ export interface Item {
   createdAt: number
   inferredType?: ItemType
   typeConfidence?: number
+  confidenceReasoning?: string
   lastReviewedAt?: number
   migratedCapture: boolean
 }

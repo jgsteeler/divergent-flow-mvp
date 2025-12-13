@@ -83,7 +83,7 @@ function calculatePatternScore(text: string, patterns: TypePattern): number {
 function applyLearningData(
   text: string,
   learningData: TypeLearningData[]
-): { type: ItemType; confidence: number } | null {
+): { type: ItemType; confidence: number; reasoning: string } | null {
   const recentLearning = learningData
     .filter(ld => ld.wasCorrect !== false)
     .slice(-50)
@@ -100,7 +100,8 @@ function applyLearningData(
       const confidenceBoost = learning.confidence >= 80 ? 30 : 20
       return {
         type: learning.type,
-        confidence: 70 + confidenceBoost
+        confidence: 70 + confidenceBoost,
+        reasoning: `Similar to previous ${learning.type} patterns (matched ${matchingWords.length} keywords)`
       }
     }
   }
@@ -111,12 +112,13 @@ function applyLearningData(
 export function inferType(
   text: string,
   learningData: TypeLearningData[] = []
-): { type: ItemType | null; confidence: number } {
+): { type: ItemType | null; confidence: number; reasoning: string } {
   const learned = applyLearningData(text, learningData)
   if (learned && learned.confidence >= 80) {
     return {
       type: learned.type,
-      confidence: learned.confidence
+      confidence: learned.confidence,
+      reasoning: learned.reasoning
     }
   }
 
@@ -134,28 +136,38 @@ export function inferType(
   }
 
   if (maxScore === 0) {
-    return { type: null, confidence: 0 }
+    return { type: null, confidence: 0, reasoning: 'No patterns matched' }
   }
 
   let inferredType: ItemType
+  let patternName: string
   if (reminderScore > actionScore && reminderScore > noteScore) {
     inferredType = 'reminder'
+    patternName = 'reminder keywords'
   } else if (actionScore > noteScore) {
     inferredType = 'action'
+    patternName = 'action verbs'
   } else {
     inferredType = 'note'
+    patternName = 'note indicators'
   }
 
   let confidence: number
+  let strengthLabel: string
   if (maxScore >= 1.0) {
     confidence = 95
+    strengthLabel = 'Strong match'
   } else if (maxScore >= 0.8) {
     confidence = 75
+    strengthLabel = 'Good match'
   } else {
     confidence = 50
+    strengthLabel = 'Weak match'
   }
 
-  return { type: inferredType, confidence }
+  const reasoning = `${strengthLabel} with ${patternName}`
+
+  return { type: inferredType, confidence, reasoning }
 }
 
 export async function saveTypeLearning(
