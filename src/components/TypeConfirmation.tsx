@@ -7,12 +7,12 @@ import { Check, X, Note, ListChecks, Bell } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface TypeConfirmationProps {
-  captureId: string
+  itemId: string
   text: string
   inferredType: ItemType | null
   confidence: number
-  onConfirm: (captureId: string, confirmedType: ItemType) => void
-  onDismiss: (captureId: string) => void
+  onConfirm: (itemId: string, confirmedType: ItemType) => void
+  onDismiss: (itemId: string) => void
 }
 
 const TYPE_ICONS = {
@@ -22,7 +22,7 @@ const TYPE_ICONS = {
 }
 
 export function TypeConfirmation({
-  captureId,
+  itemId,
   text,
   inferredType,
   confidence,
@@ -70,7 +70,7 @@ export function TypeConfirmation({
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => onDismiss(captureId)}
+                onClick={() => onDismiss(itemId)}
                 className="h-8 w-8 text-muted-foreground hover:text-foreground"
               >
                 <X />
@@ -115,7 +115,7 @@ export function TypeConfirmation({
                           ? 'bg-primary hover:bg-primary/90 text-primary-foreground' 
                           : 'hover:bg-accent hover:text-accent-foreground'
                       }`}
-                      onClick={() => onConfirm(captureId, type)}
+                      onClick={() => onConfirm(itemId, type)}
                     >
                       <div className="flex items-center gap-3 w-full">
                         <Icon 

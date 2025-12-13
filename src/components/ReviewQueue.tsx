@@ -51,13 +51,13 @@ export function ReviewQueue({ items, onReviewItem }: ReviewQueueProps) {
         </div>
 
         <div className="space-y-3">
-          {items.map((item, index) => {
-            const PriorityIcon = getPriorityIcon(item.reviewPriority)
-            const TypeIcon = item.capture.inferredType ? TYPE_ICONS[item.capture.inferredType] : null
+          {items.map((reviewItem, index) => {
+            const PriorityIcon = getPriorityIcon(reviewItem.reviewPriority)
+            const TypeIcon = reviewItem.item.inferredType ? TYPE_ICONS[reviewItem.item.inferredType] : null
 
             return (
               <motion.div
-                key={item.capture.id}
+                key={reviewItem.item.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
@@ -68,33 +68,33 @@ export function ReviewQueue({ items, onReviewItem }: ReviewQueueProps) {
                       <PriorityIcon 
                         size={20} 
                         weight="duotone"
-                        className={item.reviewPriority >= 900 ? 'text-destructive' : item.reviewPriority >= 800 ? 'text-orange-500' : 'text-muted-foreground'}
+                        className={reviewItem.reviewPriority >= 900 ? 'text-destructive' : reviewItem.reviewPriority >= 800 ? 'text-orange-500' : 'text-muted-foreground'}
                       />
                     </div>
                     
                     <div className="flex-1 space-y-2">
                       <p className="text-sm text-foreground line-clamp-2 leading-relaxed">
-                        {item.capture.text}
+                        {reviewItem.item.text}
                       </p>
                       
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge 
                           variant="outline" 
-                          className={`text-xs ${getPriorityColor(item.reviewPriority)}`}
+                          className={`text-xs ${getPriorityColor(reviewItem.reviewPriority)}`}
                         >
-                          {item.reason}
+                          {reviewItem.reason}
                         </Badge>
                         
-                        {TypeIcon && item.capture.inferredType && (
+                        {TypeIcon && reviewItem.item.inferredType && (
                           <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">
                             <TypeIcon size={12} weight="duotone" className="mr-1" />
-                            {getTypeLabel(item.capture.inferredType)}
+                            {getTypeLabel(reviewItem.item.inferredType)}
                           </Badge>
                         )}
                         
-                        {item.capture.typeConfidence !== undefined && (
+                        {reviewItem.item.typeConfidence !== undefined && (
                           <Badge variant="outline" className="text-xs bg-muted text-muted-foreground">
-                            {item.capture.typeConfidence}%
+                            {reviewItem.item.typeConfidence}%
                           </Badge>
                         )}
                       </div>
@@ -104,7 +104,7 @@ export function ReviewQueue({ items, onReviewItem }: ReviewQueueProps) {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => onReviewItem(item.capture.id)}
+                        onClick={() => onReviewItem(reviewItem.item.id)}
                         className="h-8 text-primary hover:text-primary hover:bg-primary/10"
                       >
                         Review

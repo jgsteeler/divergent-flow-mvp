@@ -27,32 +27,35 @@ This MVP starts with pure capture to build a blank slate foundation. The system 
 - Support for three item types: note, action, reminder
 
 ### Phase 3: Review Queue (Current)
+- Consolidated Item data structure: all captures stored as unified Item objects with properties that evolve
+- Items start with text and createdAt, then gain inferredType, typeConfidence, and lastReviewedAt through the flow
+- migratedCapture property tracks whether items will eventually move to full action/note/reminder objects (future phase)
 - Priority-based review queue surfacing top 3 items needing attention
-- Review criteria based purely on confidence percentage: no type OR confidence < 90% OR invalid confidence data
-- Priority algorithm: no type (highest priority) > invalid/low confidence (< 90% or invalid data) > oldest unreviewed (by lastReviewedAt or createdAt)
-- Items disappear from queue after review and confirmation (typeConfirmed=true)
-- Queue only shows unconfirmed items, keeping focus on what needs attention
+- Review criteria based purely on confidence percentage: no type OR confidence < 85% OR invalid confidence data
+- Priority algorithm: no type (highest priority) > invalid/low confidence (< 85% or invalid data) > oldest unreviewed (by lastReviewedAt or createdAt)
+- Items disappear from queue after review and confirmation (confidence set to 100%)
+- Queue only shows items needing review, keeping focus on what needs attention
 - Maximum 3 items shown to avoid overwhelming ADHD users
 - Queue appears on page load and when there are unreviewed items (not when type confirmation dialog is open)
-- Type confirmation sets typeConfirmed=true, typeConfidence=100, and lastReviewedAt
-- High confidence items (≥90%) are auto-confirmed with typeConfirmed=true and never appear in review queue
+- Type confirmation sets typeConfidence=100 and lastReviewedAt
+- High confidence items (≥85%) are auto-saved with lastReviewedAt and never appear in review queue
 - Visual indicators for review priority and reasons
 
 ## Essential Features (Phase 1)
 
 ### 1. Quick Capture
-- **Functionality**: Large, always-accessible text input that accepts any natural language text with zero processing
+- **Functionality**: Large, always-accessible text input that accepts any natural language text
 - **Purpose**: Preserve fleeting thoughts instantly without any categorization overhead
 - **Trigger**: User focuses on capture input (default focus on load)
-- **Progression**: Focus input → Type thought → Press Cmd/Ctrl+Enter or click Capture → Visual confirmation → Input clears → Capture count updates → Ready for next capture
-- **Success criteria**: Capture completes in under 1 second; no processing, no inference, just pure storage; helpful placeholder suggests asking about the app itself
+- **Progression**: Focus input → Type thought → Press Cmd/Ctrl+Enter or click Capture → Item created with text and createdAt → Visual confirmation → Input clears → Item count updates → Type inference begins → Ready for next capture
+- **Success criteria**: Capture completes instantly; Item object created with minimal properties (id, text, createdAt, migratedCapture=false); helpful placeholder suggests asking about the app itself
 
 ### 2. Persistent Storage
-- **Functionality**: All captures are automatically saved to browser storage
-- **Purpose**: Build trust that thoughts won't be lost
+- **Functionality**: All items are automatically saved to browser storage as unified Item objects
+- **Purpose**: Build trust that thoughts won't be lost; provide consistent data structure that evolves
 - **Trigger**: Immediately on capture
-- **Progression**: Capture created → Saved to KV store → UI updates to show count
-- **Success criteria**: Captures persist across page refreshes; storage is transparent to user
+- **Progression**: Item created → Saved to KV store with 'items' key → UI updates to show count
+- **Success criteria**: Items persist across page refreshes; storage is transparent to user; all items use same Item structure
 
 ### 3. Discovery Guidance
 - **Functionality**: Helpful placeholder text that encourages users to ask about the app
@@ -62,17 +65,17 @@ This MVP starts with pure capture to build a blank slate foundation. The system 
 - **Success criteria**: Placeholder text invites exploration without overwhelming with instructions
 
 ### 4. Type Inference (Phase 2)
-- **Functionality**: Analyze capture text using keyword/phrase patterns to determine if it's a note, action item, or reminder
-- **Purpose**: Automatically categorize captures without manual user configuration
-- **Trigger**: Immediately after capture is saved
-- **Progression**: Capture saved → Pattern matching analysis → Confidence scoring → User prompt if needed → Type confirmation → Learning storage updated
-- **Success criteria**: High confidence inferences (90%+) auto-confirm; medium/low confidence prompt user; learning improves accuracy over time
+- **Functionality**: Analyze item text using keyword/phrase patterns to determine if it's a note, action item, or reminder
+- **Purpose**: Automatically categorize items without manual user configuration
+- **Trigger**: Immediately after item is captured
+- **Progression**: Item saved → Pattern matching analysis → Confidence scoring → inferredType and typeConfidence added to Item → User prompt if confidence < 85% → Type confirmation → Learning storage updated
+- **Success criteria**: High confidence inferences (85%+) auto-save with lastReviewedAt; medium/low confidence prompt user; learning improves accuracy over time
 
 ### 5. Type Confirmation Dialog
 - **Functionality**: Interactive UI prompting user to confirm or correct inferred item type
 - **Purpose**: Validate inferences and collect training data for learning system
-- **Trigger**: When inference confidence is medium or low, or no type could be inferred
-- **Progression**: Prompt appears → Shows inferred type (if any) with confidence badge → User selects correct type → Learning data saved → Capture updated
+- **Trigger**: When inference confidence < 85%, or no type could be inferred
+- **Progression**: Prompt appears → Shows inferred type (if any) with confidence badge → User selects correct type → inferredType updated → typeConfidence set to 100 → lastReviewedAt set to now → Learning data saved → Item updated
 - **Success criteria**: Clear explanation of each type; easy single-click confirmation; dismissable without blocking workflow
 
 ### 6. Learning System
@@ -86,27 +89,27 @@ This MVP starts with pure capture to build a blank slate foundation. The system 
 - **Functionality**: Display top 3 items needing attention based on confidence-based priority algorithm
 - **Purpose**: Surface items requiring user input in a manageable, non-overwhelming way
 - **Trigger**: On page load and when not showing type confirmation dialog
-- **Progression**: Algorithm calculates priorities → Top 3 items displayed → Visual indicators show priority and reason → User clicks Review → Opens type confirmation dialog → Item updated with typeConfirmed=true and removed from queue
+- **Progression**: Algorithm calculates priorities → Top 3 items displayed → Visual indicators show priority and reason → User clicks Review → Opens type confirmation dialog → Item updated with inferredType, typeConfidence=100, and lastReviewedAt → Item removed from queue
 - **Success criteria**: Priority algorithm correctly identifies items needing review; queue shows helpful context; limited to 3 items to avoid overwhelming; items disappear after confirmation and don't reappear
 
 ### 8. Priority Algorithm
-- **Functionality**: Score all captures based on type confidence to determine review priority
+- **Functionality**: Score all items based on type confidence to determine review priority
 - **Purpose**: Ensure items needing user input get attention, using simple confidence-based prioritization
 - **Trigger**: Runs whenever review queue is displayed
 - **Progression**: 
-  1. Items without type: Priority 1000 (highest)
+  1. Items without inferredType: Priority 1000 (highest)
   2. Items with invalid confidence data (NaN, undefined, <0, >100): Priority 900
-  3. Items with confidence < 90%: Priority 900
-  4. Items with typeConfirmed=true are excluded from review queue entirely
+  3. Items with typeConfidence < 85%: Priority 800
+  4. Items with lastReviewedAt set (confidence 85%+) are excluded from review queue
   5. Within same priority level, older items (by lastReviewedAt or createdAt) appear first
-- **Success criteria**: Critical items always surface first; confidence percentage is the sole determinant; confirmed items never reappear; maximum 3 items shown at once
+- **Success criteria**: Critical items always surface first; confidence percentage is the sole determinant; reviewed items (with lastReviewedAt) never reappear unless confidence drops; maximum 3 items shown at once
 
 ### 9. Type Confirmation Flow
 - **Functionality**: User confirms or corrects item type through interactive dialog
 - **Purpose**: Build confidence in the system and train the learning model
 - **Trigger**: When review item is clicked from queue
-- **Progression**: Review button clicked → Type confirmation dialog opens → User selects type → Type is set with typeConfirmed=true and typeConfidence=100 → Learning data saved → Item marked as reviewed
-- **Success criteria**: Confirmed types have 100% confidence; typeConfirmed flag prevents re-review of already-confirmed items; learning improves future accuracy
+- **Progression**: Review button clicked → Type confirmation dialog opens → User selects type → inferredType set → typeConfidence set to 100 → lastReviewedAt set to now → Learning data saved → Item marked as reviewed
+- **Success criteria**: Confirmed types have 100% confidence and lastReviewedAt; reviewed items don't reappear in queue; learning improves future accuracy
 
 ### 10. Property Validation (Future Phase)
 - **Functionality**: Check that items have required properties based on their type (deferred to future phase)

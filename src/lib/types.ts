@@ -2,44 +2,14 @@ export type ItemType = 'note' | 'action' | 'reminder'
 
 export type Priority = 'low' | 'medium' | 'high'
 
-export interface InferredAttributes {
-  type?: ItemType
-  typeConfidence?: number
-  collection?: string
-  priority?: Priority
-  dueDate?: number
-  context?: string
-  tags?: string[]
-}
-
-export interface Capture {
+export interface Item {
   id: string
   text: string
   createdAt: number
   inferredType?: ItemType
   typeConfidence?: number
-  typeConfirmed?: boolean
-  processedAt?: number
   lastReviewedAt?: number
-  priority?: Priority
-  dueDate?: number
-  context?: string
-  tags?: string[]
-}
-
-export interface Item {
-  id: string
-  type: ItemType
-  text: string
-  collection: string
-  priority?: Priority
-  dueDate?: number
-  context?: string
-  tags?: string[]
-  completed: boolean
-  createdAt: number
-  completedAt?: number
-  lastReviewedAt?: number
+  migratedCapture: boolean
 }
 
 export interface TypeLearningData {
@@ -50,15 +20,8 @@ export interface TypeLearningData {
   wasCorrect?: boolean
 }
 
-export interface LearningData {
-  originalText: string
-  inferredAttributes: InferredAttributes
-  correctedAttributes: InferredAttributes
-  timestamp: number
-}
-
 export interface ReviewItem {
-  capture: Capture
+  item: Item
   reviewPriority: number
   reason: string
 }

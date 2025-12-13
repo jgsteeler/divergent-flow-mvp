@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useKV } from '@github/spark/hooks'
-import { Capture, ItemType, TypeLearningData } from '@/lib/types'
+import { Item, ItemType, TypeLearningData } from '@/lib/types'
 import { CaptureInput } from '@/components/CaptureInput'
 import { TypeConfirmation } from '@/components/TypeConfirmation'
 import { ReviewQueue } from '@/components/ReviewQueue'
@@ -10,88 +10,86 @@ import { inferType, saveTypeLearning } from '@/lib/typeInference'
 import { getTopReviewItems } from '@/lib/reviewPriority'
 
 function App() {
-  const [captures, setCaptures] = useKV<Capture[]>('captures', [])
+  const [items, setItems] = useKV<Item[]>('items', [])
   const [typeLearning, setTypeLearning] = useKV<TypeLearningData[]>('type-learning', [])
   const [isProcessing, setIsProcessing] = useState(false)
-  const [pendingConfirmation, setPendingConfirmation] = useState<Capture | null>(null)
+  const [pendingConfirmation, setPendingConfirmation] = useState<Item | null>(null)
 
-  const capturesArray = captures || []
+  const itemsArray = items || []
   const learningArray = typeLearning || []
 
-  const reviewItems = getTopReviewItems(capturesArray, 3)
+  const reviewItems = getTopReviewItems(itemsArray, 3)
 
   const handleCapture = async (text: string) => {
     setIsProcessing(true)
     
-    const capture: Capture = {
-      id: `capture-${Date.now()}-${Math.random()}`,
+    const item: Item = {
+      id: `item-${Date.now()}-${Math.random()}`,
       text,
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      migratedCapture: false
     }
     
-    setCaptures((current) => [...(current || []), capture])
+    setItems((current) => [...(current || []), item])
     toast.success('Captured!')
     
     setTimeout(async () => {
-      await processCapture(capture)
+      await processItem(item)
       setIsProcessing(false)
     }, 100)
   }
 
-  const processCapture = async (capture: Capture) => {
-    const { type, confidence } = inferType(capture.text, learningArray)
+  const processItem = async (item: Item) => {
+    const { type, confidence } = inferType(item.text, learningArray)
     
-    const needsReview = !type || confidence < 90 || isNaN(confidence)
+    const needsReview = !type || confidence < 85 || isNaN(confidence)
     
-    const updatedCapture: Capture = {
-      ...capture,
+    const updatedItem: Item = {
+      ...item,
       inferredType: type || undefined,
       typeConfidence: confidence,
-      processedAt: Date.now(),
-      typeConfirmed: !needsReview,
-      lastReviewedAt: !needsReview ? Date.now() : undefined
+      lastReviewedAt: needsReview ? undefined : Date.now()
     }
     
-    setCaptures((current) => 
-      (current || []).map(c => c.id === capture.id ? updatedCapture : c)
+    setItems((current) => 
+      (current || []).map(i => i.id === item.id ? updatedItem : i)
     )
 
     if (needsReview) {
-      setPendingConfirmation(updatedCapture)
+      setPendingConfirmation(updatedItem)
     } else if (type) {
-      await saveTypeLearning(capture.text, type, type, confidence)
+      await saveTypeLearning(item.text, type, type, confidence)
       setTypeLearning((current) => [...(current || [])])
       toast.success(`Saved as ${type}!`)
     }
   }
 
-  const handleTypeConfirm = async (captureId: string, confirmedType: ItemType) => {
-    const capture = capturesArray.find(c => c.id === captureId)
-    if (!capture) return
+  const handleTypeConfirm = async (itemId: string, confirmedType: ItemType) => {
+    const item = itemsArray.find(i => i.id === itemId)
+    if (!item) return
 
-    const updatedCapture: Capture = {
-      ...capture,
+    const updatedItem: Item = {
+      ...item,
       inferredType: confirmedType,
       typeConfidence: 100,
-      typeConfirmed: true,
       lastReviewedAt: Date.now()
     }
 
-    setCaptures((current) =>
-      (current || []).map(c => c.id === captureId ? updatedCapture : c)
+    setItems((current) =>
+      (current || []).map(i => i.id === itemId ? updatedItem : i)
     )
 
     await saveTypeLearning(
-      capture.text,
-      capture.inferredType || null,
+      item.text,
+      item.inferredType || null,
       confirmedType,
-      capture.typeConfidence || 0
+      item.typeConfidence || 0
     )
     
     setTypeLearning((current) => [...(current || [])])
     setPendingConfirmation(null)
     
-    const wasCorrect = capture.inferredType === confirmedType
+    const wasCorrect = item.inferredType === confirmedType
     if (wasCorrect) {
       toast.success(`Confirmed as ${confirmedType}! I'm learning.`)
     } else {
@@ -99,14 +97,14 @@ function App() {
     }
   }
 
-  const handleDismiss = (captureId: string) => {
+  const handleDismiss = (itemId: string) => {
     setPendingConfirmation(null)
   }
 
-  const handleReviewItem = (captureId: string) => {
-    const capture = capturesArray.find(c => c.id === captureId)
-    if (capture) {
-      setPendingConfirmation(capture)
+  const handleReviewItem = (itemId: string) => {
+    const item = itemsArray.find(i => i.id === itemId)
+    if (item) {
+      setPendingConfirmation(item)
     }
   }
 
@@ -127,7 +125,7 @@ function App() {
 
         {pendingConfirmation && (
           <TypeConfirmation
-            captureId={pendingConfirmation.id}
+            itemId={pendingConfirmation.id}
             text={pendingConfirmation.text}
             inferredType={pendingConfirmation.inferredType || null}
             confidence={pendingConfirmation.typeConfidence || 0}
@@ -143,10 +141,10 @@ function App() {
           />
         )}
 
-        {capturesArray.length > 0 && (
+        {itemsArray.length > 0 && (
           <div className="text-center space-y-1">
             <div className="text-sm text-muted-foreground">
-              {capturesArray.length} {capturesArray.length === 1 ? 'capture' : 'captures'} saved
+              {itemsArray.length} {itemsArray.length === 1 ? 'item' : 'items'} saved
             </div>
             {learningArray.length > 0 && (
               <div className="text-xs text-muted-foreground/70">
