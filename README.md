@@ -1,23 +1,83 @@
-# ✨ Welcome to Your Spark Template!
-You've just launched your brand-new Spark Template Codespace — everything’s fired up and ready for you to explore, build, and create with Spark!
+# Divergent Flow 🧠
 
-This template is your blank canvas. It comes with a minimal setup to help you get started quickly with Spark development.
+An ADHD-friendly brain management tool that helps you capture thoughts instantly and process them intelligently.
 
-🚀 What's Inside?
-- A clean, minimal Spark environment
-- Pre-configured for local development
-- Ready to scale with your ideas
-  
-🧠 What Can You Do?
+## Current Status
 
-Right now, this is just a starting point — the perfect place to begin building and testing your Spark applications.
+- ✅ **Phase 1 Complete**: Quick capture with persistent storage
+- ✅ **Phase 2 Complete**: Type inference engine with learning
+- 🚧 **Phase 3 In Progress**: Review queue with priority system
+- ⏭️ **Phase 4 Next**: LLM-powered intelligent processing
 
-🧹 Just Exploring?
-No problem! If you were just checking things out and don’t need to keep this code:
+## 🎯 Ready to Accelerate Development?
 
-- Simply delete your Spark.
-- Everything will be cleaned up — no traces left behind.
+**If you're looking for guidance on transitioning from Spark to AI coding agents**, start here:
 
-📄 License For Spark Template Resources 
+### 📖 Quick Start (5 minutes)
+→ **[SPARK-TRANSITION-SUMMARY.md](./SPARK-TRANSITION-SUMMARY.md)** - Executive summary answering your key questions
 
-The Spark Template files and resources from GitHub are licensed under the terms of the MIT license, Copyright GitHub, Inc.
+### 🚀 Setup AI Agent (10 minutes)
+→ **[AI-AGENT-QUICK-START.md](./AI-AGENT-QUICK-START.md)** - Step-by-step setup for GitHub Copilot, Cursor, or Aider
+
+### 📚 Complete Guide (30 minutes)
+→ **[TRANSITION-GUIDE.md](./TRANSITION-GUIDE.md)** - Full roadmap, architecture, and scaling plan
+
+### 📋 Project Requirements
+→ **[PRD.md](./PRD.md)** - Product requirements document with all phases and features
+
+## Development
+
+### Prerequisites
+```bash
+npm install
+```
+
+### Run Locally
+```bash
+npm run dev
+```
+
+### Build
+```bash
+npm run build
+```
+
+## Tech Stack
+
+- **Frontend**: React 19, TypeScript, Vite
+- **UI**: Radix UI, Tailwind CSS, Framer Motion
+- **State**: React hooks, Spark KV storage
+- **Icons**: Phosphor Icons
+
+## Project Structure
+
+```
+src/
+├── components/          # React components
+│   ├── ui/             # Reusable UI components
+│   ├── CaptureInput.tsx
+│   ├── ReviewQueue.tsx
+│   └── TypeConfirmation.tsx
+├── lib/                # Business logic
+│   ├── types.ts
+│   ├── typeInference.ts
+│   └── reviewPriority.ts
+└── App.tsx             # Main application
+```
+
+## Next Steps
+
+1. Read [SPARK-TRANSITION-SUMMARY.md](./SPARK-TRANSITION-SUMMARY.md) to understand when/why to transition
+2. Follow [AI-AGENT-QUICK-START.md](./AI-AGENT-QUICK-START.md) to set up AI coding assistant
+3. Use AI agent to complete Phase 3-6 per [PRD.md](./PRD.md)
+4. Scale to backend when ready using [TRANSITION-GUIDE.md](./TRANSITION-GUIDE.md)
+
+## License
+
+MIT License - See LICENSE file for details
+
+---
+
+## Original Spark Template Info
+
+This project started with the GitHub Spark Template. The Spark Template files and resources from GitHub are licensed under the terms of the MIT license, Copyright GitHub, Inc.
