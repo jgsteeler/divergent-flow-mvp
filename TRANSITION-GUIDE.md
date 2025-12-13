@@ -2,13 +2,17 @@
 
 ## Executive Summary
 
-Based on analysis of your current progress and PRD, **NOW is the ideal time to transition from Spark to an AI coding agent** for the following reasons:
+Based on analysis of your current progress and PRD, **NOW is the ideal time to transition from Spark to an AI coding agent**.
 
-1. ✅ **Foundation Complete**: Phase 1-2 are functional, giving you a stable base
+### Measurable Criteria Met ✅
+1. ✅ **Foundation Complete**: Phase 1-2 are functional (captures work, inference runs, data persists)
 2. ✅ **Clear Requirements**: Your PRD is exceptionally detailed with specific acceptance criteria
-3. ✅ **Complexity Increasing**: Phase 3+ requires more sophisticated logic and integration
-4. ✅ **Architecture Evolution**: You're ready to start thinking about backend separation
-5. ✅ **Learning Data Accumulation**: The system is generating data patterns that need more intelligence
+3. ✅ **Complexity Inflection**: Phase 3+ requires logic beyond UI prototyping (LLM APIs, backend separation)
+4. ✅ **Pattern Recognition**: 2+ commits show consistent patterns AI agents can learn from
+5. ✅ **Architecture Evolution**: You're ready to start thinking about backend separation
+6. ✅ **Learning Data Accumulation**: The system is generating data patterns that need more intelligence
+
+**Quantitative Indicator**: When UI prototyping represents <30% of remaining work, switch to AI agents. Your project: ~20% UI, 80% logic/integration remaining.
 
 ---
 
@@ -622,16 +626,23 @@ createItemMutation.mutate({ text: 'my item' })
 
 ### MVP Phase (Current - 3 months)
 - **GitHub Copilot**: $10-20/month (free for students)
-- **LLM API calls**: $5-20/month for development
-- **Total**: ~$15-40/month
+- **LLM API calls**: $20-50/month for development
+  - Assumes: 50-100 API calls/day for testing
+  - GPT-4 Turbo: ~$0.01 per call (1K input tokens)
+  - Monthly: 3,000 calls × $0.01 = $30
+- **Total**: ~$30-70/month
 
 ### Scaled Production (6+ months)
 - **Frontend Hosting (Vercel)**: $20/month (Pro plan)
 - **Backend Hosting (Azure)**: $100-200/month (App Service + DB)
 - **Redis Cache**: $20-50/month
 - **LLM API calls**: $50-500/month (depends on users)
+  - 100 users × 20 inferences/day × $0.005 = $100/month
+  - Caching can reduce costs by 50-70%
 - **Monitoring**: $10-30/month
 - **Total**: ~$200-800/month for 100-1000 users
+
+**Note**: AI coding agent API usage can be higher during intensive development sessions (200-500 calls/day when actively coding). Budget $50-100/month for heavy development periods.
 
 ---
 

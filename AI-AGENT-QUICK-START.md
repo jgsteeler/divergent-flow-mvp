@@ -65,8 +65,8 @@ open https://cursor.sh
 # 1. Install
 pip install aider-chat
 
-# 2. Set API key
-export OPENAI_API_KEY=sk-your-key-here
+# 2. Set API key (use your actual key, never commit it!)
+export OPENAI_API_KEY=your-actual-openai-api-key-here
 
 # 3. Run in your repo
 cd divergent-flow-mvp
@@ -297,10 +297,10 @@ Create `.env.local`:
 
 ```env
 # OpenAI API (for Phase 4 LLM integration)
-VITE_OPENAI_API_KEY=sk-your-key-here
+VITE_OPENAI_API_KEY=your-actual-openai-api-key-here
 
 # Optional: Use Anthropic instead
-# VITE_ANTHROPIC_API_KEY=sk-ant-your-key-here
+# VITE_ANTHROPIC_API_KEY=your-actual-anthropic-api-key-here
 
 # API URL (for future backend)
 # VITE_API_URL=http://localhost:5000
@@ -310,10 +310,10 @@ Create `.env.example`:
 
 ```env
 # OpenAI API (required for Phase 4+)
-VITE_OPENAI_API_KEY=sk-...
+VITE_OPENAI_API_KEY=your-actual-openai-api-key-here
 
 # Optional: Anthropic API (alternative to OpenAI)
-# VITE_ANTHROPIC_API_KEY=sk-ant-...
+# VITE_ANTHROPIC_API_KEY=your-actual-anthropic-api-key-here
 
 # Backend API URL (for production deployment)
 # VITE_API_URL=https://api.divergentflow.com
@@ -323,7 +323,14 @@ Add to `.gitignore`:
 ```
 .env.local
 .env
+.env*.local
 ```
+
+**Security Best Practices**:
+- Use `.env.local` for local development (automatically ignored by Vite)
+- Use `.env.development` for development-specific config (commit this with dummy values)
+- Never commit files containing real API keys
+- Rotate keys immediately if accidentally committed
 
 ---
 

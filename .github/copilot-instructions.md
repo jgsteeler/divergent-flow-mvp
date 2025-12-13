@@ -65,11 +65,15 @@ When adding tests:
 
 ## API Integration Notes (Phase 4+)
 - Use OpenAI API for LLM inference
-- Store API key in .env (never commit!)
+- Store API key in .env.local (never commit!)
+- For Vite projects: Use `.env.local` for local development (auto-ignored)
+- For Next.js projects: Use `.env.local` for all local secrets
+- Commit `.env.example` with dummy values as template
 - Implement retry logic (3 attempts)
 - Add rate limiting (user-based)
 - Track costs (log token usage)
 - Graceful degradation if API fails
+- **Critical**: Add `.env.local`, `.env`, and `.env*.local` to `.gitignore`
 
 ## Database Migration Notes (Future)
 - Current: Spark KV (browser storage)
