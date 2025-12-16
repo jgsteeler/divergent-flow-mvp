@@ -175,17 +175,16 @@ export async function saveTypeLearning(
   inferredType: ItemType | null,
   actualType: ItemType,
   confidence: number
-): Promise<void> {
+): Promise<TypeLearningData> {
   const learningData: TypeLearningData = {
     pattern: text.toLowerCase().substring(0, 100),
     type: actualType,
     confidence,
     timestamp: Date.now(),
-    wasCorrect: inferredType === actualType
-  }
+    wasCorrect: inferredType === actualType,
+  };
 
-  const existing = await window.spark.kv.get<TypeLearningData[]>('type-learning') || []
-  await window.spark.kv.set('type-learning', [...existing, learningData])
+  return learningData;
 }
 
 export function getTypeLabel(type: ItemType): string {
