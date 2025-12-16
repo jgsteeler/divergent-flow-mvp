@@ -60,7 +60,7 @@
         "octokit": "^5.0.5",
         "react": "^19.2.3",
         "react-dom": "^19.2.3",
-        "react-error-boundary": "^4.0.13",
+        "react-error-boundary": "^6.0.0",
         "react-hook-form": "^7.54.2",
         "react-resizable-panels": "^2.1.7",
         "recharts": "^3.5.1",
