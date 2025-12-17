@@ -9,6 +9,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { inferType, saveTypeLearning } from "@/lib/typeInference";
 import { inferAttributes } from "@/lib/inference";
 import { getTopReviewItems } from "@/lib/reviewPriority";
+import { HIGH_CONFIDENCE_THRESHOLD, CONFIRMED_CONFIDENCE } from "@/lib/constants";
 
 function App() {
   const [items, setItems] = useLocalStorage<Item[]>("items", []);
@@ -72,8 +73,8 @@ function App() {
     const needsReview = 
       !attributes.type || 
       !attributes.collection ||
-      (attributes.typeConfidence && attributes.typeConfidence < 85) ||
-      (attributes.collectionConfidence && attributes.collectionConfidence < 85);
+      (attributes.typeConfidence && attributes.typeConfidence < HIGH_CONFIDENCE_THRESHOLD) ||
+      (attributes.collectionConfidence && attributes.collectionConfidence < HIGH_CONFIDENCE_THRESHOLD);
     
     if (needsReview) {
       setPendingConfirmation(updatedItem);
@@ -129,8 +130,8 @@ function App() {
         collection: updates.collection,
         priority: updates.priority,
         dueDate: updates.dueDate,
-        typeConfidence: 100,
-        collectionConfidence: 100,
+        typeConfidence: CONFIRMED_CONFIDENCE,
+        collectionConfidence: CONFIRMED_CONFIDENCE,
       },
       timestamp: Date.now(),
       wasCorrect: item.inferredType === updates.inferredType && item.collection === updates.collection,

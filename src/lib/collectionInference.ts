@@ -1,4 +1,5 @@
 import { LearningData } from './types'
+import { MIN_WORD_LENGTH_FOR_LEARNING, MAX_LEARNING_PATTERNS } from './constants'
 
 interface CollectionPattern {
   patterns: RegExp[]
@@ -89,14 +90,14 @@ function applyCollectionLearning(
 ): { collection: string; confidence: number; reasoning: string } | null {
   const recentLearning = learningData
     .filter(ld => ld.correctedAttributes.collection && ld.wasCorrect !== false)
-    .slice(-50)
+    .slice(-MAX_LEARNING_PATTERNS)
 
   for (const learning of recentLearning.reverse()) {
     const patternWords = learning.originalText.toLowerCase().split(/\s+/)
     const textWords = text.toLowerCase().split(/\s+/)
     
     const matchingWords = patternWords.filter(word => 
-      word.length > 3 && textWords.some(tw => tw.includes(word) || word.includes(tw))
+      word.length > MIN_WORD_LENGTH_FOR_LEARNING && textWords.some(tw => tw.includes(word) || word.includes(tw))
     )
     
     if (matchingWords.length >= Math.min(2, patternWords.length)) {

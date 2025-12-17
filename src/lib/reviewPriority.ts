@@ -1,4 +1,9 @@
 import { Item, ReviewItem } from './types'
+import { HIGH_CONFIDENCE_THRESHOLD } from './constants'
+
+function isValidConfidence(confidence: number | undefined): boolean {
+  return typeof confidence === 'number' && !isNaN(confidence) && confidence >= 0 && confidence <= 100
+}
 
 export function getTopReviewItems(items: Item[], limit: number = 3): ReviewItem[] {
   const reviewItems: ReviewItem[] = []
@@ -6,8 +11,8 @@ export function getTopReviewItems(items: Item[], limit: number = 3): ReviewItem[
   for (const item of items) {
     // Skip items that have been reviewed with high confidence
     if (item.lastReviewedAt && 
-        item.typeConfidence && item.typeConfidence >= 85 &&
-        item.collectionConfidence && item.collectionConfidence >= 85) {
+        item.typeConfidence && item.typeConfidence >= HIGH_CONFIDENCE_THRESHOLD &&
+        item.collectionConfidence && item.collectionConfidence >= HIGH_CONFIDENCE_THRESHOLD) {
       continue
     }
 
@@ -25,22 +30,17 @@ export function getTopReviewItems(items: Item[], limit: number = 3): ReviewItem[
       reason = 'No collection'
     }
     // High priority: Invalid confidence data
-    else if (
-      item.typeConfidence === undefined ||
-      isNaN(item.typeConfidence) ||
-      item.typeConfidence < 0 ||
-      item.typeConfidence > 100
-    ) {
+    else if (!isValidConfidence(item.typeConfidence)) {
       priority = 900
       reason = 'Invalid data'
     }
     // Medium priority: Low type confidence
-    else if (item.typeConfidence < 85) {
+    else if (item.typeConfidence < HIGH_CONFIDENCE_THRESHOLD) {
       priority = 800
       reason = `Low confidence (${item.typeConfidence}%)`
     }
     // Medium priority: Low collection confidence
-    else if (item.collectionConfidence !== undefined && item.collectionConfidence < 85) {
+    else if (item.collectionConfidence !== undefined && item.collectionConfidence < HIGH_CONFIDENCE_THRESHOLD) {
       priority = 700
       reason = `Collection uncertain (${item.collectionConfidence}%)`
     }

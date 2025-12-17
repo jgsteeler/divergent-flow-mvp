@@ -10,8 +10,19 @@ export async function inferAttributes(
   // Extract date/time from text first
   const { dateTime: extractedDate, cleanText } = extractDateTimeFromText(text)
   
-  // Use pattern-based inference for type (no LLM needed initially)
-  const typeInference = inferType(text, [])
+  // Extract type learning data from general learning data for backwards compatibility
+  const typeLearningData = learningData
+    .filter(ld => ld.correctedAttributes.type)
+    .map(ld => ({
+      pattern: ld.originalText.toLowerCase().substring(0, 100),
+      type: ld.correctedAttributes.type!,
+      confidence: ld.correctedAttributes.typeConfidence || 80,
+      timestamp: ld.timestamp,
+      wasCorrect: ld.wasCorrect
+    }))
+  
+  // Use pattern-based inference for type with learning data
+  const typeInference = inferType(text, typeLearningData)
   
   // Use pattern-based inference for collection
   const collectionInference = inferCollection(text, learningData)

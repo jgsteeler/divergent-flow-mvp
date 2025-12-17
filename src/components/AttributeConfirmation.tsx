@@ -3,6 +3,7 @@ import { ItemType, Priority, Item } from '@/lib/types'
 import { getTypeLabel, getTypeDescription } from '@/lib/typeInference'
 import { getCommonCollections } from '@/lib/collectionInference'
 import { formatDate } from '@/lib/dateParser'
+import { HIGH_CONFIDENCE_THRESHOLD, MEDIUM_CONFIDENCE_THRESHOLD, CONFIRMED_CONFIDENCE } from '@/lib/constants'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -38,23 +39,23 @@ export function AttributeConfirmation({
   const priorities: Priority[] = ['low', 'medium', 'high']
 
   const getConfidenceBadgeColor = (conf: number) => {
-    if (conf >= 85) return 'bg-primary/10 text-primary border-primary/20'
-    if (conf >= 70) return 'bg-accent/10 text-accent-foreground border-accent/20'
+    if (conf >= HIGH_CONFIDENCE_THRESHOLD) return 'bg-primary/10 text-primary border-primary/20'
+    if (conf >= MEDIUM_CONFIDENCE_THRESHOLD) return 'bg-accent/10 text-accent-foreground border-accent/20'
     return 'bg-muted text-muted-foreground border-border'
   }
 
   const getConfidenceLabel = (conf: number) => {
-    if (conf >= 85) return 'High'
-    if (conf >= 70) return 'Medium'
+    if (conf >= HIGH_CONFIDENCE_THRESHOLD) return 'High'
+    if (conf >= MEDIUM_CONFIDENCE_THRESHOLD) return 'Medium'
     return 'Low'
   }
 
   const handleConfirm = () => {
     const updates: Partial<Item> = {
       inferredType: selectedType || undefined,
-      typeConfidence: 100,
+      typeConfidence: CONFIRMED_CONFIDENCE,
       collection: selectedCollection || customCollection || undefined,
-      collectionConfidence: 100,
+      collectionConfidence: CONFIRMED_CONFIDENCE,
       priority: selectedPriority,
       lastReviewedAt: Date.now(),
     }
