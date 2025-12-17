@@ -92,9 +92,21 @@ export function ReviewQueue({ items, onReviewItem }: ReviewQueueProps) {
                           </Badge>
                         )}
                         
+                        {reviewItem.item.collection && (
+                          <Badge variant="outline" className="text-xs bg-accent/10 text-accent-foreground border-accent/20">
+                            {reviewItem.item.collection}
+                          </Badge>
+                        )}
+                        
                         {reviewItem.item.typeConfidence !== undefined && (
                           <Badge variant="outline" className="text-xs bg-muted text-muted-foreground">
-                            {reviewItem.item.typeConfidence}%
+                            Type: {reviewItem.item.typeConfidence}%
+                          </Badge>
+                        )}
+                        
+                        {reviewItem.item.collectionConfidence !== undefined && reviewItem.item.collectionConfidence > 0 && (
+                          <Badge variant="outline" className="text-xs bg-muted text-muted-foreground">
+                            Collection: {reviewItem.item.collectionConfidence}%
                           </Badge>
                         )}
                       </div>

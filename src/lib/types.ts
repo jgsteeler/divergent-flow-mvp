@@ -11,6 +11,18 @@ export interface Item {
   confidenceReasoning?: string
   lastReviewedAt?: number
   migratedCapture: boolean
+  // New properties for collection and date/time inference
+  collection?: string
+  collectionConfidence?: number
+  priority?: Priority
+  dueDate?: number
+  startDate?: number
+  reviewDate?: number
+  remindTime?: number
+  context?: string
+  tags?: string[]
+  type?: ItemType
+  completed?: boolean
 }
 
 export interface TypeLearningData {
@@ -25,4 +37,35 @@ export interface ReviewItem {
   item: Item
   reviewPriority: number
   reason: string
+}
+
+export interface InferredAttributes {
+  type?: ItemType | null
+  collection?: string | null
+  priority?: Priority | null
+  dueDate?: number | null
+  startDate?: number | null
+  reviewDate?: number | null
+  remindTime?: number | null
+  context?: string | null
+  tags?: string[] | null
+  typeConfidence?: number
+  collectionConfidence?: number
+}
+
+export interface LearningData {
+  originalText: string
+  inferredAttributes: InferredAttributes
+  correctedAttributes: InferredAttributes
+  timestamp: number
+  wasCorrect?: boolean
+}
+
+export interface Capture {
+  id: string
+  text: string
+  createdAt: number
+  inferredType?: ItemType
+  typeConfidence?: number
+  typeConfirmed?: boolean
 }

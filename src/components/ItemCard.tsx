@@ -49,8 +49,8 @@ export function ItemCard({ item, onComplete, showComplete = true }: ItemCardProp
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
-              <Badge className={typeColors[item.type]}>
-                {item.type}
+              <Badge className={item.type ? typeColors[item.type] : 'bg-muted text-muted-foreground'}>
+                {item.type || 'unknown'}
               </Badge>
               {item.priority && (
                 <Badge className={priorityColors[item.priority]}>
