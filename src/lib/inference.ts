@@ -2,6 +2,7 @@ import { InferredAttributes, ItemType, Priority, LearningData } from './types'
 import { extractDateTimeFromText } from './dateParser'
 import { inferType } from './typeInference'
 import { inferCollection } from './collectionInference'
+import { MAX_PATTERN_LENGTH, DEFAULT_LEARNING_CONFIDENCE, HIGH_CONFIDENCE_THRESHOLD } from './constants'
 
 export async function inferAttributes(
   text: string,
@@ -14,9 +15,9 @@ export async function inferAttributes(
   const typeLearningData = learningData
     .filter(ld => ld.correctedAttributes.type)
     .map(ld => ({
-      pattern: ld.originalText.toLowerCase().substring(0, 100),
+      pattern: ld.originalText.toLowerCase().substring(0, MAX_PATTERN_LENGTH),
       type: ld.correctedAttributes.type!,
-      confidence: ld.correctedAttributes.typeConfidence || 80,
+      confidence: ld.correctedAttributes.typeConfidence || DEFAULT_LEARNING_CONFIDENCE,
       timestamp: ld.timestamp,
       wasCorrect: ld.wasCorrect
     }))
@@ -166,7 +167,7 @@ export function calculateReviewPriority(
   // Low confidence on type or collection
   const typeConf = attributes.typeConfidence || 0
   const collectionConf = attributes.collectionConfidence || 0
-  if (typeConf < 85 || collectionConf < 85) {
+  if (typeConf < HIGH_CONFIDENCE_THRESHOLD || collectionConf < HIGH_CONFIDENCE_THRESHOLD) {
     return 300 + hoursOld
   }
   

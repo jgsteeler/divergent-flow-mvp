@@ -1,5 +1,13 @@
 import { LearningData } from './types'
-import { MIN_WORD_LENGTH_FOR_LEARNING, MAX_LEARNING_PATTERNS } from './constants'
+import { 
+  MIN_WORD_LENGTH_FOR_LEARNING, 
+  MAX_LEARNING_PATTERNS,
+  MIN_MATCHING_WORDS,
+  LEARNED_COLLECTION_MAX_CONFIDENCE,
+  LEARNED_COLLECTION_BASE_CONFIDENCE,
+  LEARNED_COLLECTION_CONFIDENCE_DIVISOR,
+  LEARNING_CONFIDENCE_THRESHOLD
+} from './constants'
 
 interface CollectionPattern {
   patterns: RegExp[]
@@ -100,11 +108,11 @@ function applyCollectionLearning(
       word.length > MIN_WORD_LENGTH_FOR_LEARNING && textWords.some(tw => tw.includes(word) || word.includes(tw))
     )
     
-    if (matchingWords.length >= Math.min(2, patternWords.length)) {
+    if (matchingWords.length >= Math.min(MIN_MATCHING_WORDS, patternWords.length)) {
       const confidenceBoost = learning.correctedAttributes.collectionConfidence || 70
       return {
         collection: learning.correctedAttributes.collection!,
-        confidence: Math.min(90, 60 + confidenceBoost / 3),
+        confidence: Math.min(LEARNED_COLLECTION_MAX_CONFIDENCE, LEARNED_COLLECTION_BASE_CONFIDENCE + confidenceBoost / LEARNED_COLLECTION_CONFIDENCE_DIVISOR),
         reasoning: `Similar to previous "${learning.correctedAttributes.collection}" items (${matchingWords.length} matching keywords)`
       }
     }
@@ -118,7 +126,7 @@ export function inferCollection(
   learningData: LearningData[] = []
 ): { collection: string | null; confidence: number; reasoning: string } {
   const learned = applyCollectionLearning(text, learningData)
-  if (learned && learned.confidence >= 75) {
+  if (learned && learned.confidence >= LEARNING_CONFIDENCE_THRESHOLD) {
     return learned
   }
 
