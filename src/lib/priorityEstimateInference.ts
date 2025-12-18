@@ -70,14 +70,30 @@ const SHORT_ESTIMATES: EstimatePattern = {
   weight: 1.0
 }
 
-const MEDIUM_ESTIMATES: EstimatePattern = {
+const HALF_HOUR_ESTIMATES: EstimatePattern = {
   patterns: [
     /\b30 ?min(ute)?s?\b/i,
     /\bhalf( |-)?hour\b/i,
-    /\b1 ?hour?\b/i,
-    /\b2 ?hours?\b/i,
   ],
   estimate: '30min',
+  weight: 1.0
+}
+
+const ONE_HOUR_ESTIMATES: EstimatePattern = {
+  patterns: [
+    /\b1 ?hour?\b/i,
+    /\bone( |-)?hour\b/i,
+  ],
+  estimate: '1hour',
+  weight: 1.0
+}
+
+const TWO_HOUR_ESTIMATES: EstimatePattern = {
+  patterns: [
+    /\b2 ?hours?\b/i,
+    /\btwo( |-)?hours?\b/i,
+  ],
+  estimate: '2hours',
   weight: 0.9
 }
 
@@ -234,18 +250,22 @@ export function inferEstimate(
 
   let quickScore = calculatePatternScore(text, QUICK_ESTIMATES)
   let shortScore = calculatePatternScore(text, SHORT_ESTIMATES)
-  let mediumScore = calculatePatternScore(text, MEDIUM_ESTIMATES)
+  let halfHourScore = calculatePatternScore(text, HALF_HOUR_ESTIMATES)
+  let oneHourScore = calculatePatternScore(text, ONE_HOUR_ESTIMATES)
+  let twoHourScore = calculatePatternScore(text, TWO_HOUR_ESTIMATES)
   let longScore = calculatePatternScore(text, LONG_ESTIMATES)
 
   if (learned) {
     const learnedBoost = learned.confidence / 100
     if (learned.estimate === '5min') quickScore += learnedBoost
     if (learned.estimate === '15min') shortScore += learnedBoost
-    if (learned.estimate === '30min' || learned.estimate === '1hour' || learned.estimate === '2hours') mediumScore += learnedBoost
+    if (learned.estimate === '30min') halfHourScore += learnedBoost
+    if (learned.estimate === '1hour') oneHourScore += learnedBoost
+    if (learned.estimate === '2hours') twoHourScore += learnedBoost
     if (learned.estimate === 'halfday' || learned.estimate === 'day' || learned.estimate === 'multiday') longScore += learnedBoost
   }
 
-  const maxScore = Math.max(quickScore, shortScore, mediumScore, longScore)
+  const maxScore = Math.max(quickScore, shortScore, halfHourScore, oneHourScore, twoHourScore, longScore)
 
   if (maxScore === 0) {
     // Infer based on text length as fallback
@@ -263,17 +283,25 @@ export function inferEstimate(
   let patternName: string
   let confidence: number
 
-  if (quickScore > 0 && quickScore >= Math.max(shortScore, mediumScore, longScore)) {
+  if (quickScore > 0 && quickScore >= Math.max(shortScore, halfHourScore, oneHourScore, twoHourScore, longScore)) {
     inferredEstimate = '5min'
     patternName = 'quick task indicators'
     confidence = 85
-  } else if (shortScore > 0 && shortScore >= Math.max(mediumScore, longScore)) {
+  } else if (shortScore > 0 && shortScore >= Math.max(halfHourScore, oneHourScore, twoHourScore, longScore)) {
     inferredEstimate = '15min'
     patternName = 'short task indicators'
     confidence = 80
-  } else if (mediumScore > 0 && mediumScore >= longScore) {
+  } else if (halfHourScore > 0 && halfHourScore >= Math.max(oneHourScore, twoHourScore, longScore)) {
+    inferredEstimate = '30min'
+    patternName = 'half-hour task indicators'
+    confidence = 80
+  } else if (oneHourScore > 0 && oneHourScore >= Math.max(twoHourScore, longScore)) {
     inferredEstimate = '1hour'
-    patternName = 'medium task indicators'
+    patternName = 'one-hour task indicators'
+    confidence = 80
+  } else if (twoHourScore > 0 && twoHourScore >= longScore) {
+    inferredEstimate = '2hours'
+    patternName = 'two-hour task indicators'
     confidence = 75
   } else if (longScore > 0) {
     inferredEstimate = 'day'
