@@ -69,3 +69,9 @@ export interface Capture {
   typeConfidence?: number
   typeConfirmed?: boolean
 }
+
+export interface CollectionInference {
+  collection: string
+  confidence: number
+  reasoning: string
+}

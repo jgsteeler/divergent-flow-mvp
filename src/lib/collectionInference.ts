@@ -1,4 +1,4 @@
-import { LearningData } from './types'
+import { LearningData, CollectionInference } from './types'
 import { 
   MIN_WORD_LENGTH_FOR_LEARNING, 
   MAX_LEARNING_PATTERNS,
@@ -6,17 +6,25 @@ import {
   LEARNED_COLLECTION_MAX_CONFIDENCE,
   LEARNED_COLLECTION_BASE_CONFIDENCE,
   LEARNED_COLLECTION_CONFIDENCE_DIVISOR,
+  MEDIUM_CONFIDENCE_THRESHOLD,
 } from './constants'
 
 function applyCollectionLearning(
   text: string,
   learningData: LearningData[]
-): { collection: string; confidence: number; reasoning: string } | null {
+): CollectionInference[] {
   const recentLearning = learningData
     .filter(ld => ld.correctedAttributes.collection && ld.wasCorrect !== false)
     .slice(-MAX_LEARNING_PATTERNS)
 
+  const inferences: CollectionInference[] = []
+  const seen = new Set<string>()
+
   for (const learning of recentLearning.reverse()) {
+    if (seen.has(learning.correctedAttributes.collection!)) {
+      continue
+    }
+
     const patternWords = learning.originalText.toLowerCase().split(/\s+/)
     const textWords = text.toLowerCase().split(/\s+/)
     
@@ -26,29 +34,43 @@ function applyCollectionLearning(
     
     if (matchingWords.length >= Math.min(MIN_MATCHING_WORDS, patternWords.length)) {
       const confidenceBoost = learning.correctedAttributes.collectionConfidence || 70
-      return {
+      const confidence = Math.min(
+        LEARNED_COLLECTION_MAX_CONFIDENCE, 
+        LEARNED_COLLECTION_BASE_CONFIDENCE + confidenceBoost / LEARNED_COLLECTION_CONFIDENCE_DIVISOR
+      )
+      
+      inferences.push({
         collection: learning.correctedAttributes.collection!,
-        confidence: Math.min(LEARNED_COLLECTION_MAX_CONFIDENCE, LEARNED_COLLECTION_BASE_CONFIDENCE + confidenceBoost / LEARNED_COLLECTION_CONFIDENCE_DIVISOR),
+        confidence,
         reasoning: `Similar to previous "${learning.correctedAttributes.collection}" items (${matchingWords.length} matching keywords)`
-      }
+      })
+      
+      seen.add(learning.correctedAttributes.collection!)
     }
   }
   
-  return null
+  return inferences.sort((a, b) => b.confidence - a.confidence)
+}
+
+export function inferCollections(
+  text: string,
+  learningData: LearningData[] = []
+): CollectionInference[] {
+  // Return multiple inferences sorted by confidence
+  return applyCollectionLearning(text, learningData)
 }
 
 export function inferCollection(
   text: string,
   learningData: LearningData[] = []
 ): { collection: string | null; confidence: number; reasoning: string } {
-  // Only use learning data - no pre-defined patterns
-  const learned = applyCollectionLearning(text, learningData)
+  // Backward compatibility - return single highest confidence
+  const inferences = inferCollections(text, learningData)
   
-  if (learned) {
-    return learned
+  if (inferences.length > 0) {
+    return inferences[0]
   }
 
-  // No learning data available - return null to prompt user
   return { 
     collection: null, 
     confidence: 0, 
@@ -67,4 +89,22 @@ export function getLearnedCollections(learningData: LearningData[]): string[] {
   })
   
   return Array.from(collections).sort()
+}
+
+export function getRelevantInferences(
+  inferences: CollectionInference[]
+): CollectionInference[] {
+  // Filter to show only medium+ confidence or highest if all are low
+  const mediumPlus = inferences.filter(inf => inf.confidence >= MEDIUM_CONFIDENCE_THRESHOLD)
+  
+  if (mediumPlus.length > 0) {
+    return mediumPlus
+  }
+  
+  // Return highest confidence inference if all are below medium
+  if (inferences.length > 0) {
+    return [inferences[0]]
+  }
+  
+  return []
 }

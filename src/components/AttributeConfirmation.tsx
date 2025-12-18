@@ -1,16 +1,16 @@
 import { useState } from 'react'
 import { ItemType, Priority, Item, LearningData } from '@/lib/types'
 import { getTypeLabel, getTypeDescription } from '@/lib/typeInference'
-import { getLearnedCollections } from '@/lib/collectionInference'
+import { inferCollections, getLearnedCollections, getRelevantInferences } from '@/lib/collectionInference'
 import { formatDate } from '@/lib/dateParser'
 import { HIGH_CONFIDENCE_THRESHOLD, MEDIUM_CONFIDENCE_THRESHOLD, CONFIRMED_CONFIDENCE } from '@/lib/constants'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Check, X, Note, ListChecks, Bell } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { CollectionSelector } from '@/components/CollectionSelector'
 
 interface AttributeConfirmationProps {
   item: Item
@@ -33,11 +33,12 @@ export function AttributeConfirmation({
 }: AttributeConfirmationProps) {
   const [selectedType, setSelectedType] = useState<ItemType | null>(item.inferredType || null)
   const [selectedCollection, setSelectedCollection] = useState<string>(item.collection || '')
-  const [customCollection, setCustomCollection] = useState<string>('')
   const [selectedPriority, setSelectedPriority] = useState<Priority | undefined>(item.priority)
 
   const types: ItemType[] = ['note', 'action', 'reminder']
-  const learnedCollections = getLearnedCollections(learningData)
+  const allCollections = getLearnedCollections(learningData)
+  const collectionInferences = inferCollections(item.text, learningData)
+  const relevantInferences = getRelevantInferences(collectionInferences)
   const priorities: Priority[] = ['low', 'medium', 'high']
 
   const getConfidenceBadgeColor = (conf: number) => {
@@ -56,7 +57,7 @@ export function AttributeConfirmation({
     const updates: Partial<Item> = {
       inferredType: selectedType || undefined,
       typeConfidence: CONFIRMED_CONFIDENCE,
-      collection: selectedCollection || customCollection || undefined,
+      collection: selectedCollection || undefined,
       collectionConfidence: CONFIRMED_CONFIDENCE,
       priority: selectedPriority,
       lastReviewedAt: Date.now(),
@@ -64,7 +65,7 @@ export function AttributeConfirmation({
     onConfirm(item.id, updates)
   }
 
-  const isValid = selectedType && (selectedCollection || customCollection)
+  const isValid = selectedType && selectedCollection
 
   return (
     <AnimatePresence>
@@ -148,58 +149,12 @@ export function AttributeConfirmation({
             </div>
 
             {/* Collection Selection */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Label className="text-sm font-medium">Collection</Label>
-                {item.collectionConfidence !== undefined && item.collectionConfidence > 0 && (
-                  <Badge variant="outline" className={getConfidenceBadgeColor(item.collectionConfidence)}>
-                    {item.collectionConfidence}% {getConfidenceLabel(item.collectionConfidence)}
-                  </Badge>
-                )}
-              </div>
-              {learnedCollections.length > 0 && (
-                <div className="grid grid-cols-2 gap-2">
-                  {learnedCollections.map((collection) => {
-                    const isSelected = collection === selectedCollection
-                    
-                    return (
-                      <Button
-                        key={collection}
-                        variant={isSelected ? 'default' : 'outline'}
-                        className={`justify-center ${
-                          isSelected 
-                            ? 'bg-primary hover:bg-primary/90 text-primary-foreground' 
-                            : 'hover:bg-accent hover:text-accent-foreground'
-                        }`}
-                        onClick={() => {
-                          setSelectedCollection(collection)
-                          setCustomCollection('')
-                        }}
-                      >
-                        {collection}
-                        {isSelected && <Check size={16} weight="bold" className="ml-2" />}
-                      </Button>
-                    )
-                  })}
-                </div>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="custom-collection" className="text-xs text-muted-foreground">
-                  {learnedCollections.length > 0 ? 'Or create a new collection:' : 'Create a collection:'}
-                </Label>
-                <Input
-                  id="custom-collection"
-                  placeholder="e.g., Work, Personal, Health..."
-                  value={customCollection}
-                  onChange={(e) => {
-                    setCustomCollection(e.target.value)
-                    if (e.target.value) {
-                      setSelectedCollection('')
-                    }
-                  }}
-                />
-              </div>
-            </div>
+            <CollectionSelector
+              inferences={relevantInferences}
+              allCollections={allCollections}
+              selectedCollection={selectedCollection}
+              onSelect={setSelectedCollection}
+            />
 
             {/* Priority Selection (for actions) */}
             {selectedType === 'action' && (
