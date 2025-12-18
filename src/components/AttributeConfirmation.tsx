@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { ItemType, Priority, Item } from '@/lib/types'
+import { ItemType, Priority, Item, LearningData } from '@/lib/types'
 import { getTypeLabel, getTypeDescription } from '@/lib/typeInference'
-import { getCommonCollections } from '@/lib/collectionInference'
+import { getLearnedCollections } from '@/lib/collectionInference'
 import { formatDate } from '@/lib/dateParser'
 import { HIGH_CONFIDENCE_THRESHOLD, MEDIUM_CONFIDENCE_THRESHOLD, CONFIRMED_CONFIDENCE } from '@/lib/constants'
 import { Card } from '@/components/ui/card'
@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 interface AttributeConfirmationProps {
   item: Item
+  learningData: LearningData[]
   onConfirm: (itemId: string, updates: Partial<Item>) => void
   onDismiss: (itemId: string) => void
 }
@@ -26,6 +27,7 @@ const TYPE_ICONS = {
 
 export function AttributeConfirmation({
   item,
+  learningData,
   onConfirm,
   onDismiss,
 }: AttributeConfirmationProps) {
@@ -35,7 +37,7 @@ export function AttributeConfirmation({
   const [selectedPriority, setSelectedPriority] = useState<Priority | undefined>(item.priority)
 
   const types: ItemType[] = ['note', 'action', 'reminder']
-  const commonCollections = getCommonCollections()
+  const learnedCollections = getLearnedCollections(learningData)
   const priorities: Priority[] = ['low', 'medium', 'high']
 
   const getConfidenceBadgeColor = (conf: number) => {
@@ -155,37 +157,39 @@ export function AttributeConfirmation({
                   </Badge>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                {commonCollections.map((collection) => {
-                  const isSelected = collection === selectedCollection
-                  
-                  return (
-                    <Button
-                      key={collection}
-                      variant={isSelected ? 'default' : 'outline'}
-                      className={`justify-center ${
-                        isSelected 
-                          ? 'bg-primary hover:bg-primary/90 text-primary-foreground' 
-                          : 'hover:bg-accent hover:text-accent-foreground'
-                      }`}
-                      onClick={() => {
-                        setSelectedCollection(collection)
-                        setCustomCollection('')
-                      }}
-                    >
-                      {collection}
-                      {isSelected && <Check size={16} weight="bold" className="ml-2" />}
-                    </Button>
-                  )
-                })}
-              </div>
+              {learnedCollections.length > 0 && (
+                <div className="grid grid-cols-2 gap-2">
+                  {learnedCollections.map((collection) => {
+                    const isSelected = collection === selectedCollection
+                    
+                    return (
+                      <Button
+                        key={collection}
+                        variant={isSelected ? 'default' : 'outline'}
+                        className={`justify-center ${
+                          isSelected 
+                            ? 'bg-primary hover:bg-primary/90 text-primary-foreground' 
+                            : 'hover:bg-accent hover:text-accent-foreground'
+                        }`}
+                        onClick={() => {
+                          setSelectedCollection(collection)
+                          setCustomCollection('')
+                        }}
+                      >
+                        {collection}
+                        {isSelected && <Check size={16} weight="bold" className="ml-2" />}
+                      </Button>
+                    )
+                  })}
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="custom-collection" className="text-xs text-muted-foreground">
-                  Or create a custom collection:
+                  {learnedCollections.length > 0 ? 'Or create a new collection:' : 'Create a collection:'}
                 </Label>
                 <Input
                   id="custom-collection"
-                  placeholder="e.g., Side Project, Learning..."
+                  placeholder="e.g., Work, Personal, Health..."
                   value={customCollection}
                   onChange={(e) => {
                     setCustomCollection(e.target.value)

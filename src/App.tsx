@@ -180,6 +180,7 @@ function App() {
         {pendingConfirmation && (
           <AttributeConfirmation
             item={pendingConfirmation}
+            learningData={attributeLearningArray}
             onConfirm={handleAttributeConfirm}
             onDismiss={handleDismiss}
           />
