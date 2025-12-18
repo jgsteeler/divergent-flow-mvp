@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
-import { Item, ItemType, TypeLearningData } from "@/lib/types";
+import { Item, ItemType, TypeLearningData, LearningData } from "@/lib/types";
 import { CaptureInput } from "@/components/CaptureInput";
-import { TypeConfirmation } from "@/components/TypeConfirmation";
+import { AttributeConfirmation } from "@/components/AttributeConfirmation";
 import { ReviewQueue } from "@/components/ReviewQueue";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { inferType, saveTypeLearning } from "@/lib/typeInference";
+import { inferAttributes } from "@/lib/inference";
 import { getTopReviewItems } from "@/lib/reviewPriority";
+import { HIGH_CONFIDENCE_THRESHOLD, CONFIRMED_CONFIDENCE } from "@/lib/constants";
 
 function App() {
   const [items, setItems] = useLocalStorage<Item[]>("items", []);
@@ -15,11 +17,16 @@ function App() {
     "type-learning",
     []
   );
+  const [attributeLearning, setAttributeLearning] = useLocalStorage<LearningData[]>(
+    "attribute-learning",
+    []
+  );
   const [isProcessing, setIsProcessing] = useState(false);
   const [pendingConfirmation, setPendingConfirmation] = useState<Item | null>(null);
 
   const itemsArray = items || [];
   const learningArray = typeLearning || [];
+  const attributeLearningArray = attributeLearning || [];
 
   const reviewItems = getTopReviewItems(itemsArray, 3);
 
@@ -43,55 +50,104 @@ function App() {
   };
 
   const processItem = async (item: Item) => {
-    const { type, confidence, reasoning } = inferType(item.text, learningArray);
-
+    // Infer all attributes: type, collection, dates, etc.
+    const attributes = await inferAttributes(item.text, attributeLearningArray);
+    
     const updatedItem: Item = {
       ...item,
-      inferredType: type || undefined,
-      typeConfidence: confidence,
-      confidenceReasoning: reasoning,
+      inferredType: attributes.type || undefined,
+      typeConfidence: attributes.typeConfidence,
+      collection: attributes.collection || undefined,
+      collectionConfidence: attributes.collectionConfidence,
+      dueDate: attributes.dueDate || undefined,
+      priority: attributes.priority || undefined,
+      context: attributes.context || undefined,
+      tags: attributes.tags || undefined,
     };
 
     setItems((current) =>
       (current || []).map((i) => (i.id === item.id ? updatedItem : i))
     );
 
-    setPendingConfirmation(updatedItem);
+    // Show confirmation dialog if confidence is low or missing critical fields
+    const needsReview = 
+      !attributes.type || 
+      !attributes.collection ||
+      (attributes.typeConfidence && attributes.typeConfidence < HIGH_CONFIDENCE_THRESHOLD) ||
+      (attributes.collectionConfidence && attributes.collectionConfidence < HIGH_CONFIDENCE_THRESHOLD);
+    
+    if (needsReview) {
+      setPendingConfirmation(updatedItem);
+    } else {
+      // High confidence - mark as reviewed
+      const reviewedItem = { ...updatedItem, lastReviewedAt: Date.now() };
+      setItems((current) =>
+        (current || []).map((i) => (i.id === item.id ? reviewedItem : i))
+      );
+    }
   };
 
-  const handleTypeConfirm = async (itemId: string, confirmedType: ItemType) => {
+  const handleAttributeConfirm = async (itemId: string, updates: Partial<Item>) => {
     const item = itemsArray.find((i) => i.id === itemId);
     if (!item) return;
 
     const updatedItem: Item = {
       ...item,
-      inferredType: confirmedType,
-      typeConfidence: 100,
-      lastReviewedAt: Date.now(),
+      ...updates,
     };
 
     setItems((current) =>
       (current || []).map((i) => (i.id === itemId ? updatedItem : i))
     );
 
-    const newLearning = await saveTypeLearning(
-      item.text,
-      item.inferredType || null,
-      confirmedType,
-      item.typeConfidence || 0
-    );
+    // Save type learning if type was changed
+    if (updates.inferredType) {
+      const newLearning = await saveTypeLearning(
+        item.text,
+        item.inferredType || null,
+        updates.inferredType,
+        item.typeConfidence || 0
+      );
 
-    if (newLearning) {
-      setTypeLearning((current) => [...(current || []), newLearning]);
+      if (newLearning) {
+        setTypeLearning((current) => [...(current || []), newLearning]);
+      }
     }
+
+    // Save attribute learning for collection and other properties
+    const learningData: LearningData = {
+      originalText: item.text,
+      inferredAttributes: {
+        type: item.inferredType,
+        collection: item.collection,
+        priority: item.priority,
+        dueDate: item.dueDate,
+        typeConfidence: item.typeConfidence,
+        collectionConfidence: item.collectionConfidence,
+      },
+      correctedAttributes: {
+        type: updates.inferredType,
+        collection: updates.collection,
+        priority: updates.priority,
+        dueDate: updates.dueDate,
+        typeConfidence: CONFIRMED_CONFIDENCE,
+        collectionConfidence: CONFIRMED_CONFIDENCE,
+      },
+      timestamp: Date.now(),
+      wasCorrect: item.inferredType === updates.inferredType && item.collection === updates.collection,
+    };
+
+    setAttributeLearning((current) => [...(current || []), learningData]);
 
     setPendingConfirmation(null);
 
-    const wasCorrect = item.inferredType === confirmedType;
-    if (wasCorrect) {
-      toast.success(`Confirmed as ${confirmedType}! I'm learning.`);
+    const wasTypeCorrect = item.inferredType === updates.inferredType;
+    const wasCollectionCorrect = item.collection === updates.collection;
+    
+    if (wasTypeCorrect && wasCollectionCorrect) {
+      toast.success("Confirmed! I'm learning from your input.");
     } else {
-      toast.success(`Updated to ${confirmedType}. I'll remember that!`);
+      toast.success("Updated! I'll remember that for next time.");
     }
   };
 
@@ -122,13 +178,10 @@ function App() {
         <CaptureInput onCapture={handleCapture} isProcessing={isProcessing} />
 
         {pendingConfirmation && (
-          <TypeConfirmation
-            itemId={pendingConfirmation.id}
-            text={pendingConfirmation.text}
-            inferredType={pendingConfirmation.inferredType || null}
-            confidence={pendingConfirmation.typeConfidence || 0}
-            reasoning={pendingConfirmation.confidenceReasoning}
-            onConfirm={handleTypeConfirm}
+          <AttributeConfirmation
+            item={pendingConfirmation}
+            learningData={attributeLearningArray}
+            onConfirm={handleAttributeConfirm}
             onDismiss={handleDismiss}
           />
         )}
