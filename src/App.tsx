@@ -199,8 +199,10 @@ function App() {
             reasoning={pendingConfirmation.confidenceReasoning}
             priority={pendingConfirmation.priority}
             priorityConfidence={pendingConfirmation.priorityConfidence}
+            priorityReasoning={pendingConfirmation.priorityReasoning}
             estimate={pendingConfirmation.estimate}
             estimateConfidence={pendingConfirmation.estimateConfidence}
+            estimateReasoning={pendingConfirmation.estimateReasoning}
             onConfirm={handleTypeConfirm}
             onDismiss={handleDismiss}
           />

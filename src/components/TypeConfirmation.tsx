@@ -16,8 +16,10 @@ interface TypeConfirmationProps {
   reasoning?: string
   priority?: Priority
   priorityConfidence?: number
+  priorityReasoning?: string
   estimate?: Estimate
   estimateConfidence?: number
+  estimateReasoning?: string
   onConfirm: (itemId: string, confirmedType: ItemType, confirmedPriority?: Priority, confirmedEstimate?: Estimate) => void
   onDismiss: (itemId: string) => void
 }
@@ -36,8 +38,10 @@ export function TypeConfirmation({
   reasoning,
   priority,
   priorityConfidence,
+  priorityReasoning,
   estimate,
   estimateConfidence,
+  estimateReasoning,
   onConfirm,
   onDismiss,
 }: TypeConfirmationProps) {
@@ -171,6 +175,11 @@ export function TypeConfirmation({
                     </Badge>
                   )}
                 </div>
+                {priorityReasoning && priorityConfidence !== undefined && priorityConfidence > 0 && (
+                  <p className="text-xs text-muted-foreground/80 italic">
+                    {priorityReasoning}
+                  </p>
+                )}
                 
                 <div className="grid grid-cols-3 gap-2">
                   {priorities.map((pri) => {
@@ -210,6 +219,11 @@ export function TypeConfirmation({
                     </Badge>
                   )}
                 </div>
+                {estimateReasoning && estimateConfidence !== undefined && estimateConfidence > 0 && (
+                  <p className="text-xs text-muted-foreground/80 italic">
+                    {estimateReasoning}
+                  </p>
+                )}
                 
                 <div className="grid grid-cols-4 gap-2">
                   {estimates.map((est) => {
