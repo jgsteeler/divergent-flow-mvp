@@ -2,17 +2,18 @@ import { useState } from "react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { Item, ItemType, Priority, Estimate, TypeLearningData, PriorityLearningData, EstimateLearningData } from "@/lib/types";
 import { CaptureInput } from "@/components/CaptureInput";
-import { TypeConfirmation } from "@/components/TypeConfirmation";
+import { AttributeConfirmation } from "@/components/AttributeConfirmation";
 import { ReviewQueue } from "@/components/ReviewQueue";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
-import { inferType, saveTypeLearning } from "@/lib/typeInference";
+import { inferAttributes } from "@/lib/inference";
 import { inferPriority, inferEstimate, savePriorityLearning, saveEstimateLearning } from "@/lib/priorityEstimateInference";
 import { getTopReviewItems } from "@/lib/reviewPriority";
 
 function App() {
   const [items, setItems] = useLocalStorage<Item[]>("items", []);
   const [typeLearning, setTypeLearning] = useLocalStorage<TypeLearningData[]>("type-learning", []);
+  const [attributeLearning, setAttributeLearning] = useLocalStorage("attribute-learning", []);
   const [priorityLearning, setPriorityLearning] = useLocalStorage<PriorityLearningData[]>("priority-learning", []);
   const [estimateLearning, setEstimateLearning] = useLocalStorage<EstimateLearningData[]>("estimate-learning", []);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -20,6 +21,7 @@ function App() {
 
   const itemsArray = items || [];
   const typeLearningArray = typeLearning || [];
+  const attributeLearningArray = attributeLearning || [];
   const priorityLearningArray = priorityLearning || [];
   const estimateLearningArray = estimateLearning || [];
 
@@ -45,101 +47,101 @@ function App() {
   };
 
   const processItem = async (item: Item) => {
-    const { type, confidence, reasoning } = inferType(item.text, typeLearningArray);
+    const attributes = await inferAttributes(item.text, attributeLearningArray);
 
     const { priority, confidence: priorityConf, reasoning: priorityReason } = inferPriority(
       item.text,
-      type,
+      attributes.type,
       priorityLearningArray
     );
 
     const { estimate, confidence: estimateConf, reasoning: estimateReason } = inferEstimate(
       item.text,
-      type,
+      attributes.type,
       estimateLearningArray
     );
 
     const updatedItem: Item = {
       ...item,
-      inferredType: type || undefined,
-      typeConfidence: confidence,
-      confidenceReasoning: reasoning,
+      inferredType: attributes.type || undefined,
+      typeConfidence: attributes.typeConfidence,
+      collection: attributes.collection || undefined,
+      collectionConfidence: attributes.collectionConfidence,
+      dueDate: attributes.dueDate || undefined,
       priority: priority || undefined,
       priorityConfidence: priorityConf,
       priorityReasoning: priorityReason,
       estimate: estimate || undefined,
       estimateConfidence: estimateConf,
       estimateReasoning: estimateReason,
+      context: attributes.context || undefined,
+      tags: attributes.tags || undefined,
     };
 
     setItems((current) =>
       (current || []).map((i) => (i.id === item.id ? updatedItem : i))
     );
 
-    const needsConfirmation =
-      confidence < 85 ||
-      (type === "action" || type === "reminder") && priorityConf < 85 ||
-      type === "action" && estimateConf < 85;
+    const needsReview =
+      !attributes.type ||
+      !attributes.collection ||
+      (attributes.typeConfidence && attributes.typeConfidence < 85) ||
+      (attributes.collectionConfidence && attributes.collectionConfidence < 85) ||
+      (priorityConf < 85) ||
+      (estimateConf < 85);
 
-    if (needsConfirmation || !type) {
+    if (needsReview) {
       setPendingConfirmation(updatedItem);
     } else {
-      const autoSavedItem: Item = {
-        ...updatedItem,
-        lastReviewedAt: Date.now(),
-      };
+      const reviewedItem = { ...updatedItem, lastReviewedAt: Date.now() };
       setItems((current) =>
-        (current || []).map((i) => (i.id === item.id ? autoSavedItem : i))
+        (current || []).map((i) => (i.id === item.id ? reviewedItem : i))
       );
     }
   };
 
-  const handleTypeConfirm = async (
-    itemId: string,
-    confirmedType: ItemType,
-    confirmedPriority?: Priority,
-    confirmedEstimate?: Estimate
-  ) => {
+  const handleAttributeConfirm = async (itemId: string, updates: Partial<Item>) => {
     const item = itemsArray.find((i) => i.id === itemId);
     if (!item) return;
 
     const updatedItem: Item = {
       ...item,
-      inferredType: confirmedType,
-      typeConfidence: 100,
-      lastReviewedAt: Date.now(),
+      ...updates,
     };
-
-    if (confirmedPriority !== undefined) {
-      updatedItem.priority = confirmedPriority;
-      updatedItem.priorityConfidence = 100;
-    }
-
-    if (confirmedEstimate !== undefined) {
-      updatedItem.estimate = confirmedEstimate;
-      updatedItem.estimateConfidence = 100;
-    }
 
     setItems((current) =>
       (current || []).map((i) => (i.id === itemId ? updatedItem : i))
     );
 
-    const newLearning = await saveTypeLearning(
-      item.text,
-      item.inferredType || null,
-      confirmedType,
-      item.typeConfidence || 0
-    );
+    const learningData = {
+      originalText: item.text,
+      inferredAttributes: {
+        type: item.inferredType,
+        collection: item.collection,
+        priority: item.priority,
+        dueDate: item.dueDate,
+        typeConfidence: item.typeConfidence,
+        collectionConfidence: item.collectionConfidence,
+      },
+      correctedAttributes: {
+        type: updates.inferredType,
+        collection: updates.collection,
+        priority: updates.priority,
+        dueDate: updates.dueDate,
+        typeConfidence: 100,
+        collectionConfidence: 100,
+      },
+      timestamp: Date.now(),
+      wasCorrect: item.inferredType === updates.inferredType && item.collection === updates.collection,
+    };
 
-    if (newLearning) {
-      setTypeLearning((current) => [...(current || []), newLearning]);
-    }
+    setAttributeLearning((current) => [...(current || []), learningData]);
 
-    if (confirmedPriority !== undefined) {
+    if (updates.priority) {
       const newPriorityLearning = await savePriorityLearning(
         item.text,
         item.priority || null,
-        confirmedPriority,
+        updates.priority,
         item.priorityConfidence || 0
       );
       if (newPriorityLearning) {
@@ -147,11 +149,11 @@ function App() {
       }
     }
 
-    if (confirmedEstimate !== undefined) {
+    if (updates.estimate) {
       const newEstimateLearning = await saveEstimateLearning(
         item.text,
         item.estimate || null,
-        confirmedEstimate,
+        updates.estimate,
         item.estimateConfidence || 0
       );
       if (newEstimateLearning) {
@@ -161,11 +163,13 @@ function App() {
 
     setPendingConfirmation(null);
 
-    const wasCorrect = item.inferredType === confirmedType;
-    if (wasCorrect) {
-      toast.success("Confirmed! I'm learning.");
+    const wasTypeCorrect = item.inferredType === updates.inferredType;
+    const wasCollectionCorrect = item.collection === updates.collection;
+
+    if (wasTypeCorrect && wasCollectionCorrect) {
+      toast.success("Confirmed! I'm learning from your input.");
     } else {
-      toast.success("Updated! I'll remember that.");
+      toast.success("Updated! I'll remember that for next time.");
     }
   };
 
@@ -191,19 +195,10 @@ function App() {
         <CaptureInput onCapture={handleCapture} isProcessing={isProcessing} />
 
         {pendingConfirmation && (
-          <TypeConfirmation
-            itemId={pendingConfirmation.id}
-            text={pendingConfirmation.text}
-            inferredType={pendingConfirmation.inferredType || null}
-            confidence={pendingConfirmation.typeConfidence || 0}
-            reasoning={pendingConfirmation.confidenceReasoning}
-            priority={pendingConfirmation.priority}
-            priorityConfidence={pendingConfirmation.priorityConfidence}
-            priorityReasoning={pendingConfirmation.priorityReasoning}
-            estimate={pendingConfirmation.estimate}
-            estimateConfidence={pendingConfirmation.estimateConfidence}
-            estimateReasoning={pendingConfirmation.estimateReasoning}
-            onConfirm={handleTypeConfirm}
+          <AttributeConfirmation
+            item={pendingConfirmation}
+            learningData={attributeLearningArray}
+            onConfirm={handleAttributeConfirm}
             onDismiss={handleDismiss}
           />
         )}
