@@ -7,8 +7,14 @@ import { readFileSync } from "fs";
 const projectRoot = process.env.PROJECT_ROOT || import.meta.dirname;
 
 // Read version from package.json
-const packageJson = JSON.parse(readFileSync('./package.json', 'utf-8'));
-const version = packageJson.version;
+let version = '0.0.0';
+try {
+  const packageJsonPath = resolve(projectRoot, 'package.json');
+  const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+  version = packageJson.version;
+} catch (error) {
+  console.warn('Warning: Could not read version from package.json, using default version 0.0.0');
+}
 
 // https://vite.dev/config/
 export default defineConfig({
