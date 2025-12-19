@@ -12,8 +12,7 @@
       "package-name": "backend",
       "changelog-path": "backend/CHANGELOG.md",
       "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": true,
-      "extra-files": []
+      "bump-patch-for-minor-pre-major": true
     }
   }
 }

@@ -30,7 +30,12 @@ This repository is configured to support both:
   - Changelog: `CHANGELOG.md`
 - **Backend**: Future .NET Web API project (simple release-type)
   - Changelog: `backend/CHANGELOG.md`
-  - **Note**: When creating the backend project, update `.github/release-please-config.json` to add the .csproj file path to the `extra-files` array for automatic version updates.
+  - **Note**: When creating the backend project, update `.github/release-please-config.json` to add an `extra-files` array with the .csproj file path(s) for automatic version updates. For example:
+    ```json
+    "extra-files": [
+      "backend/DivergentFlow.Api/DivergentFlow.Api.csproj"
+    ]
+    ```
 
 Each package has its own version tracking and changelog to avoid conflicts.
 
