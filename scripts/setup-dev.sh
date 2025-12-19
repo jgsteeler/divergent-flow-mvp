@@ -3,7 +3,7 @@
 # Setup script for Divergent Flow development environment
 # Configures Git to use conventional commits
 
-set -e
+set -euo pipefail
 
 echo "🚀 Setting up Divergent Flow development environment..."
 echo ""

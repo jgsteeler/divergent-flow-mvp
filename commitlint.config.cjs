@@ -32,7 +32,9 @@ module.exports = {
     // Scope is optional but should be lowercase
     'scope-case': [2, 'always', 'lower-case'],
     'scope-enum': [
-      0, // Warning only, not error
+      0, // Warning only (not error) - allows custom scopes but recommends these
+         // Level 0 = disabled (no error), just a suggestion
+         // This gives developers flexibility while providing guidance
       'always',
       [
         'capture',

@@ -21,6 +21,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           # Configure which types are allowed
+          # NOTE: Keep this list in sync with commitlint.config.cjs type-enum rule
           types: |
             feat
             fix
@@ -33,6 +34,8 @@ jobs:
             ci
             build
           # Configure which scopes are allowed (optional)
+          # NOTE: Keep this list in sync with commitlint.config.cjs scope-enum rule
+          # Scopes are suggestions only (not enforced as errors)
           scopes: |
             capture
             review
