@@ -2,6 +2,10 @@
 
 An ADHD-friendly brain management tool that helps you capture thoughts instantly and process them intelligently.
 
+> 📚 **New to the project?** See [DOCS-INDEX.md](./DOCS-INDEX.md) for a complete guide to all documentation.
+> 
+> ⚠️ **Contributing?** All commits must follow [Conventional Commits](https://www.conventionalcommits.org/) format. See [COMMIT-GUIDELINES.md](./COMMIT-GUIDELINES.md).
+
 ## Current Status
 
 - ✅ **Phase 1 Complete**: Quick capture with persistent storage
@@ -33,7 +37,21 @@ An ADHD-friendly brain management tool that helps you capture thoughts instantly
 ### Prerequisites
 ```bash
 npm install
+
+# Optional: Configure git for conventional commits
+./scripts/setup-dev.sh
 ```
+
+### Commit Message Format ⚠️
+
+**All commits must follow [Conventional Commits](https://www.conventionalcommits.org/) format:**
+```
+<type>(<scope>): <description>
+```
+
+Example: `feat(capture): add keyboard shortcut`
+
+See [COMMIT-GUIDELINES.md](./COMMIT-GUIDELINES.md) for quick reference.
 
 ### Run Locally
 ```bash
@@ -74,6 +92,12 @@ src/
 2. Follow [AI-AGENT-QUICK-START.md](./AI-AGENT-QUICK-START.md) to set up AI coding assistant
 3. Use AI agent to complete Phase 3-6 per [PRD.md](./PRD.md)
 4. Scale to backend when ready using [TRANSITION-GUIDE.md](./TRANSITION-GUIDE.md)
+
+## Contributing
+
+We welcome contributions! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+
+**Important**: All commits and PR titles must follow [Conventional Commits](https://www.conventionalcommits.org/) format.
 
 ## License
 

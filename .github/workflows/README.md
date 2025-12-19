@@ -2,6 +2,47 @@
 
 This directory contains GitHub Actions workflows for the Divergent Flow MVP project.
 
+## Conventional Commits Validation
+
+The `conventional-commits.yml` workflow enforces Conventional Commits format on all commits and PR titles.
+
+### What It Does
+
+1. **PR Title Validation**: Checks that PR titles follow the format `<type>(<scope>): <description>`
+2. **Commit Message Validation**: Validates all commits in a PR against Conventional Commits specification
+3. **Automatic Feedback**: Provides clear error messages when validation fails
+
+### Validation Rules
+
+- **Required format**: `<type>(<scope>): <description>`
+- **Valid types**: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `ci`, `build`
+- **Valid scopes**: `capture`, `review`, `inference`, `ui`, `storage`, `types`, `tests`, `agent`, `deps` (optional)
+- **Description**: Must start with lowercase, no period at end, max 72 characters
+
+### When It Runs
+
+- On pull request creation
+- On pull request title edit
+- On new commits pushed to PR
+- On PR synchronization
+
+### Configuration
+
+- Workflow: `.github/workflows/conventional-commits.yml`
+- Commitlint config: `commitlint.config.cjs`
+- Commit template: `.github/commit_template.txt`
+
+### Local Setup
+
+Run the setup script to configure local validation:
+```bash
+./scripts/setup-dev.sh
+```
+
+See [COMMIT-GUIDELINES.md](../../COMMIT-GUIDELINES.md) for quick reference.
+
+---
+
 ## Release Please
 
 The `release-please.yml` workflow automates version management and changelog generation using [Release Please](https://github.com/googleapis/release-please).

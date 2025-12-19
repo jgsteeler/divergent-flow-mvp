@@ -1,5 +1,23 @@
 # AI Agent Quick Start Guide
 
+## 🚨 Critical: Conventional Commits Required
+
+**Before you start, know this: ALL commits and PR titles MUST follow [Conventional Commits](https://www.conventionalcommits.org/) format.**
+
+```bash
+# Correct format
+git commit -m "feat(capture): add keyboard shortcut"
+git commit -m "fix(review): correct sorting bug"
+
+# Wrong format (will fail CI)
+git commit -m "added feature"
+git commit -m "bug fix"
+```
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for complete guidelines.
+
+---
+
 ## TL;DR - Get Started in 5 Minutes
 
 You're ready to stop using Spark and start using an AI coding agent. Here's how to get started **right now**.
