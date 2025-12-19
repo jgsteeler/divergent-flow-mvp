@@ -27,9 +27,12 @@ The `release-please.yml` workflow automates version management and changelog gen
 
 This repository is configured to support both:
 - **Frontend (root)**: TypeScript/React application (node release-type)
+  - Changelog: `CHANGELOG.md`
 - **Backend**: Future .NET Web API project (simple release-type)
+  - Changelog: `backend/CHANGELOG.md`
+  - **Note**: When creating the backend project, update `.github/release-please-config.json` to add the .csproj file path to the `extra-files` array for automatic version updates.
 
-Each package has its own version tracking and changelog.
+Each package has its own version tracking and changelog to avoid conflicts.
 
 ### Conventional Commit Format
 

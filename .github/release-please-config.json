@@ -10,12 +10,10 @@
     "backend": {
       "release-type": "simple",
       "package-name": "backend",
-      "changelog-path": "CHANGELOG.md",
+      "changelog-path": "backend/CHANGELOG.md",
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
-      "extra-files": [
-        "DivergentFlow.Api/DivergentFlow.Api.csproj"
-      ]
+      "extra-files": []
     }
   }
 }
