@@ -217,6 +217,10 @@ function App() {
           </div>
         )}
       </div>
+      
+      <footer className="mt-8 pb-4 text-center">
+        <p className="text-xs text-muted-foreground">v{__APP_VERSION__}</p>
+      </footer>
     </div>
   );
 }

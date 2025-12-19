@@ -1,0 +1,18 @@
+{
+  "packages": {
+    ".": {
+      "release-type": "node",
+      "package-name": "divergent-flow-mvp",
+      "changelog-path": "CHANGELOG.md",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true
+    },
+    "backend": {
+      "release-type": "simple",
+      "package-name": "backend",
+      "changelog-path": "backend/CHANGELOG.md",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true
+    }
+  }
+}
