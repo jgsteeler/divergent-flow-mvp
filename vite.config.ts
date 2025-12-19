@@ -13,7 +13,7 @@ try {
   const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
   version = packageJson.version;
 } catch (error) {
-  console.warn('Warning: Could not read version from package.json, using default version 0.0.0', error);
+  console.warn('Warning: Could not read version from package.json, using default version 0.0.0:', error instanceof Error ? error.message : 'Unknown error');
 }
 
 // https://vite.dev/config/
