@@ -98,7 +98,7 @@ Refs #456
 Your commits are validated by:
 - **Local hook** (if installed via `scripts/setup-dev.sh`)
 - **GitHub Actions** (on PR creation/update)
-- **commitlint** (uses `commitlint.config.js`)
+- **commitlint** (uses `commitlint.config.cjs`)
 
 ## Setup
 

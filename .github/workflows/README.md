@@ -29,7 +29,7 @@ The `conventional-commits.yml` workflow enforces Conventional Commits format on 
 ### Configuration
 
 - Workflow: `.github/workflows/conventional-commits.yml`
-- Commitlint config: `commitlint.config.js`
+- Commitlint config: `commitlint.config.cjs`
 - Commit template: `.github/commit_template.txt`
 
 ### Local Setup

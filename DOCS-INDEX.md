@@ -45,7 +45,7 @@ All commits and PR titles MUST follow Conventional Commits format. Non-complianc
 ### Templates & Configuration
 - 📝 **[.github/pull_request_template.md](./.github/pull_request_template.md)** - PR template
 - 💬 **[.github/commit_template.txt](./.github/commit_template.txt)** - Commit message template
-- ⚙️ **[commitlint.config.js](./commitlint.config.js)** - Commitlint configuration
+- ⚙️ **[commitlint.config.cjs](./commitlint.config.cjs)** - Commitlint configuration
 - 🔄 **[.github/release-please-config.json](./.github/release-please-config.json)** - Release config
 
 ---
@@ -96,7 +96,7 @@ All commits and PR titles MUST follow Conventional Commits format. Non-complianc
 | `SECURITY.md` | Security policies |
 | `.github/copilot-instructions.md` | AI agent instructions |
 | `.cursorrules` | Cursor IDE rules |
-| `commitlint.config.js` | Commit validation config |
+| `commitlint.config.cjs` | Commit validation config |
 | `.github/commit_template.txt` | Commit message template |
 | `.github/pull_request_template.md` | PR template |
 | `scripts/setup-dev.sh` | Local setup script |

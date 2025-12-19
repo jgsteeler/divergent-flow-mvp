@@ -21,7 +21,7 @@ This PR implements comprehensive enforcement of Conventional Commits format for 
 
 ### 2. Configuration Files
 
-**Commitlint Configuration** (`commitlint.config.js`)
+**Commitlint Configuration** (`commitlint.config.cjs`)
 - ✅ Defines valid commit types (feat, fix, docs, etc.)
 - ✅ Defines valid scopes (capture, review, inference, etc.)
 - ✅ Enforces format rules (lowercase, max length, no period)
@@ -221,7 +221,7 @@ Repository Root
 │       └── conventional-commits.yml   # Validation workflow
 ├── scripts/
 │   └── setup-dev.sh                   # Setup script
-└── commitlint.config.js               # Commitlint config
+└── commitlint.config.cjs               # Commitlint config
 ```
 
 ## Next Steps
