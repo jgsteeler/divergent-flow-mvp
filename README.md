@@ -2,6 +2,10 @@
 
 An ADHD-friendly brain management tool that helps you capture thoughts instantly and process them intelligently.
 
+> 📚 **New to the project?** See [DOCS-INDEX.md](./DOCS-INDEX.md) for a complete guide to all documentation.
+> 
+> ⚠️ **Contributing?** All commits must follow [Conventional Commits](https://www.conventionalcommits.org/) format. See [COMMIT-GUIDELINES.md](./COMMIT-GUIDELINES.md).
+
 ## Current Status
 
 - ✅ **Phase 1 Complete**: Quick capture with persistent storage
@@ -33,7 +37,21 @@ An ADHD-friendly brain management tool that helps you capture thoughts instantly
 ### Prerequisites
 ```bash
 npm install
+
+# Optional: Configure git for conventional commits
+./scripts/setup-dev.sh
 ```
+
+### Commit Message Format ⚠️
+
+**All commits must follow [Conventional Commits](https://www.conventionalcommits.org/) format:**
+```
+<type>(<scope>): <description>
+```
+
+Example: `feat(capture): add keyboard shortcut`
+
+See [COMMIT-GUIDELINES.md](./COMMIT-GUIDELINES.md) for quick reference.
 
 ### Run Locally
 ```bash
