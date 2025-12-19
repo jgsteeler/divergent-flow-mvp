@@ -1,5 +1,25 @@
 # Divergent Flow - AI Agent Instructions
 
+## ⚠️ CRITICAL: Conventional Commits Required
+
+**ALL commits and PR titles MUST follow the [Conventional Commits](https://www.conventionalcommits.org/) specification.**
+
+This is automatically validated by CI/CD. Non-compliant commits will cause PR checks to fail.
+
+### Quick Format
+```
+<type>(<scope>): <description>
+
+Examples:
+  feat(capture): add keyboard shortcut Cmd+Enter to submit
+  fix(review): correct priority sorting in review queue
+  docs(readme): update installation instructions
+```
+
+See the [Conventional Commits](#conventional-commits) section below for complete guidelines.
+
+---
+
 ## Project Overview
 ADHD-friendly brain management tool. See PRD.md for complete requirements.
 

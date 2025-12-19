@@ -1,5 +1,10 @@
 This is Divergent Flow, an ADHD productivity tool.
 
+⚠️ CRITICAL: ALL COMMITS MUST USE CONVENTIONAL COMMITS FORMAT
+Format: <type>(<scope>): <description>
+Examples: feat(capture): add feature, fix(review): correct bug
+See .github/copilot-instructions.md for full guidelines.
+
 CRITICAL CONTEXT:
 - Read PRD.md for all requirements
 - Follow patterns in existing code
@@ -20,3 +25,4 @@ NEVER:
 - Remove animations
 - Use any instead of proper types
 - Commit secrets
+- Use non-conventional commit messages

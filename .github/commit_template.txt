@@ -1,0 +1,41 @@
+# <type>(<scope>): <subject>
+# |<----  Using a Maximum Of 72 Characters  ---->|
+
+# Explain why this change is being made
+# |<----   Try To Limit Each Line to a Maximum Of 72 Characters   ---->|
+
+# Provide links or keys to any relevant tickets, articles or other resources
+# Example: Closes #123
+
+# --- COMMIT END ---
+# Type can be:
+#   feat     (new feature)
+#   fix      (bug fix)
+#   docs     (documentation changes)
+#   style    (formatting, missing semi colons, etc; no code change)
+#   refactor (refactoring production code)
+#   test     (adding missing tests, refactoring tests; no production code change)
+#   chore    (updating build tasks, package manager configs, etc; no production code change)
+#   perf     (performance improvements)
+#   ci       (CI/CD configuration changes)
+#   build    (changes to build system or dependencies)
+# --------------------
+# Scope is optional and represents the area of the codebase:
+#   capture, review, inference, ui, storage, types, tests, etc.
+# --------------------
+# Subject should use imperative mood: "add feature" not "added feature"
+# --------------------
+# Body should explain WHAT and WHY, not HOW
+# --------------------
+# Breaking changes:
+#   - Add ! after type/scope: feat(api)!: redesign inference API
+#   - Include BREAKING CHANGE: footer with description
+# --------------------
+# Examples:
+#   feat(capture): add keyboard shortcut Cmd+Enter to submit
+#   fix(review): correct priority sorting in review queue
+#   docs(readme): update installation instructions
+#   refactor(inference): extract pattern matching to separate function
+# --------------------
+# Remember: This format is used by Release Please for automated releases!
+# See: https://www.conventionalcommits.org/

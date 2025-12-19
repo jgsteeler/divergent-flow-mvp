@@ -75,6 +75,12 @@ src/
 3. Use AI agent to complete Phase 3-6 per [PRD.md](./PRD.md)
 4. Scale to backend when ready using [TRANSITION-GUIDE.md](./TRANSITION-GUIDE.md)
 
+## Contributing
+
+We welcome contributions! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+
+**Important**: All commits and PR titles must follow [Conventional Commits](https://www.conventionalcommits.org/) format.
+
 ## License
 
 MIT License - See LICENSE file for details
