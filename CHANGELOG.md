@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-mvp-v1.1.0...divergent-flow-mvp-v1.1.1) (2025-12-20)
+
+
+### Bug Fixes
+
+* **workflow:** update PR title validation to follow Conventional Commits format ([#89](https://github.com/jgsteeler/divergent-flow-mvp/issues/89)) ([bda1fa2](https://github.com/jgsteeler/divergent-flow-mvp/commit/bda1fa2a6a8026219d4c37e59b28e8b93c96dc1d))
+
 ## [1.1.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-mvp-v1.0.0...divergent-flow-mvp-v1.1.0) (2025-12-19)
 
 
