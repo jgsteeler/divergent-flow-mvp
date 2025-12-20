@@ -1,14 +1,17 @@
 import { useState } from 'react'
-import { ItemType, Priority, Item, LearningData } from '@/lib/types'
+import { ItemType, Priority, Estimate, Item, LearningData } from '@/lib/types'
 import { getTypeLabel, getTypeDescription } from '@/lib/typeInference'
 import { inferCollections, getLearnedCollections, getRelevantInferences } from '@/lib/collectionInference'
-import { formatDate } from '@/lib/dateParser'
+import { formatDate, extractDateTimeFromText } from '@/lib/dateParser'
+import { getPriorityLabel, getPriorityDescription, getEstimateLabel, getEstimateDescription } from '@/lib/priorityEstimateInference'
 import { HIGH_CONFIDENCE_THRESHOLD, MEDIUM_CONFIDENCE_THRESHOLD, CONFIRMED_CONFIDENCE } from '@/lib/constants'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
-import { Check, X, Note, ListChecks, Bell } from '@phosphor-icons/react'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Check, X, Note, ListChecks, Bell, Calendar, Clock, Tag, MapPin, Warning, Info } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CollectionSelector } from '@/components/CollectionSelector'
 
@@ -34,17 +37,25 @@ export function AttributeConfirmation({
   const [selectedType, setSelectedType] = useState<ItemType | null>(item.inferredType || null)
   const [selectedCollection, setSelectedCollection] = useState<string>(item.collection || '')
   const [selectedPriority, setSelectedPriority] = useState<Priority | undefined>(item.priority)
+  const [selectedEstimate, setSelectedEstimate] = useState<Estimate | undefined>(item.estimate)
+  const [selectedContext, setSelectedContext] = useState<string>(item.context || '')
+  const [selectedTags, setSelectedTags] = useState<string>(item.tags?.join(', ') || '')
+  const [selectedDueDate, setSelectedDueDate] = useState<string>(
+    item.dueDate ? formatDate(item.dueDate) : ''
+  )
+  const [dueDateError, setDueDateError] = useState<string>('')
 
   const types: ItemType[] = ['note', 'action', 'reminder']
   const allCollections = getLearnedCollections(learningData)
   const collectionInferences = inferCollections(item.text, learningData)
   const relevantInferences = getRelevantInferences(collectionInferences)
   const priorities: Priority[] = ['low', 'medium', 'high']
+  const estimates: Estimate[] = ['5min', '15min', '30min', '1hour', '2hours', 'halfday', 'day', 'multiday']
 
   const getConfidenceBadgeColor = (conf: number) => {
     if (conf >= HIGH_CONFIDENCE_THRESHOLD) return 'bg-primary/10 text-primary border-primary/20'
     if (conf >= MEDIUM_CONFIDENCE_THRESHOLD) return 'bg-accent/10 text-accent-foreground border-accent/20'
-    return 'bg-muted text-muted-foreground border-border'
+    return 'bg-orange-500/10 text-orange-600 border-orange-500/20'
   }
 
   const getConfidenceLabel = (conf: number) => {
@@ -53,19 +64,54 @@ export function AttributeConfirmation({
     return 'Low'
   }
 
+  const handleDueDateChange = (value: string) => {
+    setSelectedDueDate(value)
+    setDueDateError('')
+    
+    if (value.trim()) {
+      const { dateTime, error } = extractDateTimeFromText(value)
+      if (error) {
+        setDueDateError(error)
+      }
+    }
+  }
+
   const handleConfirm = () => {
+    // Parse due date if provided
+    let parsedDueDate = item.dueDate
+    if (selectedDueDate.trim()) {
+      const { dateTime, error } = extractDateTimeFromText(selectedDueDate)
+      if (error) {
+        setDueDateError(error)
+        return
+      }
+      parsedDueDate = dateTime || undefined
+    }
+
+    // Parse tags
+    const parsedTags = selectedTags
+      .split(',')
+      .map(t => t.trim())
+      .filter(t => t.length > 0)
+
     const updates: Partial<Item> = {
       inferredType: selectedType || undefined,
       typeConfidence: CONFIRMED_CONFIDENCE,
       collection: selectedCollection || undefined,
       collectionConfidence: CONFIRMED_CONFIDENCE,
       priority: selectedPriority,
+      priorityConfidence: selectedPriority ? CONFIRMED_CONFIDENCE : undefined,
+      estimate: selectedEstimate,
+      estimateConfidence: selectedEstimate ? CONFIRMED_CONFIDENCE : undefined,
+      context: selectedContext || undefined,
+      tags: parsedTags.length > 0 ? parsedTags : undefined,
+      dueDate: parsedDueDate,
       lastReviewedAt: Date.now(),
     }
     onConfirm(item.id, updates)
   }
 
-  const isValid = selectedType && selectedCollection
+  const isValid = selectedType && selectedCollection && !(selectedType === 'reminder' && !selectedDueDate)
 
   return (
     <AnimatePresence>
@@ -75,7 +121,7 @@ export function AttributeConfirmation({
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.2 }}
       >
-        <Card className="p-6 border-2 border-accent/40 bg-card shadow-lg">
+        <Card className="p-6 border-2 border-accent/40 bg-card shadow-lg max-h-[80vh] overflow-y-auto">
           <div className="space-y-6">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 space-y-2">
@@ -156,10 +202,22 @@ export function AttributeConfirmation({
               onSelect={setSelectedCollection}
             />
 
-            {/* Priority Selection (for actions) */}
-            {selectedType === 'action' && (
+            {/* Priority Selection (for actions and reminders) */}
+            {(selectedType === 'action' || selectedType === 'reminder') && (
               <div className="space-y-3">
-                <Label className="text-sm font-medium">Priority</Label>
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium">Priority</Label>
+                  {item.priorityConfidence !== undefined && item.priorityConfidence > 0 && (
+                    <Badge variant="outline" className={getConfidenceBadgeColor(item.priorityConfidence)}>
+                      {item.priorityConfidence}% {getConfidenceLabel(item.priorityConfidence)}
+                    </Badge>
+                  )}
+                  {item.priorityReasoning && (
+                    <Badge variant="outline" className="bg-muted text-muted-foreground text-xs">
+                      <Info size={12} className="mr-1" /> {item.priorityReasoning}
+                    </Badge>
+                  )}
+                </div>
                 <div className="grid grid-cols-3 gap-2">
                   {priorities.map((priority) => {
                     const isSelected = priority === selectedPriority
@@ -181,27 +239,140 @@ export function AttributeConfirmation({
                     )
                   })}
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  {selectedPriority ? getPriorityDescription(selectedPriority) : 'Select a priority level'}
+                </p>
               </div>
             )}
 
-            {/* Show extracted date/time if present */}
-            {item.dueDate && (
-              <div className="p-3 bg-muted/50 rounded-md border border-border">
+            {/* Estimate Selection (for actions) */}
+            {selectedType === 'action' && (
+              <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <Label className="text-sm font-medium">Due Date:</Label>
-                  <span className="text-sm text-foreground">{formatDate(item.dueDate)}</span>
+                  <Clock size={16} weight="duotone" className="text-muted-foreground" />
+                  <Label className="text-sm font-medium">Estimate</Label>
+                  {item.estimateConfidence !== undefined && item.estimateConfidence > 0 && (
+                    <Badge variant="outline" className={getConfidenceBadgeColor(item.estimateConfidence)}>
+                      {item.estimateConfidence}% {getConfidenceLabel(item.estimateConfidence)}
+                    </Badge>
+                  )}
+                  {item.estimateReasoning && (
+                    <Badge variant="outline" className="bg-muted text-muted-foreground text-xs">
+                      <Info size={12} className="mr-1" /> {item.estimateReasoning}
+                    </Badge>
+                  )}
                 </div>
+                <div className="grid grid-cols-4 gap-2">
+                  {estimates.map((estimate) => {
+                    const isSelected = estimate === selectedEstimate
+                    
+                    return (
+                      <Button
+                        key={estimate}
+                        variant={isSelected ? 'default' : 'outline'}
+                        size="sm"
+                        className={`justify-center text-xs ${
+                          isSelected 
+                            ? 'bg-primary hover:bg-primary/90 text-primary-foreground' 
+                            : 'hover:bg-accent hover:text-accent-foreground'
+                        }`}
+                        onClick={() => setSelectedEstimate(estimate)}
+                      >
+                        {getEstimateLabel(estimate)}
+                        {isSelected && <Check size={12} weight="bold" className="ml-1" />}
+                      </Button>
+                    )
+                  })}
+                </div>
+                {selectedEstimate && (
+                  <p className="text-xs text-muted-foreground">
+                    {getEstimateDescription(selectedEstimate)}
+                  </p>
+                )}
               </div>
             )}
+
+            {/* Due Date/Time (for reminders and actions) */}
+            {(selectedType === 'reminder' || selectedType === 'action') && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Calendar size={16} weight="duotone" className="text-muted-foreground" />
+                  <Label className="text-sm font-medium">
+                    {selectedType === 'reminder' ? 'Due Date/Time' : 'Due Date (optional)'}
+                  </Label>
+                  {selectedType === 'reminder' && !selectedDueDate && (
+                    <Badge variant="outline" className="bg-orange-500/10 text-orange-600 border-orange-500/20 text-xs">
+                      <Warning size={12} className="mr-1" /> Required for reminders
+                    </Badge>
+                  )}
+                </div>
+                <Input
+                  value={selectedDueDate}
+                  onChange={(e) => handleDueDateChange(e.target.value)}
+                  placeholder="e.g., tomorrow at 3pm, next Tuesday, in 2 days"
+                  className={dueDateError ? 'border-destructive' : ''}
+                />
+                {dueDateError && (
+                  <p className="text-xs text-destructive flex items-center gap-1">
+                    <Warning size={12} /> {dueDateError}
+                  </p>
+                )}
+                {selectedDueDate && !dueDateError && (
+                  <p className="text-xs text-muted-foreground">
+                    Natural language dates are supported (e.g., "tomorrow at 3pm")
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Context (for actions) */}
+            {selectedType === 'action' && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <MapPin size={16} weight="duotone" className="text-muted-foreground" />
+                  <Label className="text-sm font-medium">Context (optional)</Label>
+                </div>
+                <Input
+                  value={selectedContext}
+                  onChange={(e) => setSelectedContext(e.target.value)}
+                  placeholder="e.g., home, office, phone, computer"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Where or how should this be done?
+                </p>
+              </div>
+            )}
+
+            {/* Tags (for all types) */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Tag size={16} weight="duotone" className="text-muted-foreground" />
+                <Label className="text-sm font-medium">Tags (optional)</Label>
+              </div>
+              <Input
+                value={selectedTags}
+                onChange={(e) => setSelectedTags(e.target.value)}
+                placeholder="e.g., urgent, meeting, personal (comma-separated)"
+              />
+              <p className="text-xs text-muted-foreground">
+                Add keywords to help organize and find this item later
+              </p>
+            </div>
 
             {/* Confirm Button */}
             <Button
               onClick={handleConfirm}
-              disabled={!isValid}
+              disabled={!isValid || !!dueDateError}
               className="w-full"
               size="lg"
             >
-              {isValid ? 'Confirm' : 'Select type and collection to continue'}
+              {!selectedType || !selectedCollection 
+                ? 'Select type and collection to continue'
+                : selectedType === 'reminder' && !selectedDueDate
+                ? 'Reminders require a due date'
+                : dueDateError
+                ? 'Fix date error to continue'
+                : 'Confirm'}
             </Button>
           </div>
         </Card>
