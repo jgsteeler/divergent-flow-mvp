@@ -27,7 +27,7 @@ describe('collectionInference', () => {
 
     expect(result.collection).toBe('MGB')
     expect(result.confidence).toBeGreaterThan(0)
-    expect(result.confidence).toBeLessThanOrEqual(90)
+    expect(result.confidence).toBeLessThanOrEqual(100)
   })
 
   it('should return multiple inferences sorted by confidence', () => {
@@ -36,7 +36,8 @@ describe('collectionInference', () => {
 
     expect(results).toHaveLength(1)
     expect(results[0].collection).toBe('MGB')
-    expect(results[0].confidence).toBe(90)
+    expect(results[0].confidence).toBeGreaterThan(90) // Now can exceed 90% with new settings
+    expect(results[0].confidence).toBeLessThanOrEqual(100)
   })
 
   it('should match 3-character words like "mgb" when combined with other matches', () => {

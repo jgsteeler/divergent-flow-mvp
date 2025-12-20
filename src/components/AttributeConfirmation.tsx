@@ -4,14 +4,14 @@ import { getTypeLabel, getTypeDescription } from '@/lib/typeInference'
 import { inferCollections, getLearnedCollections, getRelevantInferences } from '@/lib/collectionInference'
 import { formatDate, extractDateTimeFromText } from '@/lib/dateParser'
 import { getPriorityLabel, getPriorityDescription, getEstimateLabel, getEstimateDescription } from '@/lib/priorityEstimateInference'
-import { HIGH_CONFIDENCE_THRESHOLD, MEDIUM_CONFIDENCE_THRESHOLD, CONFIRMED_CONFIDENCE } from '@/lib/constants'
+import { HIGH_CONFIDENCE_THRESHOLD, MEDIUM_CONFIDENCE_THRESHOLD, CONFIRMED_CONFIDENCE, COLLECTION_HIGH_CONFIDENCE_THRESHOLD } from '@/lib/constants'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Check, X, Note, ListChecks, Bell, Calendar, Clock, Tag, MapPin, Warning, Info } from '@phosphor-icons/react'
+import { Check, X, Note, ListChecks, Bell, Calendar, Clock, Tag, MapPin, Warning, Info, PencilSimple } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CollectionSelector } from '@/components/CollectionSelector'
 
@@ -44,6 +44,7 @@ export function AttributeConfirmation({
     item.dueDate ? formatDate(item.dueDate) : ''
   )
   const [dueDateError, setDueDateError] = useState<string>('')
+  const [showCollectionEditor, setShowCollectionEditor] = useState<boolean>(false)
 
   const types: ItemType[] = ['note', 'action', 'reminder']
   const allCollections = getLearnedCollections(learningData)
@@ -51,6 +52,14 @@ export function AttributeConfirmation({
   const relevantInferences = getRelevantInferences(collectionInferences)
   const priorities: Priority[] = ['low', 'medium', 'high']
   const estimates: Estimate[] = ['5min', '15min', '30min', '1hour', '2hours', 'halfday', 'day', 'multiday']
+
+  // Check if we have a high-confidence collection that should be auto-displayed
+  const hasHighConfidenceCollection = item.collectionConfidence !== undefined && 
+    item.collectionConfidence >= COLLECTION_HIGH_CONFIDENCE_THRESHOLD &&
+    item.collection
+  
+  // Show editor if: no high confidence collection OR user explicitly wants to edit
+  const shouldShowEditor = !hasHighConfidenceCollection || showCollectionEditor
 
   const getConfidenceBadgeColor = (conf: number) => {
     if (conf >= HIGH_CONFIDENCE_THRESHOLD) return 'bg-primary/10 text-primary border-primary/20'
@@ -207,13 +216,36 @@ export function AttributeConfirmation({
                   </Badge>
                 )}
               </div>
-              <CollectionSelector
-                inferences={relevantInferences}
-                allCollections={allCollections}
-                selectedCollection={selectedCollection}
-                onSelect={setSelectedCollection}
-                showLabel={false}
-              />
+              
+              {hasHighConfidenceCollection && !showCollectionEditor ? (
+                // High confidence: Show collection directly with edit button
+                <div className="space-y-2">
+                  <div 
+                    className="flex items-center justify-between p-3 rounded-md border-2 border-primary/40 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors"
+                    onClick={() => setShowCollectionEditor(true)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Check size={20} weight="bold" className="text-primary" />
+                      <div>
+                        <div className="font-medium text-foreground">{selectedCollection}</div>
+                        <div className="text-xs text-muted-foreground">
+                          High confidence - Click to change
+                        </div>
+                      </div>
+                    </div>
+                    <PencilSimple size={18} className="text-muted-foreground" />
+                  </div>
+                </div>
+              ) : (
+                // Normal flow: Show collection selector
+                <CollectionSelector
+                  inferences={relevantInferences}
+                  allCollections={allCollections}
+                  selectedCollection={selectedCollection}
+                  onSelect={setSelectedCollection}
+                  showLabel={false}
+                />
+              )}
             </div>
 
             {/* Priority Selection (for actions and reminders) */}
