@@ -13,6 +13,7 @@ interface CollectionSelectorProps {
   selectedCollection: string
   onSelect: (collection: string) => void
   showConfidenceBadge?: boolean
+  showLabel?: boolean
 }
 
 export function CollectionSelector({
@@ -21,6 +22,7 @@ export function CollectionSelector({
   selectedCollection,
   onSelect,
   showConfidenceBadge = true,
+  showLabel = true,
 }: CollectionSelectorProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [isCreatingNew, setIsCreatingNew] = useState(false)
@@ -70,9 +72,11 @@ export function CollectionSelector({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <Label className="text-sm font-medium">Collection</Label>
-      </div>
+      {showLabel && (
+        <div className="flex items-center gap-2">
+          <Label className="text-sm font-medium">Collection</Label>
+        </div>
+      )}
 
       {/* Show inferred collections with medium+ confidence */}
       {inferences.length > 0 && (

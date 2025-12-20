@@ -113,6 +113,8 @@ function App() {
       (current || []).map((i) => (i.id === itemId ? updatedItem : i))
     );
 
+    // Learning data: maps Item properties to normalized attribute names
+    // Item.inferredType → type, Item.collection → collection, etc.
     const learningData = {
       originalText: item.text,
       inferredAttributes: {

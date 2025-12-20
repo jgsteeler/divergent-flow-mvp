@@ -198,12 +198,23 @@ export function AttributeConfirmation({
             </div>
 
             {/* Collection Selection */}
-            <CollectionSelector
-              inferences={relevantInferences}
-              allCollections={allCollections}
-              selectedCollection={selectedCollection}
-              onSelect={setSelectedCollection}
-            />
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Label className="text-sm font-medium">Collection</Label>
+                {item.collectionConfidence !== undefined && item.collectionConfidence > 0 && (
+                  <Badge variant="outline" className={getConfidenceBadgeColor(item.collectionConfidence)}>
+                    {item.collectionConfidence}% {getConfidenceLabel(item.collectionConfidence)}
+                  </Badge>
+                )}
+              </div>
+              <CollectionSelector
+                inferences={relevantInferences}
+                allCollections={allCollections}
+                selectedCollection={selectedCollection}
+                onSelect={setSelectedCollection}
+                showLabel={false}
+              />
+            </div>
 
             {/* Priority Selection (for actions and reminders) */}
             {(selectedType === 'action' || selectedType === 'reminder') && (
