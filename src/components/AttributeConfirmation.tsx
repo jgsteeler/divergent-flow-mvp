@@ -68,10 +68,11 @@ export function AttributeConfirmation({
     setSelectedDueDate(value)
     setDueDateError('')
     
+    // Only validate if there's a value
     if (value.trim()) {
-      const { dateTime, error } = extractDateTimeFromText(value)
-      if (error) {
-        setDueDateError(error)
+      const { dateTime } = extractDateTimeFromText(value)
+      if (!dateTime) {
+        setDueDateError('Could not parse date. Try formats like "tomorrow", "next Tuesday at 3pm", or "in 2 days"')
       }
     }
   }
@@ -80,12 +81,12 @@ export function AttributeConfirmation({
     // Parse due date if provided
     let parsedDueDate = item.dueDate
     if (selectedDueDate.trim()) {
-      const { dateTime, error } = extractDateTimeFromText(selectedDueDate)
-      if (error) {
-        setDueDateError(error)
+      const { dateTime } = extractDateTimeFromText(selectedDueDate)
+      if (!dateTime) {
+        setDueDateError('Could not parse date. Try formats like "tomorrow", "next Tuesday at 3pm", or "in 2 days"')
         return
       }
-      parsedDueDate = dateTime || undefined
+      parsedDueDate = dateTime
     }
 
     // Parse tags
@@ -111,7 +112,9 @@ export function AttributeConfirmation({
     onConfirm(item.id, updates)
   }
 
-  const isValid = selectedType && selectedCollection && !(selectedType === 'reminder' && !selectedDueDate)
+  const isReminderWithoutDate = selectedType === 'reminder' && !selectedDueDate
+  const hasRequiredFields = selectedType && selectedCollection
+  const isValid = hasRequiredFields && !isReminderWithoutDate
 
   return (
     <AnimatePresence>
@@ -362,7 +365,7 @@ export function AttributeConfirmation({
             {/* Confirm Button */}
             <Button
               onClick={handleConfirm}
-              disabled={!isValid || !!dueDateError}
+              disabled={!isValid || dueDateError.length > 0}
               className="w-full"
               size="lg"
             >
@@ -370,7 +373,7 @@ export function AttributeConfirmation({
                 ? 'Select type and collection to continue'
                 : selectedType === 'reminder' && !selectedDueDate
                 ? 'Reminders require a due date'
-                : dueDateError
+                : dueDateError.length > 0
                 ? 'Fix date error to continue'
                 : 'Confirm'}
             </Button>
