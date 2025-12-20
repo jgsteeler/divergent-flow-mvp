@@ -29,7 +29,7 @@ function applyCollectionLearning(
     const textWords = text.toLowerCase().split(/\s+/)
     
     const matchingWords = patternWords.filter(word => 
-      word.length > MIN_WORD_LENGTH_FOR_LEARNING && textWords.some(tw => tw.includes(word) || word.includes(tw))
+      word.length >= MIN_WORD_LENGTH_FOR_LEARNING && textWords.some(tw => tw.includes(word) || word.includes(tw))
     )
     
     if (matchingWords.length >= Math.min(MIN_MATCHING_WORDS, patternWords.length)) {
