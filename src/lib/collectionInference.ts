@@ -13,8 +13,18 @@ function applyCollectionLearning(
   text: string,
   learningData: LearningData[]
 ): CollectionInference[] {
+  // Include learning data where:
+  // 1. A collection was provided in correctedAttributes
+  // 2. wasCorrect is not explicitly false when there was an inference
+  // (if wasCorrect is false but no collection was inferred, still learn from it)
   const recentLearning = learningData
-    .filter(ld => ld.correctedAttributes.collection && ld.wasCorrect !== false)
+    .filter(ld => {
+      if (!ld.correctedAttributes.collection) return false
+      // If no collection was inferred originally, always learn from it
+      if (!ld.inferredAttributes.collection) return true
+      // If collection was inferred, only learn if it wasn't marked as incorrect
+      return ld.wasCorrect !== false
+    })
     .slice(-MAX_LEARNING_PATTERNS)
 
   const inferences: CollectionInference[] = []
