@@ -113,23 +113,35 @@ function App() {
       (current || []).map((i) => (i.id === itemId ? updatedItem : i))
     );
 
+    // Learning data: maps Item properties to normalized attribute names
+    // Item.inferredType → type, Item.collection → collection, etc.
     const learningData = {
       originalText: item.text,
       inferredAttributes: {
         type: item.inferredType,
         collection: item.collection,
         priority: item.priority,
+        estimate: item.estimate,
         dueDate: item.dueDate,
+        context: item.context,
+        tags: item.tags,
         typeConfidence: item.typeConfidence,
         collectionConfidence: item.collectionConfidence,
+        priorityConfidence: item.priorityConfidence,
+        estimateConfidence: item.estimateConfidence,
       },
       correctedAttributes: {
         type: updates.inferredType,
         collection: updates.collection,
         priority: updates.priority,
+        estimate: updates.estimate,
         dueDate: updates.dueDate,
+        context: updates.context,
+        tags: updates.tags,
         typeConfidence: 100,
         collectionConfidence: 100,
+        priorityConfidence: updates.priority ? 100 : undefined,
+        estimateConfidence: updates.estimate ? 100 : undefined,
       },
       timestamp: Date.now(),
       wasCorrect: item.inferredType === updates.inferredType && item.collection === updates.collection,
