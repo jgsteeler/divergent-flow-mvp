@@ -359,7 +359,16 @@ export function inferType(
   learningData: TypeLearningData[] = []
 ): { type: ItemType | null; confidence: number; reasoning: string; keywords: string[] } {
   const keywords = parseKeywords(text);
+  const { dateTime } = extractDateTimeFromText(text);
+  const hasDateTime = dateTime !== null;
+
   const scores = calculateTypeScores(keywords, learningData);
+
+  // Boost reminder score if date/time is present with action indicators
+  if (hasDateTime && scores.action.score > 0) {
+    scores.reminder.score += scores.action.score * 0.5;
+    scores.reminder.matches += 1;
+  }
 
   // Apply phrase boosts and score adjustments
   applyPhraseBoosts(scores, text);
@@ -381,7 +390,7 @@ export function inferType(
   const baseConfidence = calculateBaseConfidence(scores);
   const finalType = selectBestType(scores);
   const normalizedConfidence = normalizeFinalConfidence(baseConfidence, finalType, scores);
-  
+
   // Apply final adjustments
   const { type: returnType, confidence: returnConfidence } = applyFinalAdjustments(
     finalType,
