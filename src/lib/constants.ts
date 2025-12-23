@@ -27,7 +27,6 @@ export const CONFIDENCE_CAP_BELOW_THRESHOLD = 94.9 // Cap confidence below 95 to
 export const EXACT_MATCH_SCORE_THRESHOLD = 0.9 // Threshold for considering a match as "exact" (90% of total)
 export const EXACT_MATCH_CONFIDENCE = 95 // Confidence for exact matches
 export const REMINDER_PREFIX_BOOST = 3 // Boost for explicit 'Reminder:' prefix
-export const DEFAULT_NOTE_CONFIDENCE = 85 // Default confidence when no strong indicators
 export const AMBIGUOUS_CASE_SCORE_THRESHOLD = 0.8 // Threshold for ambiguous cases (80% of total)
 export const AMBIGUOUS_CASE_MIN_CONFIDENCE = 75 // Minimum confidence for ambiguous cases
 export const EXPLICIT_REMINDER_CONFIDENCE = 95 // Confidence for explicitly prioritized reminders
