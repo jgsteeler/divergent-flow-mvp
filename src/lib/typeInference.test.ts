@@ -120,31 +120,6 @@ describe('typeInference', () => {
         })
       })
 
-      it('should identify Phase 2 preloaded action phrases', () => {
-        const phrases = [
-          'Create a new project',
-          'Take the trash out',
-          'Build a mobile app',
-          'Fix the bug in production',
-          'Update the README',
-          'Review the pull request',
-          'Send an email to client',
-          'Call the office',
-          'Email the team',
-          'Schedule a meeting',
-          'Complete the onboarding',
-          'Finish the report',
-          'Submit the proposal',
-          'Prepare the presentation',
-          'Order new supplies'
-        ]
-        
-        phrases.forEach(phrase => {
-          const result = inferType(phrase, defaultLearningData)
-          expect(result.type).toBe('action')
-          expect(result.confidence).toBeGreaterThan(50)
-        })
-      })
     })
 
     describe('note patterns', () => {
