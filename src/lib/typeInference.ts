@@ -125,6 +125,109 @@ function calculateTypeScores(
 }
 
 /**
+ * Calculate confidence for a given type based on scores and context
+ */
+function calculateConfidence(
+  selectedType: ItemType,
+  scores: Record<ItemType, { score: number; matches: number }>,
+  hasStrongIndicators: boolean
+): number {
+  const maxScore = Math.max(scores.action.score, scores.reminder.score, scores.note.score);
+  const totalScore = scores.action.score + scores.reminder.score + scores.note.score;
+
+  // Default case: no matches
+  if (maxScore === 0) {
+    return 85; // Default confidence for note type
+  }
+
+  // Strong indicators (explicit keywords): high confidence
+  if (hasStrongIndicators && (selectedType === 'action' || selectedType === 'reminder')) {
+    return 95;
+  }
+
+  // Calculate base confidence from score distribution
+  const normalizedConfidence = (maxScore / totalScore) * 100;
+
+  // Determine confidence based on type and score dominance
+  const scoreDominance = maxScore / totalScore;
+
+  if (scoreDominance > 0.9) {
+    // Very strong match (>90% of total score)
+    if (selectedType === 'action' || selectedType === 'reminder') {
+      return 95;
+    }
+    return Math.min(normalizedConfidence, 85); // Cap note confidence at 85
+  } else if (scoreDominance > 0.8) {
+    // Strong match (>80% of total score)
+    if (selectedType === 'action' || selectedType === 'reminder') {
+      return 95;
+    }
+    return Math.min(normalizedConfidence, 85); // Cap note confidence
+  } else if (scoreDominance > 0.6) {
+    // Moderate match (>60% of total score)
+    if (selectedType === 'action' || selectedType === 'reminder') {
+      return 90;
+    }
+    return Math.min(normalizedConfidence, 85); // Cap note confidence
+  } else {
+    // Ambiguous case (<60% of total score)
+    return Math.max(75, Math.min(normalizedConfidence, 85));
+  }
+}
+
+/**
+ * Determine the best type from scores with tie-breaking rules
+ */
+function selectBestType(
+  scores: Record<ItemType, { score: number; matches: number }>,
+  text: string
+): ItemType {
+  const maxScore = Math.max(scores.action.score, scores.reminder.score, scores.note.score);
+
+  // Default to note if no scores
+  if (maxScore === 0) {
+    return 'note';
+  }
+
+  const typePreferenceOrder: ItemType[] = ['reminder', 'action', 'note'];
+
+  const candidates: { type: ItemType; score: number; matches: number }[] = [
+    { type: 'action', score: scores.action.score, matches: scores.action.matches },
+    { type: 'reminder', score: scores.reminder.score, matches: scores.reminder.matches },
+    { type: 'note', score: scores.note.score, matches: scores.note.matches },
+  ];
+
+  const topCandidates = candidates.filter((candidate) => candidate.score === maxScore);
+
+  if (topCandidates.length === 0) {
+    return 'note';
+  }
+
+  // Apply tie-breaking: prefer higher match count, then preference order
+  const bestCandidate = topCandidates.reduce((best, current) => {
+    if (current.matches > best.matches) {
+      return current;
+    }
+    if (current.matches < best.matches) {
+      return best;
+    }
+    // Equal matches: use preference order
+    const bestIndex = typePreferenceOrder.indexOf(best.type);
+    const currentIndex = typePreferenceOrder.indexOf(current.type);
+    return currentIndex !== -1 && (bestIndex === -1 || currentIndex < bestIndex) ? current : best;
+  }, topCandidates[0]);
+
+  let selectedType = bestCandidate.type;
+
+  // Edge case: override note with action if action score is strong
+  if (selectedType === 'note' && scores.action.score > 0.8 * scores.note.score) {
+    selectedType = 'action';
+  }
+
+  return selectedType;
+}
+
+/**
  * Infer type using keyword-based matching against learning data
  */
 export function inferType(
@@ -139,137 +242,58 @@ export function inferType(
 
   const lowerText = text.toLowerCase();
 
-  // Adjust reminder boost for specific phrases
+  // Apply phrase-based score adjustments
   const reminderBoostPhrases = ['remind me to', 'follow up on', "don't forget", 'remember to', 'need to remember', 'Reminder:'];
   const reminderBoost = reminderBoostPhrases.reduce((total, phrase) => {
     if (!lowerText.includes(phrase)) {
       return total;
     }
-    const boost = phrase === "don't forget" ? 3 : 4; // Reduce boost for "don't forget"
+    const boost = phrase === "don't forget" ? 3 : 4;
     return total + boost;
   }, 0);
   scores.reminder.score += reminderBoost;
 
-  // Adjust action boost for specific verbs
   const actionBoostPhrases = ['create', 'make', 'write', 'send', 'call', 'email', 'fix', 'build', 'update', 'submit'];
   const actionBoost = actionBoostPhrases.reduce((total, phrase) => {
     if (!lowerText.includes(phrase)) {
       return total;
     }
-    const boost = phrase === 'submit' ? 3 : 2; // Stronger boost for "submit"
+    const boost = phrase === 'submit' ? 3 : 2;
     return total + boost;
   }, 0);
   scores.action.score += actionBoost;
 
+  // Special handling for 'Reminder:' prefix
+  if (text.startsWith('Reminder:')) {
+    scores.reminder.score += 3;
+  }
+
   // Reduce reminder dominance when action keywords are present
   if (scores.action.score > 0 && scores.reminder.score > 0) {
-    scores.reminder.score -= scores.action.score * 0.2; // Slightly reduce penalty
+    scores.reminder.score -= scores.action.score * 0.2;
   }
 
+  // Determine if there are strong explicit indicators
+  const hasStrongIndicators = reminderBoostPhrases.some(phrase => lowerText.includes(phrase));
+
+  // Select the best type based on scores
+  const selectedType = selectBestType(scores, text);
+
+  // Calculate confidence once based on selected type and scores
+  const confidence = calculateConfidence(selectedType, scores, hasStrongIndicators);
+
+  // Handle default case (no matches) with specific reasoning
   const maxScore = Math.max(scores.action.score, scores.reminder.score, scores.note.score);
-
-  // Normalize confidence to a 0–100 scale
-  const totalScore = scores.action.score + scores.reminder.score + scores.note.score;
-  let normalizedConfidence = totalScore > 0 ? (maxScore / totalScore) * 100 : 0;
-
-  // Adjust confidence scaling to better align with test expectations
-  let adjustedConfidence = Math.min(normalizedConfidence, 94.9); // Cap below 95 to fix boundary issues
-
-  // Boost confidence for exact matches
-  if (maxScore > 0.9 * totalScore) {
-    adjustedConfidence = 95; // Ensure exact matches hit 95
-  }
-
-  // Add special handling for 'Reminder:' prefix
-  if (text.startsWith('Reminder:')) {
-    scores.reminder.score += 3; // Strong boost for explicit prefix
-  }
-
-  // Adjust default confidence for note type
   if (maxScore === 0) {
     return {
       type: 'note',
-      confidence: 85, // Ensure default confidence for note is consistently 85
+      confidence: 85,
       reasoning: 'Default to note - no strong action or reminder indicators',
       keywords,
     };
   }
 
-  // Refine confidence scaling for ambiguous cases
-  if (totalScore > 0 && maxScore / totalScore < 0.8) {
-    adjustedConfidence = Math.max(adjustedConfidence, 75); // Ensure minimum confidence for ambiguous cases
-  }
-
-  // Explicitly prioritize reminder if certain keywords are present
-  if (scores.reminder.score > 0 && reminderBoostPhrases.some(phrase => text.toLowerCase().includes(phrase))) {
-    return {
-      type: 'reminder',
-      confidence: 95,
-      reasoning: 'Explicitly prioritized reminder due to strong indicators',
-      keywords,
-    };
-  }
-
-  // Refine type prioritization logic
-  const typePreferenceOrder: ItemType[] = ['reminder', 'action', 'note']
-
-  const candidates: { type: ItemType; score: number; matches: number }[] = [
-    { type: 'action', score: scores.action.score, matches: scores.action.matches },
-    { type: 'reminder', score: scores.reminder.score, matches: scores.reminder.matches },
-    { type: 'note', score: scores.note.score, matches: scores.note.matches },
-  ]
-
-  const topCandidates = candidates.filter((candidate) => candidate.score === maxScore)
-
-  const bestCandidate =
-    topCandidates.length === 0
-      ? { type: 'note' as ItemType, score: 0, matches: 0 }
-      : topCandidates.reduce((best, current) => {
-          if (current.matches > best.matches) {
-            return current
-          }
-
-          if (current.matches < best.matches) {
-            return best
-          }
-
-          // If matches are equal, fall back to a deterministic preference order
-          const bestIndex = typePreferenceOrder.indexOf(best.type)
-          const currentIndex = typePreferenceOrder.indexOf(current.type)
-          return currentIndex !== -1 && (bestIndex === -1 || currentIndex < bestIndex) ? current : best
-        }, topCandidates[0])
-
-  const finalType = bestCandidate.type
-  // Add additional prioritization for action phrases
-  if (scores.action.score > scores.reminder.score && scores.action.score > scores.note.score) {
-    adjustedConfidence = Math.max(adjustedConfidence, 90); // Boost confidence for action
-  }
-
-  // Ensure note confidence is capped at 85 in ambiguous cases
-  if (finalType === 'note' && adjustedConfidence > 85) {
-    adjustedConfidence = 85;
-  }
-
-  // Ensure confidence for action and reminder types aligns with test expectations
-  if (finalType === 'action' && adjustedConfidence < 95) {
-    adjustedConfidence = 95;
-  }
-  if (finalType === 'reminder' && adjustedConfidence < 95) {
-    adjustedConfidence = 95;
-  }
-
-  // Prepare final return values, allowing last-mile adjustments without extra exit paths
-  let returnType: ItemType | null = finalType;
-  let returnConfidence = adjustedConfidence;
-
-  // Final edge case handling for action vs note prioritization
-  if (finalType === 'note' && scores.action.score > 0.8 * scores.note.score) {
-    returnType = 'action';
-    if (returnConfidence < 95) {
-      returnConfidence = 95;
-    }
-  }
-
+  // Build reasoning
   const scoreSummary = `Scores - note: ${scores.note.score.toFixed(2)}, action: ${scores.action.score.toFixed(2)}, reminder: ${scores.reminder.score.toFixed(2)}`;
   const keywordSummary =
     keywords.length > 0
@@ -277,13 +301,13 @@ export function inferType(
       : 'No specific keywords matched';
 
   let reasoningDetail: string;
-  if (finalType === 'action') {
+  if (selectedType === 'action') {
     reasoningDetail =
       'Classified as action because action-related patterns had the strongest score after refined prioritization.';
-  } else if (finalType === 'reminder') {
+  } else if (selectedType === 'reminder') {
     reasoningDetail =
       'Classified as reminder because reminder-related patterns had the strongest score after refined prioritization.';
-  } else if (finalType === 'note') {
+  } else if (selectedType === 'note') {
     reasoningDetail =
       'Classified as note because informational patterns outweighed action and reminder indicators after refined prioritization.';
   } else {
@@ -294,8 +318,8 @@ export function inferType(
   const detailedReasoning = `${reasoningDetail} ${scoreSummary}. ${keywordSummary}.`;
 
   return {
-    type: finalType,
-    confidence: adjustedConfidence, // Use refined confidence
+    type: selectedType,
+    confidence,
     reasoning: detailedReasoning,
     keywords,
   };
