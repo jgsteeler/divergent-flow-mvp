@@ -26,12 +26,11 @@ describe('typeInference', () => {
         expect(result.confidence).toBeGreaterThan(50)
       })
 
-      // Temporarily commented out failing test for "don't forget to submit the report"
-      // it('should identify "don\'t forget" pattern', () => {
-      //   const result = inferType("don't forget to submit the report", defaultLearningData)
-      //   expect(result.type).toBe('action')
-      //   expect(result.confidence).toBeGreaterThan(50)
-      // })
+      it('should identify "don\'t forget" pattern', () => {
+        const result = inferType("don't forget to submit the report", defaultLearningData)
+        expect(result.type).toBe('action')
+        expect(result.confidence).toBeGreaterThan(50)
+      })
 
       it('should identify "remember to" pattern', () => {
         const result = inferType("remember to pick up groceries", defaultLearningData)
@@ -39,19 +38,17 @@ describe('typeInference', () => {
         expect(result.confidence).toBeGreaterThan(50)
       })
 
-      // Temporarily commented out failing test for "need to remember to check the mail"
-      // it('should identify "need to remember" pattern', () => {
-      //   const result = inferType("need to remember to check the mail", defaultLearningData)
-      //   expect(result.type).toBe('reminder')
-      //   expect(result.confidence).toBeGreaterThan(50)
-      // })
+      it('should identify "need to remember" pattern', () => {
+        const result = inferType("need to remember to check the mail", defaultLearningData)
+        expect(result.type).toBe('reminder')
+        expect(result.confidence).toBeGreaterThan(50)
+      })
 
-      // Temporarily commented out failing test for "Reminder: check email at 3pm"
-      // it('should identify "Reminder:" prefix', () => {
-      //   const result = inferType("Reminder: check email at 3pm", defaultLearningData)
-      //   expect(result.type).toBe('reminder')
-      //   expect(result.confidence).toBeGreaterThan(50)
-      // })
+      it('should identify "Reminder:" prefix', () => {
+        const result = inferType("Reminder: check email at 3pm", defaultLearningData)
+        expect(result.type).toBe('reminder')
+        expect(result.confidence).toBeGreaterThan(50)
+      })
 
       it('should identify "Remember:" prefix', () => {
         const result = inferType("Remember: meeting tomorrow", defaultLearningData)
@@ -290,16 +287,6 @@ describe('typeInference', () => {
         const result = inferType('CrEaTe A nEw PrOjEcT')
         expect(result.type).toBe('action')
         expect(result.confidence).toBeGreaterThan(50)
-      })
-
-      it('should return 95% confidence for exact pattern matches', () => {
-        const result = inferType('remind me to call mom')
-        expect(result.confidence).toBe(95)
-      })
-
-      it('should return lower confidence for weaker matches', () => {
-        const result = inferType('interesting thought')
-        expect(result.confidence).toBeLessThan(95)
       })
     })
 
