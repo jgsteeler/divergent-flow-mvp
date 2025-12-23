@@ -180,8 +180,8 @@ export function inferType(
     adjustedConfidence = 95; // Ensure exact matches hit 95
   }
 
-  // Add special handling for 'Reminder:' prefix
-  if (text.startsWith('Reminder:')) {
+  // Add special handling for 'Reminder:' prefix (case-insensitive)
+  if (text.toLowerCase().startsWith('reminder:')) {
     scores.reminder.score += 3; // Strong boost for explicit prefix
   }
 
@@ -200,7 +200,7 @@ export function inferType(
     adjustedConfidence = Math.max(adjustedConfidence, 75); // Ensure minimum confidence for ambiguous cases
   }
 
-  // Recalculate maxScore after all boosts have been applied
+  // Recalculate maxScore after all boosts have been applied (including Reminder: prefix boost)
   const finalMaxScore = Math.max(scores.action.score, scores.reminder.score, scores.note.score);
 
   // Refine type prioritization logic
