@@ -1,5 +1,5 @@
-import { ItemType, TypeLearningData } from './types'
-import { extractDateTimeFromText } from './dateParser'
+import { ItemType, TypeLearningData } from './types';
+import { extractDateTimeFromText } from './dateParser';
 import {
   CATCHALL_NOTE_CONFIDENCE,
   HIGH_CONFIDENCE_THRESHOLD,
@@ -24,12 +24,7 @@ import {
   DEFAULT_ACTION_PHRASE_CONFIDENCE,
   DEFAULT_REMINDER_PHRASE_CONFIDENCE,
   DEFAULT_NOTE_PHRASE_CONFIDENCE,
-} from './constants'
-
-// Boost values for type inference scoring
-const REMINDER_PREFIX_BOOST = 3 // Boost for explicit "Reminder:" prefix
-const REMINDER_KEYWORD_STRONG_BOOST = 4 // Strong boost for reminder keywords like "remind me to"
-const REMINDER_KEYWORD_WEAK_BOOST = 3 // Weaker boost for phrases like "don't forget"
+} from './constants';
 
 // Default preloaded phrases for each type (will be stored in learning data)
 export const DEFAULT_ACTION_PHRASES = [
@@ -37,84 +32,41 @@ export const DEFAULT_ACTION_PHRASES = [
   'schedule', 'complete', 'finish', 'submit', 'prepare', 'order', 'take',
   'make', 'write', 'buy', 'book', 'research', 'organize', 'plan', 'draft',
   'need to', 'have to', 'must', 'should'
-]
+];
 
 export const DEFAULT_REMINDER_PHRASES = [
-  'remind me', 'remember to', 'don\'t forget', 'need to remember',
+  'remind me', 'remember to', "don't forget", 'need to remember',
   'reminder', 'remember', 'follow up', 'check in', 'ping me', 'alert me',
   'notify me'
-]
+];
 
 export const DEFAULT_NOTE_PHRASES = [
   'note', 'idea', 'thought', 'interesting', 'learned', 'found out',
   'discovered', 'realized', 'noticed', 'observation', 'insight'
-]
-
-/**
- * Initialize default type learning data if not present
- */
-export function initializeDefaultTypeLearning(): TypeLearningData[] {
-  const defaultData: TypeLearningData[] = []
-  const timestamp = Date.now()
-  
-  DEFAULT_ACTION_PHRASES.forEach(phrase => {
-    defaultData.push({
-      keywords: [phrase],
-      type: 'action',
-      confidence: DEFAULT_ACTION_PHRASE_CONFIDENCE,
-      timestamp,
-      isDefault: true,
-      wasCorrect: true
-    })
-  })
-  
-  DEFAULT_REMINDER_PHRASES.forEach(phrase => {
-    defaultData.push({
-      keywords: [phrase],
-      type: 'reminder',
-      confidence: DEFAULT_REMINDER_PHRASE_CONFIDENCE,
-      timestamp,
-      isDefault: true,
-      wasCorrect: true
-    })
-  })
-  
-  DEFAULT_NOTE_PHRASES.forEach(phrase => {
-    defaultData.push({
-      keywords: [phrase],
-      type: 'note',
-      confidence: DEFAULT_NOTE_PHRASE_CONFIDENCE,
-      timestamp,
-      isDefault: true,
-      wasCorrect: true
-    })
-  })
-  
-  return defaultData
-}
+];
 
 /**
  * Parse text into keywords (normalized, lowercased, filtered)
  */
 export function parseKeywords(text: string): string[] {
-  const normalized = text.toLowerCase().trim()
-  const cleaned = normalized.replace(/[^\w\s']/g, ' ')
-  const words = cleaned.split(/\s+/).filter(word => word.length > 0)
-  
+  const normalized = text.toLowerCase().trim();
+  const cleaned = normalized.replace(/[^\\w\\s']/g, ' ');
+  const words = cleaned.split(/\\s+/).filter(word => word.length > 0);
+
   // Remove common stop words
-  const stopWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by']
-  const filtered = words.filter(word => !stopWords.includes(word))
-  
+  const stopWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'];
+  const filtered = words.filter(word => !stopWords.includes(word));
+
   // Include multi-word phrases (2-3 word combinations)
-  const phrases: string[] = []
+  const phrases: string[] = [];
   for (let i = 0; i < words.length - 1; i++) {
-    phrases.push(`${words[i]} ${words[i + 1]}`)
+    phrases.push(`${words[i]} ${words[i + 1]}`);
     if (i < words.length - 2) {
-      phrases.push(`${words[i]} ${words[i + 1]} ${words[i + 2]}`)
+      phrases.push(`${words[i]} ${words[i + 1]} ${words[i + 2]}`);
     }
   }
-  
-  return [...filtered, ...phrases]
+
+  return [...filtered, ...phrases];
 }
 
 /**
@@ -154,18 +106,12 @@ function calculateTypeScores(
 }
 
 /**
- * Infer type using keyword-based matching against learning data
+ * Apply phrase-specific boosts to type scores
  */
-export function inferType(
-  text: string,
-  learningData: TypeLearningData[] = []
-): { type: ItemType | null; confidence: number; reasoning: string; keywords: string[] } {
-  const keywords = parseKeywords(text);
-  const { dateTime } = extractDateTimeFromText(text);
-  const hasDateTime = dateTime !== null;
-
-  const scores = calculateTypeScores(keywords, learningData);
-
+function applyPhraseBoosts(
+  scores: Record<ItemType, { score: number; matches: number }>,
+  text: string
+): void {
   const lowerText = text.toLowerCase();
 
   // Adjust reminder boost for specific phrases
@@ -179,7 +125,7 @@ export function inferType(
   }, 0);
   scores.reminder.score += reminderBoost;
 
-  // Adjust action boost for specific verbs
+  // Action phrase boosts
   const actionBoostPhrases = ['create', 'make', 'write', 'send', 'call', 'email', 'fix', 'build', 'update', 'submit'];
   const actionBoost = actionBoostPhrases.reduce((total, phrase) => {
     if (!lowerText.includes(phrase)) {
@@ -199,11 +145,30 @@ export function inferType(
   if (scores.action.score > 0 && scores.reminder.score > 0) {
     scores.reminder.score -= scores.action.score * REMINDER_DOMINANCE_PENALTY;
   }
+}
 
+/**
+ * Apply score adjustments based on type interactions
+ */
+function applyScoreAdjustments(
+  scores: Record<ItemType, { score: number; matches: number }>
+): void {
+  // Reduce reminder dominance when action keywords are present
+  if (scores.action.score > 0 && scores.reminder.score > 0) {
+    scores.reminder.score -= scores.action.score * 0.2;
+  }
+}
+
+/**
+ * Calculate base confidence from scores
+ */
+function calculateBaseConfidence(
+  scores: Record<ItemType, { score: number; matches: number }>
+): number {
   const maxScore = Math.max(scores.action.score, scores.reminder.score, scores.note.score);
+  const totalScore = scores.action.score + scores.reminder.score + scores.note.score;
 
   // Calculate confidence: normalize to 0-100 scale and cap below 95 to fix boundary issues
-  const totalScore = scores.action.score + scores.reminder.score + scores.note.score;
   let adjustedConfidence = totalScore > 0 ? Math.min((maxScore / totalScore) * 100, 94.9) : 0;
 
   // Boost confidence for exact matches
@@ -237,27 +202,27 @@ export function inferType(
     { type: 'action', score: scores.action.score, matches: scores.action.matches },
     { type: 'reminder', score: scores.reminder.score, matches: scores.reminder.matches },
     { type: 'note', score: scores.note.score, matches: scores.note.matches },
-  ]
+  ];
 
-  const topCandidates = candidates.filter((candidate) => candidate.score === maxScore)
+  const topCandidates = candidates.filter((candidate) => candidate.score === maxScore);
 
   const bestCandidate =
     topCandidates.length === 0
       ? { type: 'note' as ItemType, score: 0, matches: 0 }
       : topCandidates.reduce((best, current) => {
           if (current.matches > best.matches) {
-            return current
+            return current;
           }
 
           if (current.matches < best.matches) {
-            return best
+            return best;
           }
 
           // If matches are equal, fall back to a deterministic preference order
-          const bestIndex = typePreferenceOrder.indexOf(best.type)
-          const currentIndex = typePreferenceOrder.indexOf(current.type)
-          return currentIndex !== -1 && (bestIndex === -1 || currentIndex < bestIndex) ? current : best
-        }, topCandidates[0])
+          const bestIndex = typePreferenceOrder.indexOf(best.type);
+          const currentIndex = typePreferenceOrder.indexOf(current.type);
+          return currentIndex !== -1 && (bestIndex === -1 || currentIndex < bestIndex) ? current : best;
+        }, topCandidates[0]);
 
   const finalType = bestCandidate.type
   // Add additional prioritization for action phrases
@@ -278,9 +243,64 @@ export function inferType(
     adjustedConfidence = CONFIRMED_TYPE_CONFIDENCE;
   }
 
-  // Prepare final return values, allowing last-mile adjustments without extra exit paths
-  let returnType: ItemType | null = finalType;
-  let returnConfidence = adjustedConfidence;
+  return bestCandidate.type;
+}
+
+/**
+ * Normalize and adjust final confidence based on type and scores
+ */
+function normalizeFinalConfidence(
+  baseConfidence: number,
+  finalType: ItemType,
+  scores: Record<ItemType, { score: number; matches: number }>
+): number {
+  const maxScore = Math.max(scores.action.score, scores.reminder.score, scores.note.score);
+  const totalScore = scores.action.score + scores.reminder.score + scores.note.score;
+  
+  // Start with capped confidence
+  let adjustedConfidence = Math.min(baseConfidence, 94.9);
+
+  // Boost confidence for exact matches
+  if (maxScore > 0.9 * totalScore) {
+    adjustedConfidence = 95;
+  }
+
+  // Refine confidence scaling for ambiguous cases
+  if (totalScore > 0 && maxScore / totalScore < 0.8) {
+    adjustedConfidence = Math.max(adjustedConfidence, 75);
+  }
+
+  // Add additional prioritization for action phrases
+  if (scores.action.score > scores.reminder.score && scores.action.score > scores.note.score) {
+    adjustedConfidence = Math.max(adjustedConfidence, 90);
+  }
+
+  // Type-specific confidence adjustments
+  if (finalType === 'note' && adjustedConfidence > 85) {
+    adjustedConfidence = 85;
+  }
+
+  if (finalType === 'action' && adjustedConfidence < 95) {
+    adjustedConfidence = 95;
+  }
+
+  if (finalType === 'reminder' && adjustedConfidence < 95) {
+    adjustedConfidence = 95;
+  }
+
+  return adjustedConfidence;
+}
+
+/**
+ * Apply final edge case adjustments to type and confidence
+ */
+function applyFinalAdjustments(
+  finalType: ItemType,
+  confidence: number,
+  scores: Record<ItemType, { score: number; matches: number }>
+): { type: ItemType; confidence: number } {
+  let returnType = finalType;
+  let returnConfidence = confidence;
 
   // Final edge case handling for action vs note prioritization
   if (finalType === 'note' && scores.action.score > ACTION_NOTE_PRIORITY_THRESHOLD * scores.note.score) {
@@ -290,6 +310,17 @@ export function inferType(
     }
   }
 
+  return { type: returnType, confidence: returnConfidence };
+}
+
+/**
+ * Build detailed reasoning string
+ */
+function buildReasoning(
+  finalType: ItemType,
+  scores: Record<ItemType, { score: number; matches: number }>,
+  keywords: string[]
+): string {
   const scoreSummary = `Scores - note: ${scores.note.score.toFixed(2)}, action: ${scores.action.score.toFixed(2)}, reminder: ${scores.reminder.score.toFixed(2)}`;
   const keywordSummary =
     keywords.length > 0
@@ -311,12 +342,65 @@ export function inferType(
       'Type could not be confidently determined; using highest available score with refined prioritization.';
   }
 
-  const detailedReasoning = `${reasoningDetail} ${scoreSummary}. ${keywordSummary}.`;
+  return `${reasoningDetail} ${scoreSummary}. ${keywordSummary}.`;
+}
+
+/**
+ * Infer type using keyword-based matching against learning data
+ */
+export function inferType(
+  text: string,
+  learningData: TypeLearningData[] = []
+): { type: ItemType | null; confidence: number; reasoning: string; keywords: string[] } {
+  const keywords = parseKeywords(text);
+  const scores = calculateTypeScores(keywords, learningData);
+
+  // Apply phrase boosts and score adjustments
+  applyPhraseBoosts(scores, text);
+  applyScoreAdjustments(scores);
+
+  // Check for early return conditions
+  const maxScore = Math.max(scores.action.score, scores.reminder.score, scores.note.score);
+  
+  if (maxScore === 0) {
+    return {
+      type: 'note',
+      confidence: 85,
+      reasoning: 'Default to note - no strong action or reminder indicators',
+      keywords,
+    };
+  }
+
+  // Check for explicit reminder priority
+  const reminderBoostPhrases = ['remind me to', 'follow up on', "don't forget", 'remember to', 'need to remember', 'Reminder:'];
+  if (scores.reminder.score > 0 && reminderBoostPhrases.some(phrase => text.toLowerCase().includes(phrase))) {
+    return {
+      type: 'reminder',
+      confidence: 95,
+      reasoning: 'Explicitly prioritized reminder due to strong indicators',
+      keywords,
+    };
+  }
+
+  // Calculate confidence and select type
+  const baseConfidence = calculateBaseConfidence(scores);
+  const finalType = selectBestType(scores);
+  const normalizedConfidence = normalizeFinalConfidence(baseConfidence, finalType, scores);
+  
+  // Apply final adjustments
+  const { type: returnType, confidence: returnConfidence } = applyFinalAdjustments(
+    finalType,
+    normalizedConfidence,
+    scores
+  );
+
+  // Build detailed reasoning
+  const reasoning = buildReasoning(finalType, scores, keywords);
 
   return {
-    type: finalType,
-    confidence: adjustedConfidence, // Use refined confidence
-    reasoning: detailedReasoning,
+    type: returnType,
+    confidence: returnConfidence,
+    reasoning,
     keywords,
   };
 }
