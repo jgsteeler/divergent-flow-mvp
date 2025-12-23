@@ -105,6 +105,10 @@ function calculateTypeScores(
   return scores;
 }
 
+// Phrase lists for type inference
+const REMINDER_BOOST_PHRASES = ['remind me to', 'follow up on', "don't forget", 'remember to', 'need to remember'];
+const ACTION_BOOST_PHRASES = ['create', 'make', 'write', 'send', 'call', 'email', 'fix', 'build', 'update', 'submit'];
+
 /**
  * Apply phrase-specific boosts to type scores
  */
@@ -114,9 +118,8 @@ function applyPhraseBoosts(
 ): void {
   const lowerText = text.toLowerCase();
 
-  // Adjust reminder boost for specific phrases
-  const reminderBoostPhrases = ['remind me to', 'follow up on', "don't forget", 'remember to', 'need to remember', 'reminder:'];
-  const reminderBoost = reminderBoostPhrases.reduce((total, phrase) => {
+  // Reminder phrase boosts
+  const reminderBoost = REMINDER_BOOST_PHRASES.reduce((total, phrase) => {
     if (!lowerText.includes(phrase)) {
       return total;
     }
@@ -125,9 +128,13 @@ function applyPhraseBoosts(
   }, 0);
   scores.reminder.score += reminderBoost;
 
+  // Special handling for 'Reminder:' prefix (case-insensitive)
+  if (text.toLowerCase().startsWith('reminder:')) {
+    scores.reminder.score += REMINDER_PREFIX_BOOST;
+  }
+
   // Action phrase boosts
-  const actionBoostPhrases = ['create', 'make', 'write', 'send', 'call', 'email', 'fix', 'build', 'update', 'submit'];
-  const actionBoost = actionBoostPhrases.reduce((total, phrase) => {
+  const actionBoost = ACTION_BOOST_PHRASES.reduce((total, phrase) => {
     if (!lowerText.includes(phrase)) {
       return total;
     }
@@ -135,11 +142,6 @@ function applyPhraseBoosts(
     return total + boost;
   }, 0);
   scores.action.score += actionBoost;
-
-  // Add special handling for 'Reminder:' prefix (case-insensitive) before final scoring
-  if (text.toLowerCase().startsWith('reminder:')) {
-    scores.reminder.score += REMINDER_PREFIX_BOOST;
-  }
 
   // Reduce reminder dominance when action keywords are present
   if (scores.action.score > 0 && scores.reminder.score > 0) {
@@ -372,8 +374,10 @@ export function inferType(
   }
 
   // Check for explicit reminder priority
-  const reminderBoostPhrases = ['remind me to', 'follow up on', "don't forget", 'remember to', 'need to remember', 'Reminder:'];
-  if (scores.reminder.score > 0 && reminderBoostPhrases.some(phrase => text.toLowerCase().includes(phrase))) {
+  if (scores.reminder.score > 0 && (
+    REMINDER_BOOST_PHRASES.some(phrase => text.toLowerCase().includes(phrase)) ||
+    text.startsWith('Reminder:')
+  )) {
     return {
       type: 'reminder',
       confidence: 95,
