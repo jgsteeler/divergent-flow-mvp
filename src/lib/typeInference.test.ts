@@ -80,6 +80,18 @@ describe('typeInference', () => {
         expect(result.type).toBe('reminder')
         expect(result.confidence).toBeGreaterThan(50)
       })
+
+      it('should boost reminder confidence when date/time is present', () => {
+        const result = inferType("call mom tomorrow at 3pm")
+        expect(result.type).toBe('reminder')
+        expect(result.confidence).toBeGreaterThan(50)
+      })
+
+      it('should detect reminder with date but no explicit reminder keyword', () => {
+        const result = inferType("buy groceries tomorrow")
+        expect(result.type).toBe('reminder')
+        expect(result.confidence).toBeGreaterThan(50)
+      })
     })
 
     describe('action patterns', () => {

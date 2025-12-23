@@ -1,6 +1,5 @@
 import { ItemType, TypeLearningData } from './types'
 import { extractDateTimeFromText } from './dateParser'
-import { CATCHALL_NOTE_CONFIDENCE, HIGH_CONFIDENCE_THRESHOLD } from './constants'
 
 // Default preloaded phrases for each type (will be stored in learning data)
 export const DEFAULT_ACTION_PHRASES = [
@@ -213,10 +212,28 @@ export function inferType(
       keywords
     }
   }
-  
-  // Boost note confidence when action/reminder have low confidence
-  if (maxScore < 1.0 && scores.note.score < maxScore) {
-    scores.note.score = maxScore * 0.9
+
+  // Check for date/time presence (Phase 2 requirement: strong reminder indicator)
+  const { dateTime } = extractDateTimeFromText(text)
+  const hasDateTime = dateTime !== null
+
+  let reminderScore = calculatePatternScore(text, REMINDER_PATTERNS)
+  let actionScore = calculatePatternScore(text, ACTION_PATTERNS)
+  let noteScore = calculatePatternScore(text, NOTE_PATTERNS)
+
+  // Phase 2: Date/time presence is a strong reminder indicator
+  // If text has date/time and action patterns but no reminder patterns, boost reminder
+  if (hasDateTime && reminderScore === 0 && actionScore > 0) {
+    reminderScore = actionScore + 0.2 // Boost to prioritize reminder over action
+  }
+
+  const maxScore = Math.max(reminderScore, actionScore, noteScore)
+
+  if (learned) {
+    const learnedBoost = learned.confidence / 100
+    if (learned.type === 'reminder') reminderScore += learnedBoost
+    if (learned.type === 'action') actionScore += learnedBoost
+    if (learned.type === 'note') noteScore += learnedBoost
   }
 
   // Phase 2 Catchall Logic: If no patterns matched or all scores are low,
@@ -235,9 +252,8 @@ export function inferType(
   
   if (scores.reminder.score > scores.action.score && scores.reminder.score > scores.note.score) {
     inferredType = 'reminder'
-    typeScore = scores.reminder.score
-    matchCount = scores.reminder.matches
-  } else if (scores.action.score > scores.note.score) {
+    patternName = hasDateTime ? 'reminder keywords + date/time' : 'reminder keywords'
+  } else if (actionScore > noteScore) {
     inferredType = 'action'
     typeScore = scores.action.score
     matchCount = scores.action.matches
