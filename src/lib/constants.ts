@@ -1,5 +1,5 @@
 // Confidence thresholds used throughout the app
-export const HIGH_CONFIDENCE_THRESHOLD = 85
+export const HIGH_CONFIDENCE_THRESHOLD = 95
 export const MEDIUM_CONFIDENCE_THRESHOLD = 70
 export const CONFIRMED_CONFIDENCE = 100
 
@@ -8,6 +8,12 @@ export const MIN_WORD_LENGTH_FOR_LEARNING = 3
 export const MAX_LEARNING_PATTERNS = 50
 export const MAX_PATTERN_LENGTH = 100
 export const DEFAULT_LEARNING_CONFIDENCE = 80
+
+// Type inference constants
+export const DATE_TIME_REMINDER_BOOST = 0.2
+export const ACTION_REMINDER_THRESHOLD = 0.5
+export const NOTE_PATTERN_THRESHOLD = 0.8
+export const CATCHALL_NOTE_CONFIDENCE = 85
 
 // Collection inference constants
 export const MIN_MATCHING_WORDS = 2

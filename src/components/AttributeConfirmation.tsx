@@ -45,6 +45,7 @@ export function AttributeConfirmation({
   )
   const [dueDateError, setDueDateError] = useState<string>('')
   const [showCollectionEditor, setShowCollectionEditor] = useState<boolean>(false)
+  const [showTypeEditor, setShowTypeEditor] = useState<boolean>(false)
 
   const types: ItemType[] = ['note', 'action', 'reminder']
   const allCollections = getLearnedCollections(learningData)
@@ -58,8 +59,16 @@ export function AttributeConfirmation({
     item.collectionConfidence >= COLLECTION_HIGH_CONFIDENCE_THRESHOLD &&
     item.collection
   
+  // Check if we have a high-confidence type that should be auto-displayed
+  const hasHighConfidenceType = item.typeConfidence !== undefined && 
+    item.typeConfidence >= HIGH_CONFIDENCE_THRESHOLD &&
+    item.inferredType
+  
   // Show editor if: no high confidence collection OR user explicitly wants to edit
   const shouldShowEditor = !hasHighConfidenceCollection || showCollectionEditor
+  
+  // Show type editor if: no high confidence type OR user explicitly wants to edit
+  const shouldShowTypeEditor = !hasHighConfidenceType || showTypeEditor
 
   const getConfidenceBadgeColor = (conf: number) => {
     if (conf >= HIGH_CONFIDENCE_THRESHOLD) return 'bg-primary/10 text-primary border-primary/20'
@@ -164,46 +173,74 @@ export function AttributeConfirmation({
                   </Badge>
                 )}
               </div>
-              <div className="grid gap-2">
-                {types.map((type) => {
-                  const Icon = TYPE_ICONS[type]
-                  const isSelected = type === selectedType
-                  
-                  return (
-                    <Button
-                      key={type}
-                      variant={isSelected ? 'default' : 'outline'}
-                      className={`justify-start h-auto py-3 px-4 ${
-                        isSelected 
-                          ? 'bg-primary hover:bg-primary/90 text-primary-foreground' 
-                          : 'hover:bg-accent hover:text-accent-foreground'
-                      }`}
-                      onClick={() => setSelectedType(type)}
-                    >
-                      <div className="flex items-center gap-3 w-full">
-                        <Icon 
-                          size={20} 
-                          weight="duotone"
-                          className={isSelected ? 'text-primary-foreground' : 'text-muted-foreground'}
-                        />
-                        <div className="flex-1 text-left">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{getTypeLabel(type)}</span>
-                            {isSelected && (
-                              <Check size={16} weight="bold" />
-                            )}
-                          </div>
-                          <span className={`text-xs ${
-                            isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'
-                          }`}>
-                            {getTypeDescription(type)}
-                          </span>
+              
+              {hasHighConfidenceType && !showTypeEditor ? (
+                // High confidence: Show type directly with edit button
+                <div className="space-y-2">
+                  <div 
+                    className="flex items-center justify-between p-3 rounded-md border-2 border-primary/40 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors"
+                    onClick={() => setShowTypeEditor(true)}
+                  >
+                    <div className="flex items-center gap-3">
+                      {selectedType && (() => {
+                        const Icon = TYPE_ICONS[selectedType]
+                        return <Icon size={20} weight="duotone" className="text-primary" />
+                      })()}
+                      <div>
+                        <div className="font-medium text-foreground">
+                          {selectedType && getTypeLabel(selectedType)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          High confidence - Click to change
                         </div>
                       </div>
-                    </Button>
-                  )
-                })}
-              </div>
+                    </div>
+                    <PencilSimple size={18} className="text-muted-foreground" />
+                  </div>
+                </div>
+              ) : (
+                // Normal flow: Show type selector
+                <div className="grid gap-2">
+                  {types.map((type) => {
+                    const Icon = TYPE_ICONS[type]
+                    const isSelected = type === selectedType
+                    
+                    return (
+                      <Button
+                        key={type}
+                        variant={isSelected ? 'default' : 'outline'}
+                        className={`justify-start h-auto py-3 px-4 ${
+                          isSelected 
+                            ? 'bg-primary hover:bg-primary/90 text-primary-foreground' 
+                            : 'hover:bg-accent hover:text-accent-foreground'
+                        }`}
+                        onClick={() => setSelectedType(type)}
+                      >
+                        <div className="flex items-center gap-3 w-full">
+                          <Icon 
+                            size={20} 
+                            weight="duotone"
+                            className={isSelected ? 'text-primary-foreground' : 'text-muted-foreground'}
+                          />
+                          <div className="flex-1 text-left">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{getTypeLabel(type)}</span>
+                              {isSelected && (
+                                <Check size={16} weight="bold" />
+                              )}
+                            </div>
+                            <span className={`text-xs ${
+                              isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'
+                            }`}>
+                              {getTypeDescription(type)}
+                            </span>
+                          </div>
+                        </div>
+                      </Button>
+                    )
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Collection Selection */}

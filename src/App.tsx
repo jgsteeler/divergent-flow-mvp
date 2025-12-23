@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { Item, ItemType, Priority, Estimate, TypeLearningData, PriorityLearningData, EstimateLearningData } from "@/lib/types";
 import { CaptureInput } from "@/components/CaptureInput";
@@ -9,6 +9,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { inferAttributes } from "@/lib/inference";
 import { inferPriority, inferEstimate, savePriorityLearning, saveEstimateLearning } from "@/lib/priorityEstimateInference";
 import { getTopReviewItems } from "@/lib/reviewPriority";
+import { initializeDefaultTypeLearning, saveTypeLearning } from "@/lib/typeInference";
 
 function App() {
   const [items, setItems] = useLocalStorage<Item[]>("items", []);
@@ -18,6 +19,14 @@ function App() {
   const [estimateLearning, setEstimateLearning] = useLocalStorage<EstimateLearningData[]>("estimate-learning", []);
   const [isProcessing, setIsProcessing] = useState(false);
   const [pendingConfirmation, setPendingConfirmation] = useState<Item | null>(null);
+
+  // Initialize default type learning data if empty
+  useEffect(() => {
+    if (!typeLearning || typeLearning.length === 0) {
+      const defaults = initializeDefaultTypeLearning()
+      setTypeLearning(defaults)
+    }
+  }, [])
 
   const itemsArray = items || [];
   const typeLearningArray = typeLearning || [];
@@ -47,7 +56,7 @@ function App() {
   };
 
   const processItem = async (item: Item) => {
-    const attributes = await inferAttributes(item.text, attributeLearningArray);
+    const attributes = await inferAttributes(item.text, attributeLearningArray, typeLearningArray);
 
     const { priority, confidence: priorityConf, reasoning: priorityReason } = inferPriority(
       item.text,
@@ -65,6 +74,7 @@ function App() {
       ...item,
       inferredType: attributes.type || undefined,
       typeConfidence: attributes.typeConfidence,
+      keywords: attributes.keywords, // Store keywords for future learning
       collection: attributes.collection || undefined,
       collectionConfidence: attributes.collectionConfidence,
       dueDate: attributes.dueDate || undefined,
@@ -85,7 +95,7 @@ function App() {
     const needsReview =
       !attributes.type ||
       !attributes.collection ||
-      (attributes.typeConfidence && attributes.typeConfidence < 85) ||
+      (attributes.typeConfidence && attributes.typeConfidence < 95) ||
       (attributes.collectionConfidence && attributes.collectionConfidence < 85) ||
       (priorityConf < 85) ||
       (estimateConf < 85);
@@ -93,10 +103,22 @@ function App() {
     if (needsReview) {
       setPendingConfirmation(updatedItem);
     } else {
+      // High confidence (>=95%), auto-confirm and save to learning
       const reviewedItem = { ...updatedItem, lastReviewedAt: Date.now() };
       setItems((current) =>
         (current || []).map((i) => (i.id === item.id ? reviewedItem : i))
       );
+      
+      // Save type learning for high-confidence inference
+      if (attributes.type && attributes.keywords && attributes.typeConfidence && attributes.typeConfidence >= 95) {
+        const newTypeLearning = await saveTypeLearning(
+          attributes.keywords,
+          attributes.type,
+          attributes.type,
+          attributes.typeConfidence
+        );
+        setTypeLearning((current) => [...(current || []), newTypeLearning]);
+      }
     }
   };
 
@@ -148,6 +170,17 @@ function App() {
     };
 
     setAttributeLearning((current) => [...(current || []), learningData]);
+
+    // Save type learning when user confirms type
+    if (updates.inferredType && item.keywords && item.keywords.length > 0) {
+      const newTypeLearning = await saveTypeLearning(
+        item.keywords,
+        item.inferredType || null,
+        updates.inferredType,
+        item.typeConfidence || 0
+      );
+      setTypeLearning((current) => [...(current || []), newTypeLearning]);
+    }
 
     if (updates.priority) {
       const newPriorityLearning = await savePriorityLearning(
