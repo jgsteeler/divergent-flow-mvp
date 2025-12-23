@@ -203,13 +203,35 @@ export function inferType(
   }
 
   // Refine type prioritization logic
-  const finalType =
-    scores.reminder.score === maxScore && scores.reminder.matches >= scores.action.matches
-      ? 'reminder'
-      : scores.action.score === maxScore && scores.action.matches >= scores.reminder.matches
-      ? 'action'
-      : 'note';
+  const typePreferenceOrder: ItemType[] = ['reminder', 'action', 'note']
 
+  const candidates: { type: ItemType; score: number; matches: number }[] = [
+    { type: 'action', score: scores.action.score, matches: scores.action.matches },
+    { type: 'reminder', score: scores.reminder.score, matches: scores.reminder.matches },
+    { type: 'note', score: scores.note.score, matches: scores.note.matches },
+  ]
+
+  const topCandidates = candidates.filter((candidate) => candidate.score === maxScore)
+
+  const bestCandidate =
+    topCandidates.length === 0
+      ? { type: 'note' as ItemType, score: 0, matches: 0 }
+      : topCandidates.reduce((best, current) => {
+          if (current.matches > best.matches) {
+            return current
+          }
+
+          if (current.matches < best.matches) {
+            return best
+          }
+
+          // If matches are equal, fall back to a deterministic preference order
+          const bestIndex = typePreferenceOrder.indexOf(best.type)
+          const currentIndex = typePreferenceOrder.indexOf(current.type)
+          return currentIndex !== -1 && (bestIndex === -1 || currentIndex < bestIndex) ? current : best
+        }, topCandidates[0])
+
+  const finalType = bestCandidate.type
   // Add additional prioritization for action phrases
   if (scores.action.score > scores.reminder.score && scores.action.score > scores.note.score) {
     adjustedConfidence = Math.max(adjustedConfidence, 90); // Boost confidence for action
