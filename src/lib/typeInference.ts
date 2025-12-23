@@ -276,7 +276,11 @@ function normalizeFinalConfidence(
   let adjustedConfidence = baseConfidence;
 
   // Add additional prioritization for action phrases
-  if (scores.action.score > scores.reminder.score && scores.action.score > scores.note.score) {
+  if (
+    finalType === 'action' &&
+    scores.action.score > scores.reminder.score &&
+    scores.action.score > scores.note.score
+  ) {
     adjustedConfidence = Math.max(adjustedConfidence, ACTION_TYPE_MIN_CONFIDENCE);
   }
 
