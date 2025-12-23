@@ -1,4 +1,5 @@
 import { ItemType, TypeLearningData } from './types'
+import { extractDateTimeFromText } from './dateParser'
 
 interface TypePattern {
   patterns: RegExp[]
@@ -134,9 +135,19 @@ export function inferType(
     }
   }
 
+  // Check for date/time presence (Phase 2 requirement: strong reminder indicator)
+  const { dateTime } = extractDateTimeFromText(text)
+  const hasDateTime = dateTime !== null
+
   let reminderScore = calculatePatternScore(text, REMINDER_PATTERNS)
   let actionScore = calculatePatternScore(text, ACTION_PATTERNS)
   let noteScore = calculatePatternScore(text, NOTE_PATTERNS)
+
+  // Phase 2: Date/time presence is a strong reminder indicator
+  // If text has date/time and action patterns but no reminder patterns, boost reminder
+  if (hasDateTime && reminderScore === 0 && actionScore > 0) {
+    reminderScore = actionScore + 0.2 // Boost to prioritize reminder over action
+  }
 
   const maxScore = Math.max(reminderScore, actionScore, noteScore)
 
@@ -161,7 +172,7 @@ export function inferType(
   let patternName: string
   if (reminderScore > actionScore && reminderScore > noteScore) {
     inferredType = 'reminder'
-    patternName = 'reminder keywords'
+    patternName = hasDateTime ? 'reminder keywords + date/time' : 'reminder keywords'
   } else if (actionScore > noteScore) {
     inferredType = 'action'
     patternName = 'action verbs'
