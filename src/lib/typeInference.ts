@@ -64,24 +64,87 @@ export function initializeDefaultTypeLearning(): TypeLearningData[] {
   return defaultData
 }
 
-/**
- * Parse text into keywords (normalized, lowercased, filtered)
- */
-export function parseKeywords(text: string): string[] {
-  const normalized = text.toLowerCase().trim()
-  const cleaned = normalized.replace(/[^\w\s']/g, ' ')
-  const words = cleaned.split(/\s+/).filter(word => word.length > 0)
-  
-  // Remove common stop words
-  const stopWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by']
-  const filtered = words.filter(word => !stopWords.includes(word))
-  
-  // Include multi-word phrases (2-3 word combinations)
-  const phrases: string[] = []
-  for (let i = 0; i < words.length - 1; i++) {
-    phrases.push(`${words[i]} ${words[i + 1]}`)
-    if (i < words.length - 2) {
-      phrases.push(`${words[i]} ${words[i + 1]} ${words[i + 2]}`)
+const REMINDER_PATTERNS: TypePattern = {
+  patterns: [
+    // Core reminder phrases from Phase 2 requirements
+    /remind\s+me(\s+to)?/i,
+    /remember\s+to/i,
+    /don't\s+forget(\s+to)?/i,
+    /need\s+to\s+remember/i,
+    /^reminder:/i,
+    /^remember:/i,
+    // Additional reminder indicators
+    /follow\s+up(\s+on)?/i,
+    /check\s+in(\s+on)?/i,
+    /ping\s+me/i,
+    /alert\s+me/i,
+    /notify\s+me/i,
+    /schedule\s+(a\s+)?reminder/i,
+  ],
+  type: 'reminder',
+  weight: 1.0
+}
+
+const ACTION_PATTERNS: TypePattern = {
+  patterns: [
+    // Modal/imperative patterns
+    /^(i\s+)?need\s+to/i,
+    /^(i\s+)?(have\s+to|must)/i,
+    /^(i\s+)?should/i,
+    // Phase 2 preloaded action phrases - "Create a...", "Build...", etc.
+    /^create\s+(a\s+)?/i,
+    /^take\s+the/i,
+    /^build\s+/i,
+    /^fix\s+/i,
+    /^update\s+/i,
+    /^review\s+/i,
+    /^send\s+(a\s+)?/i,
+    /^call\s+/i,
+    /^email\s+/i,
+    /^schedule\s+/i,
+    /^complete\s+/i,
+    /^finish\s+/i,
+    /^submit\s+/i,
+    /^prepare\s+/i,
+    /^order\s+/i,
+    // Additional common action patterns
+    /^make\s+(a\s+)?/i,
+    /^write\s+(a\s+)?/i,
+    /^buy\s+/i,
+    /^book\s+(a\s+)?/i,
+    /^research\s+/i,
+    /^organize\s+/i,
+    /^plan\s+/i,
+    /^draft\s+/i,
+  ],
+  type: 'action',
+  weight: 0.9
+}
+
+const NOTE_PATTERNS: TypePattern = {
+  patterns: [
+    /^note:/i,
+    /^idea:/i,
+    /^thought:/i,
+    /interesting\s+that/i,
+    /learned\s+(that|about)/i,
+    /found\s+out/i,
+    /discovered/i,
+    /realized/i,
+    /noticed/i,
+    /observation:/i,
+    /insight:/i,
+  ],
+  type: 'note',
+  weight: 0.8
+}
+
+function calculatePatternScore(text: string, patterns: TypePattern): number {
+  let score = 0
+  for (const pattern of patterns.patterns) {
+    if (pattern.test(text)) {
+      score += patterns.weight
+      break
     }
   }
   
@@ -155,8 +218,17 @@ export function inferType(
   if (maxScore < 1.0 && scores.note.score < maxScore) {
     scores.note.score = maxScore * 0.9
   }
-  
-  // Determine winning type
+
+  // Phase 2 Catchall Logic: If no patterns matched or all scores are low,
+  // default to note with high confidence
+  if (maxScore === 0 || (reminderScore < 0.5 && actionScore < 0.5 && noteScore < 0.8)) {
+    return { 
+      type: 'note', 
+      confidence: 85, 
+      reasoning: 'Default to note - no strong action or reminder indicators' 
+    }
+  }
+
   let inferredType: ItemType
   let typeScore: number
   let matchCount: number

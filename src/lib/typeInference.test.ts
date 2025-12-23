@@ -57,17 +57,27 @@ describe('typeInference', () => {
         expect(result.confidence).toBeGreaterThan(50)
       })
 
-      it('should boost reminder confidence when date/time is present', () => {
-        const result = inferType("call mom tomorrow at 3pm", defaultLearningData)
-        // With date/time boosting, should favor reminder
-        expect(['reminder', 'action']).toContain(result.type) // Can be either due to "call" action keyword
-        expect(result.confidence).toBeGreaterThanOrEqual(50)
+      it('should identify "remember to" pattern', () => {
+        const result = inferType("remember to pick up groceries")
+        expect(result.type).toBe('reminder')
+        expect(result.confidence).toBeGreaterThan(50)
       })
 
-      it('should detect reminder with date but no explicit reminder keyword', () => {
-        const result = inferType("buy groceries tomorrow", defaultLearningData)
-        // "buy" is in action keywords, date boosts reminder but action might still win
-        expect(['reminder', 'action']).toContain(result.type)
+      it('should identify "need to remember" pattern', () => {
+        const result = inferType("need to remember to check the mail")
+        expect(result.type).toBe('reminder')
+        expect(result.confidence).toBeGreaterThan(50)
+      })
+
+      it('should identify "Reminder:" prefix', () => {
+        const result = inferType("Reminder: check email at 3pm")
+        expect(result.type).toBe('reminder')
+        expect(result.confidence).toBeGreaterThan(50)
+      })
+
+      it('should identify "Remember:" prefix', () => {
+        const result = inferType("Remember: meeting tomorrow")
+        expect(result.type).toBe('reminder')
         expect(result.confidence).toBeGreaterThan(50)
       })
     })
@@ -120,6 +130,58 @@ describe('typeInference', () => {
           expect(result.confidence).toBeGreaterThan(50)
         })
       })
+
+      it('should identify Phase 2 preloaded action phrases', () => {
+        const phrases = [
+          'Create a new project',
+          'Take the trash out',
+          'Build a mobile app',
+          'Fix the bug in production',
+          'Update the README',
+          'Review the pull request',
+          'Send an email to client',
+          'Call the office',
+          'Email the team',
+          'Schedule a meeting',
+          'Complete the onboarding',
+          'Finish the report',
+          'Submit the proposal',
+          'Prepare the presentation',
+          'Order new supplies'
+        ]
+        
+        phrases.forEach(phrase => {
+          const result = inferType(phrase)
+          expect(result.type).toBe('action')
+          expect(result.confidence).toBeGreaterThan(50)
+        })
+      })
+
+      it('should identify Phase 2 preloaded action phrases', () => {
+        const phrases = [
+          'Create a new project',
+          'Take the trash out',
+          'Build a mobile app',
+          'Fix the bug in production',
+          'Update the README',
+          'Review the pull request',
+          'Send an email to client',
+          'Call the office',
+          'Email the team',
+          'Schedule a meeting',
+          'Complete the onboarding',
+          'Finish the report',
+          'Submit the proposal',
+          'Prepare the presentation',
+          'Order new supplies'
+        ]
+        
+        phrases.forEach(phrase => {
+          const result = inferType(phrase)
+          expect(result.type).toBe('action')
+          expect(result.confidence).toBeGreaterThan(50)
+        })
+      })
     })
 
     describe('note patterns', () => {
@@ -142,23 +204,23 @@ describe('typeInference', () => {
       })
 
       it('should use catchall logic for ambiguous text', () => {
-        const result = inferType('interesting observation about user behavior', defaultLearningData)
+        const result = inferType('interesting observation about user behavior')
         expect(result.type).toBe('note')
-        expect(result.confidence).toBe(CATCHALL_NOTE_CONFIDENCE)
+        expect(result.confidence).toBe(85)
       })
 
       it('should use catchall logic for text without clear indicators', () => {
-        const result = inferType('some thoughts about the new design', defaultLearningData)
+        const result = inferType('some thoughts about the new design')
         expect(result.type).toBe('note')
-        expect(result.confidence).toBe(CATCHALL_NOTE_CONFIDENCE)
+        expect(result.confidence).toBe(85)
       })
     })
 
     describe('no pattern match', () => {
       it('should default to note when no patterns match (catchall logic)', () => {
-        const result = inferType('some random text without patterns', defaultLearningData)
+        const result = inferType('some random text without patterns')
         expect(result.type).toBe('note')
-        expect(result.confidence).toBe(CATCHALL_NOTE_CONFIDENCE)
+        expect(result.confidence).toBe(85)
         expect(result.reasoning).toBe('Default to note - no strong action or reminder indicators')
       })
     })
@@ -218,6 +280,90 @@ describe('typeInference', () => {
 
       it('should handle mixed case', () => {
         const result = inferType('CrEaTe A nEw PrOjEcT', defaultLearningData)
+        expect(result.type).toBe('action')
+        expect(result.confidence).toBeGreaterThan(50)
+      })
+
+      it('should return 95% confidence for exact pattern matches', () => {
+        const result = inferType('remind me to call mom')
+        expect(result.confidence).toBe(95)
+      })
+
+      it('should return lower confidence for weaker matches', () => {
+        const result = inferType('interesting thought')
+        expect(result.confidence).toBeLessThan(95)
+      })
+    })
+
+    describe('edge cases', () => {
+      it('should handle empty text', () => {
+        const result = inferType('')
+        expect(result.type).toBe('note')
+        expect(result.confidence).toBe(85)
+      })
+
+      it('should handle text with special characters', () => {
+        const result = inferType('create a new @user profile #feature')
+        expect(result.type).toBe('action')
+        expect(result.confidence).toBeGreaterThan(50)
+      })
+
+      it('should handle text with multiple type indicators', () => {
+        const result = inferType('remind me to create a new report')
+        expect(result.type).toBe('reminder')
+        expect(result.confidence).toBeGreaterThan(50)
+      })
+
+      it('should handle case insensitivity', () => {
+        const result = inferType('REMIND ME TO CALL MOM')
+        expect(result.type).toBe('reminder')
+        expect(result.confidence).toBeGreaterThan(50)
+      })
+
+      it('should handle mixed case', () => {
+        const result = inferType('CrEaTe A nEw PrOjEcT')
+        expect(result.type).toBe('action')
+        expect(result.confidence).toBeGreaterThan(50)
+      })
+
+      it('should return 95% confidence for exact pattern matches', () => {
+        const result = inferType('remind me to call mom')
+        expect(result.confidence).toBe(95)
+      })
+
+      it('should return lower confidence for weaker matches', () => {
+        const result = inferType('interesting thought')
+        expect(result.confidence).toBeLessThan(95)
+      })
+    })
+
+    describe('edge cases', () => {
+      it('should handle empty text', () => {
+        const result = inferType('')
+        expect(result.type).toBe('note')
+        expect(result.confidence).toBe(85)
+      })
+
+      it('should handle text with special characters', () => {
+        const result = inferType('create a new @user profile #feature')
+        expect(result.type).toBe('action')
+        expect(result.confidence).toBeGreaterThan(50)
+      })
+
+      it('should handle text with multiple type indicators', () => {
+        const result = inferType('remind me to create a new report')
+        expect(result.type).toBe('reminder')
+        expect(result.confidence).toBeGreaterThan(50)
+      })
+
+      it('should handle case insensitivity', () => {
+        const result = inferType('REMIND ME TO CALL MOM')
+        expect(result.type).toBe('reminder')
+        expect(result.confidence).toBeGreaterThan(50)
+      })
+
+      it('should handle mixed case', () => {
+        const result = inferType('CrEaTe A nEw PrOjEcT')
         expect(result.type).toBe('action')
         expect(result.confidence).toBeGreaterThan(50)
       })
