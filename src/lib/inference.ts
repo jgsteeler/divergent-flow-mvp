@@ -1,4 +1,4 @@
-import { InferredAttributes, ItemType, Priority, LearningData } from './types'
+import { InferredAttributes, ItemType, Priority, LearningData, TypeLearningData } from './types'
 import { extractDateTimeFromText } from './dateParser'
 import { inferType } from './typeInference'
 import { inferCollection } from './collectionInference'
@@ -6,23 +6,13 @@ import { MAX_PATTERN_LENGTH, DEFAULT_LEARNING_CONFIDENCE, HIGH_CONFIDENCE_THRESH
 
 export async function inferAttributes(
   text: string,
-  learningData: LearningData[] = []
+  learningData: LearningData[] = [],
+  typeLearningData: TypeLearningData[] = []
 ): Promise<InferredAttributes> {
   // Extract date/time from text first
   const { dateTime: extractedDate, cleanText } = extractDateTimeFromText(text)
   
-  // Extract type learning data from general learning data for backwards compatibility
-  const typeLearningData = learningData
-    .filter(ld => ld.correctedAttributes.type)
-    .map(ld => ({
-      pattern: ld.originalText.toLowerCase().substring(0, MAX_PATTERN_LENGTH),
-      type: ld.correctedAttributes.type!,
-      confidence: ld.correctedAttributes.typeConfidence || DEFAULT_LEARNING_CONFIDENCE,
-      timestamp: ld.timestamp,
-      wasCorrect: ld.wasCorrect
-    }))
-  
-  // Use pattern-based inference for type with learning data
+  // Use keyword-based inference for type with learning data
   const typeInference = inferType(text, typeLearningData)
   
   // Use pattern-based inference for collection
