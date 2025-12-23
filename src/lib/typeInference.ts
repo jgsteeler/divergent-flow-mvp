@@ -397,8 +397,8 @@ export function inferType(
     scores
   );
 
-  // Build detailed reasoning
-  const reasoning = buildReasoning(finalType, scores, keywords);
+  // Build detailed reasoning based on the final returned type
+  const reasoning = buildReasoning(returnType, scores, keywords);
 
   return {
     type: returnType,
