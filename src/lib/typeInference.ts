@@ -2,6 +2,11 @@ import { ItemType, TypeLearningData } from './types'
 import { extractDateTimeFromText } from './dateParser'
 import { CATCHALL_NOTE_CONFIDENCE, HIGH_CONFIDENCE_THRESHOLD } from './constants'
 
+// Boost values for type inference scoring
+const REMINDER_PREFIX_BOOST = 3 // Boost for explicit "Reminder:" prefix
+const REMINDER_KEYWORD_STRONG_BOOST = 4 // Strong boost for reminder keywords like "remind me to"
+const REMINDER_KEYWORD_WEAK_BOOST = 3 // Weaker boost for phrases like "don't forget"
+
 // Default preloaded phrases for each type (will be stored in learning data)
 export const DEFAULT_ACTION_PHRASES = [
   'create', 'build', 'fix', 'update', 'review', 'send', 'call', 'email',
@@ -140,12 +145,12 @@ export function inferType(
   const lowerText = text.toLowerCase();
 
   // Adjust reminder boost for specific phrases
-  const reminderBoostPhrases = ['remind me to', 'follow up on', "don't forget", 'remember to', 'need to remember', 'Reminder:'];
+  const reminderBoostPhrases = ['remind me to', 'follow up on', "don't forget", 'remember to', 'need to remember', 'reminder:'];
   const reminderBoost = reminderBoostPhrases.reduce((total, phrase) => {
     if (!lowerText.includes(phrase)) {
       return total;
     }
-    const boost = phrase === "don't forget" ? 3 : 4; // Reduce boost for "don't forget"
+    const boost = phrase === "don't forget" ? REMINDER_KEYWORD_WEAK_BOOST : REMINDER_KEYWORD_STRONG_BOOST;
     return total + boost;
   }, 0);
   scores.reminder.score += reminderBoost;
@@ -160,6 +165,11 @@ export function inferType(
     return total + boost;
   }, 0);
   scores.action.score += actionBoost;
+
+  // Add special handling for 'Reminder:' prefix (case-insensitive) before final scoring
+  if (text.toLowerCase().startsWith('reminder:')) {
+    scores.reminder.score += REMINDER_PREFIX_BOOST;
+  }
 
   // Reduce reminder dominance when action keywords are present
   if (scores.action.score > 0 && scores.reminder.score > 0) {
@@ -177,11 +187,6 @@ export function inferType(
     adjustedConfidence = 95; // Ensure exact matches hit 95
   }
 
-  // Add special handling for 'Reminder:' prefix
-  if (text.startsWith('Reminder:')) {
-    scores.reminder.score += 3; // Strong boost for explicit prefix
-  }
-
   // Adjust default confidence for note type
   if (maxScore === 0) {
     return {
@@ -195,16 +200,6 @@ export function inferType(
   // Refine confidence scaling for ambiguous cases
   if (totalScore > 0 && maxScore / totalScore < 0.8) {
     adjustedConfidence = Math.max(adjustedConfidence, 75); // Ensure minimum confidence for ambiguous cases
-  }
-
-  // Explicitly prioritize reminder if certain keywords are present
-  if (scores.reminder.score > 0 && reminderBoostPhrases.some(phrase => text.toLowerCase().includes(phrase))) {
-    return {
-      type: 'reminder',
-      confidence: 95,
-      reasoning: 'Explicitly prioritized reminder due to strong indicators',
-      keywords,
-    };
   }
 
   // Refine type prioritization logic
