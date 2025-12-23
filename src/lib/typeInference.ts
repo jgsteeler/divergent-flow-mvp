@@ -13,7 +13,6 @@ import {
   EXACT_MATCH_SCORE_THRESHOLD,
   EXACT_MATCH_CONFIDENCE,
   REMINDER_PREFIX_BOOST,
-  DEFAULT_NOTE_CONFIDENCE,
   AMBIGUOUS_CASE_SCORE_THRESHOLD,
   AMBIGUOUS_CASE_MIN_CONFIDENCE,
   EXPLICIT_REMINDER_CONFIDENCE,
@@ -215,7 +214,7 @@ export function inferType(
   if (maxScore === 0) {
     return {
       type: 'note',
-      confidence: DEFAULT_NOTE_CONFIDENCE,
+      confidence: CATCHALL_NOTE_CONFIDENCE,
       reasoning: 'Default to note - no strong action or reminder indicators',
       keywords,
     };
