@@ -11,6 +11,7 @@ export const DEFAULT_LEARNING_CONFIDENCE = 80
 
 // Type inference constants
 export const DATE_TIME_REMINDER_BOOST = 0.2
+export const DATE_TIME_ACTION_MULTIPLIER = 0.5 // Multiplier for boosting reminder when date/time present with action
 export const ACTION_REMINDER_THRESHOLD = 0.5
 export const NOTE_PATTERN_THRESHOLD = 0.8
 export const CATCHALL_NOTE_CONFIDENCE = 85
