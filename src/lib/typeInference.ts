@@ -1,6 +1,30 @@
 import { ItemType, TypeLearningData } from './types'
 import { extractDateTimeFromText } from './dateParser'
-import { CATCHALL_NOTE_CONFIDENCE, HIGH_CONFIDENCE_THRESHOLD } from './constants'
+import {
+  CATCHALL_NOTE_CONFIDENCE,
+  HIGH_CONFIDENCE_THRESHOLD,
+  PARTIAL_MATCH_WEIGHT,
+  REMINDER_PHRASE_BOOST_DEFAULT,
+  REMINDER_PHRASE_BOOST_DONT_FORGET,
+  ACTION_PHRASE_BOOST_DEFAULT,
+  ACTION_PHRASE_BOOST_SUBMIT,
+  REMINDER_DOMINANCE_PENALTY,
+  CONFIDENCE_CAP_BELOW_THRESHOLD,
+  EXACT_MATCH_SCORE_THRESHOLD,
+  EXACT_MATCH_CONFIDENCE,
+  REMINDER_PREFIX_BOOST,
+  DEFAULT_NOTE_CONFIDENCE,
+  AMBIGUOUS_CASE_SCORE_THRESHOLD,
+  AMBIGUOUS_CASE_MIN_CONFIDENCE,
+  EXPLICIT_REMINDER_CONFIDENCE,
+  ACTION_TYPE_MIN_CONFIDENCE,
+  NOTE_TYPE_MAX_CONFIDENCE_AMBIGUOUS,
+  CONFIRMED_TYPE_CONFIDENCE,
+  ACTION_NOTE_PRIORITY_THRESHOLD,
+  DEFAULT_ACTION_PHRASE_CONFIDENCE,
+  DEFAULT_REMINDER_PHRASE_CONFIDENCE,
+  DEFAULT_NOTE_PHRASE_CONFIDENCE,
+} from './constants'
 
 // Boost values for type inference scoring
 const REMINDER_PREFIX_BOOST = 3 // Boost for explicit "Reminder:" prefix
@@ -37,7 +61,7 @@ export function initializeDefaultTypeLearning(): TypeLearningData[] {
     defaultData.push({
       keywords: [phrase],
       type: 'action',
-      confidence: 95,
+      confidence: DEFAULT_ACTION_PHRASE_CONFIDENCE,
       timestamp,
       isDefault: true,
       wasCorrect: true
@@ -48,7 +72,7 @@ export function initializeDefaultTypeLearning(): TypeLearningData[] {
     defaultData.push({
       keywords: [phrase],
       type: 'reminder',
-      confidence: 95,
+      confidence: DEFAULT_REMINDER_PHRASE_CONFIDENCE,
       timestamp,
       isDefault: true,
       wasCorrect: true
@@ -59,7 +83,7 @@ export function initializeDefaultTypeLearning(): TypeLearningData[] {
     defaultData.push({
       keywords: [phrase],
       type: 'note',
-      confidence: 90,
+      confidence: DEFAULT_NOTE_PHRASE_CONFIDENCE,
       timestamp,
       isDefault: true,
       wasCorrect: true
@@ -118,7 +142,7 @@ function calculateTypeScores(
           scores[learning.type].matches += 1;
         } else if (keyword.includes(learnedKeyword) || learnedKeyword.includes(keyword)) {
           // Partial match
-          const weight = (learning.confidence / 100) * 0.75; // Adjusted partial match weight
+          const weight = (learning.confidence / 100) * PARTIAL_MATCH_WEIGHT;
           scores[learning.type].score += weight;
           scores[learning.type].matches += 1;
         }
@@ -150,7 +174,7 @@ export function inferType(
     if (!lowerText.includes(phrase)) {
       return total;
     }
-    const boost = phrase === "don't forget" ? REMINDER_KEYWORD_WEAK_BOOST : REMINDER_KEYWORD_STRONG_BOOST;
+    const boost = phrase === "don't forget" ? REMINDER_PHRASE_BOOST_DONT_FORGET : REMINDER_PHRASE_BOOST_DEFAULT;
     return total + boost;
   }, 0);
   scores.reminder.score += reminderBoost;
@@ -161,7 +185,7 @@ export function inferType(
     if (!lowerText.includes(phrase)) {
       return total;
     }
-    const boost = phrase === 'submit' ? 3 : 2; // Stronger boost for "submit"
+    const boost = phrase === 'submit' ? ACTION_PHRASE_BOOST_SUBMIT : ACTION_PHRASE_BOOST_DEFAULT;
     return total + boost;
   }, 0);
   scores.action.score += actionBoost;
@@ -173,7 +197,7 @@ export function inferType(
 
   // Reduce reminder dominance when action keywords are present
   if (scores.action.score > 0 && scores.reminder.score > 0) {
-    scores.reminder.score -= scores.action.score * 0.2; // Slightly reduce penalty
+    scores.reminder.score -= scores.action.score * REMINDER_DOMINANCE_PENALTY;
   }
 
   const maxScore = Math.max(scores.action.score, scores.reminder.score, scores.note.score);
@@ -183,23 +207,23 @@ export function inferType(
   let adjustedConfidence = totalScore > 0 ? Math.min((maxScore / totalScore) * 100, 94.9) : 0;
 
   // Boost confidence for exact matches
-  if (maxScore > 0.9 * totalScore) {
-    adjustedConfidence = 95; // Ensure exact matches hit 95
+  if (maxScore > EXACT_MATCH_SCORE_THRESHOLD * totalScore) {
+    adjustedConfidence = EXACT_MATCH_CONFIDENCE;
   }
 
   // Adjust default confidence for note type
   if (maxScore === 0) {
     return {
       type: 'note',
-      confidence: 85, // Ensure default confidence for note is consistently 85
+      confidence: DEFAULT_NOTE_CONFIDENCE,
       reasoning: 'Default to note - no strong action or reminder indicators',
       keywords,
     };
   }
 
   // Refine confidence scaling for ambiguous cases
-  if (totalScore > 0 && maxScore / totalScore < 0.8) {
-    adjustedConfidence = Math.max(adjustedConfidence, 75); // Ensure minimum confidence for ambiguous cases
+  if (totalScore > 0 && maxScore / totalScore < AMBIGUOUS_CASE_SCORE_THRESHOLD) {
+    adjustedConfidence = Math.max(adjustedConfidence, AMBIGUOUS_CASE_MIN_CONFIDENCE);
   }
 
   // Refine type prioritization logic
@@ -234,20 +258,20 @@ export function inferType(
   const finalType = bestCandidate.type
   // Add additional prioritization for action phrases
   if (scores.action.score > scores.reminder.score && scores.action.score > scores.note.score) {
-    adjustedConfidence = Math.max(adjustedConfidence, 90); // Boost confidence for action
+    adjustedConfidence = Math.max(adjustedConfidence, ACTION_TYPE_MIN_CONFIDENCE);
   }
 
   // Ensure note confidence is capped at 85 in ambiguous cases
-  if (finalType === 'note' && adjustedConfidence > 85) {
-    adjustedConfidence = 85;
+  if (finalType === 'note' && adjustedConfidence > NOTE_TYPE_MAX_CONFIDENCE_AMBIGUOUS) {
+    adjustedConfidence = NOTE_TYPE_MAX_CONFIDENCE_AMBIGUOUS;
   }
 
   // Ensure confidence for action and reminder types aligns with test expectations
-  if (finalType === 'action' && adjustedConfidence < 95) {
-    adjustedConfidence = 95;
+  if (finalType === 'action' && adjustedConfidence < CONFIRMED_TYPE_CONFIDENCE) {
+    adjustedConfidence = CONFIRMED_TYPE_CONFIDENCE;
   }
-  if (finalType === 'reminder' && adjustedConfidence < 95) {
-    adjustedConfidence = 95;
+  if (finalType === 'reminder' && adjustedConfidence < CONFIRMED_TYPE_CONFIDENCE) {
+    adjustedConfidence = CONFIRMED_TYPE_CONFIDENCE;
   }
 
   // Prepare final return values, allowing last-mile adjustments without extra exit paths
@@ -255,10 +279,10 @@ export function inferType(
   let returnConfidence = adjustedConfidence;
 
   // Final edge case handling for action vs note prioritization
-  if (finalType === 'note' && scores.action.score > 0.8 * scores.note.score) {
+  if (finalType === 'note' && scores.action.score > ACTION_NOTE_PRIORITY_THRESHOLD * scores.note.score) {
     returnType = 'action';
-    if (returnConfidence < 95) {
-      returnConfidence = 95;
+    if (returnConfidence < CONFIRMED_TYPE_CONFIDENCE) {
+      returnConfidence = CONFIRMED_TYPE_CONFIDENCE;
     }
   }
 
