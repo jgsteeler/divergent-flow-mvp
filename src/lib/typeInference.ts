@@ -137,21 +137,29 @@ export function inferType(
 
   const scores = calculateTypeScores(keywords, learningData);
 
+  const lowerText = text.toLowerCase();
+
   // Adjust reminder boost for specific phrases
   const reminderBoostPhrases = ['remind me to', 'follow up on', "don't forget", 'remember to', 'need to remember', 'Reminder:'];
-  reminderBoostPhrases.forEach(phrase => {
-    if (text.toLowerCase().includes(phrase)) {
-      scores.reminder.score += phrase === "don't forget" ? 3 : 4; // Reduce boost for "don't forget"
+  const reminderBoost = reminderBoostPhrases.reduce((total, phrase) => {
+    if (!lowerText.includes(phrase)) {
+      return total;
     }
-  });
+    const boost = phrase === "don't forget" ? 3 : 4; // Reduce boost for "don't forget"
+    return total + boost;
+  }, 0);
+  scores.reminder.score += reminderBoost;
 
   // Adjust action boost for specific verbs
   const actionBoostPhrases = ['create', 'make', 'write', 'send', 'call', 'email', 'fix', 'build', 'update', 'submit'];
-  actionBoostPhrases.forEach(phrase => {
-    if (text.toLowerCase().includes(phrase)) {
-      scores.action.score += phrase === 'submit' ? 3 : 2; // Stronger boost for "submit"
+  const actionBoost = actionBoostPhrases.reduce((total, phrase) => {
+    if (!lowerText.includes(phrase)) {
+      return total;
     }
-  });
+    const boost = phrase === 'submit' ? 3 : 2; // Stronger boost for "submit"
+    return total + boost;
+  }, 0);
+  scores.action.score += actionBoost;
 
   // Reduce reminder dominance when action keywords are present
   if (scores.action.score > 0 && scores.reminder.score > 0) {
