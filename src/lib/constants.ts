@@ -29,7 +29,6 @@ export const EXACT_MATCH_CONFIDENCE = 95 // Confidence for exact matches
 export const REMINDER_PREFIX_BOOST = 3 // Boost for explicit 'Reminder:' prefix
 export const AMBIGUOUS_CASE_SCORE_THRESHOLD = 0.8 // Threshold for ambiguous cases (80% of total)
 export const AMBIGUOUS_CASE_MIN_CONFIDENCE = 75 // Minimum confidence for ambiguous cases
-export const EXPLICIT_REMINDER_CONFIDENCE = 95 // Confidence for explicitly prioritized reminders
 export const ACTION_TYPE_MIN_CONFIDENCE = 90 // Minimum confidence boost for action type
 export const NOTE_TYPE_MAX_CONFIDENCE_AMBIGUOUS = 85 // Max confidence for note in ambiguous cases
 export const CONFIRMED_TYPE_CONFIDENCE = 95 // Standard confidence for confirmed action/reminder types
