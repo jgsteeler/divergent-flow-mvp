@@ -30,10 +30,6 @@ import {
 const REMINDER_BOOST_PHRASES = ['remind me to', 'follow up on', "don't forget", 'remember to', 'need to remember', 'reminder:'];
 const ACTION_BOOST_PHRASES = ['create', 'make', 'write', 'send', 'call', 'email', 'fix', 'build', 'update', 'submit'];
 
-// Boost values for type inference scoring
-const REMINDER_KEYWORD_STRONG_BOOST = 4 // Strong boost for reminder keywords like "remind me to"
-const REMINDER_KEYWORD_WEAK_BOOST = 3 // Weaker boost for phrases like "don't forget"
-
 // Default preloaded phrases for each type (will be stored in learning data)
 export const DEFAULT_ACTION_PHRASES = [
   'create', 'build', 'fix', 'update', 'review', 'send', 'call', 'email',
