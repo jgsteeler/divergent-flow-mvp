@@ -9,6 +9,12 @@ export const MAX_LEARNING_PATTERNS = 50
 export const MAX_PATTERN_LENGTH = 100
 export const DEFAULT_LEARNING_CONFIDENCE = 80
 
+// Type inference constants
+export const DATE_TIME_REMINDER_BOOST = 0.2
+export const ACTION_REMINDER_THRESHOLD = 0.5
+export const NOTE_PATTERN_THRESHOLD = 0.8
+export const CATCHALL_NOTE_CONFIDENCE = 85
+
 // Collection inference constants
 export const MIN_MATCHING_WORDS = 2
 export const LEARNED_COLLECTION_MAX_CONFIDENCE = 100 // Allow collections to reach maximum confidence

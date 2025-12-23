@@ -1,5 +1,11 @@
 import { ItemType, TypeLearningData } from './types'
 import { extractDateTimeFromText } from './dateParser'
+import { 
+  DATE_TIME_REMINDER_BOOST, 
+  ACTION_REMINDER_THRESHOLD,
+  NOTE_PATTERN_THRESHOLD,
+  CATCHALL_NOTE_CONFIDENCE
+} from './constants'
 
 interface TypePattern {
   patterns: RegExp[]
@@ -146,7 +152,7 @@ export function inferType(
   // Phase 2: Date/time presence is a strong reminder indicator
   // If text has date/time and action patterns but no reminder patterns, boost reminder
   if (hasDateTime && reminderScore === 0 && actionScore > 0) {
-    reminderScore = actionScore + 0.2 // Boost to prioritize reminder over action
+    reminderScore = actionScore + DATE_TIME_REMINDER_BOOST // Boost to prioritize reminder over action
   }
 
   const maxScore = Math.max(reminderScore, actionScore, noteScore)
@@ -160,10 +166,10 @@ export function inferType(
 
   // Phase 2 Catchall Logic: If no patterns matched or all scores are low,
   // default to note with high confidence
-  if (maxScore === 0 || (reminderScore < 0.5 && actionScore < 0.5 && noteScore < 0.8)) {
+  if (maxScore === 0 || (reminderScore < ACTION_REMINDER_THRESHOLD && actionScore < ACTION_REMINDER_THRESHOLD && noteScore < NOTE_PATTERN_THRESHOLD)) {
     return { 
       type: 'note', 
-      confidence: 85, 
+      confidence: CATCHALL_NOTE_CONFIDENCE, 
       reasoning: 'Default to note - no strong action or reminder indicators' 
     }
   }
