@@ -1,5 +1,4 @@
 import { ItemType, TypeLearningData } from './types'
-import { extractDateTimeFromText } from './dateParser'
 import {
   CATCHALL_NOTE_CONFIDENCE,
   HIGH_CONFIDENCE_THRESHOLD,
@@ -360,9 +359,6 @@ export function inferType(
   learningData: TypeLearningData[] = []
 ): { type: ItemType | null; confidence: number; reasoning: string; keywords: string[] } {
   const keywords = parseKeywords(text);
-  const { dateTime } = extractDateTimeFromText(text);
-  const hasDateTime = dateTime !== null;
-
   const scores = calculateTypeScores(keywords, learningData);
 
   // Apply phrase boosts and score adjustments
