@@ -199,10 +199,6 @@ function selectBestType(
 
   const topCandidates = candidates.filter((candidate) => candidate.score === maxScore);
 
-  if (topCandidates.length === 0) {
-    return 'note';
-  }
-
   // Apply tie-breaking: prefer higher match count, then preference order
   const bestCandidate = topCandidates.reduce((best, current) => {
     if (current.matches > best.matches) {
@@ -279,9 +275,6 @@ export function inferType(
   // Select the best type based on scores
   const selectedType = selectBestType(scores, text);
 
-  // Calculate confidence once based on selected type and scores
-  const confidence = calculateConfidence(selectedType, scores, hasStrongIndicators);
-
   // Handle default case (no matches) with specific reasoning
   const maxScore = Math.max(scores.action.score, scores.reminder.score, scores.note.score);
   if (maxScore === 0) {
@@ -292,6 +285,9 @@ export function inferType(
       keywords,
     };
   }
+
+  // Calculate confidence once based on selected type and scores
+  const confidence = calculateConfidence(selectedType, scores, hasStrongIndicators);
 
   // Build reasoning
   const scoreSummary = `Scores - note: ${scores.note.score.toFixed(2)}, action: ${scores.action.score.toFixed(2)}, reminder: ${scores.reminder.score.toFixed(2)}`;
