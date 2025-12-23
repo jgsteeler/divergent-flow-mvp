@@ -26,6 +26,11 @@ import {
   DEFAULT_NOTE_PHRASE_CONFIDENCE,
 } from './constants'
 
+// Boost values for type inference scoring
+const REMINDER_PREFIX_BOOST = 3 // Boost for explicit "Reminder:" prefix
+const REMINDER_KEYWORD_STRONG_BOOST = 4 // Strong boost for reminder keywords like "remind me to"
+const REMINDER_KEYWORD_WEAK_BOOST = 3 // Weaker boost for phrases like "don't forget"
+
 // Default preloaded phrases for each type (will be stored in learning data)
 export const DEFAULT_ACTION_PHRASES = [
   'create', 'build', 'fix', 'update', 'review', 'send', 'call', 'email',
@@ -164,7 +169,7 @@ export function inferType(
   const lowerText = text.toLowerCase();
 
   // Adjust reminder boost for specific phrases
-  const reminderBoostPhrases = ['remind me to', 'follow up on', "don't forget", 'remember to', 'need to remember', 'Reminder:'];
+  const reminderBoostPhrases = ['remind me to', 'follow up on', "don't forget", 'remember to', 'need to remember', 'reminder:'];
   const reminderBoost = reminderBoostPhrases.reduce((total, phrase) => {
     if (!lowerText.includes(phrase)) {
       return total;
@@ -185,6 +190,11 @@ export function inferType(
   }, 0);
   scores.action.score += actionBoost;
 
+  // Add special handling for 'Reminder:' prefix (case-insensitive) before final scoring
+  if (text.toLowerCase().startsWith('reminder:')) {
+    scores.reminder.score += REMINDER_PREFIX_BOOST;
+  }
+
   // Reduce reminder dominance when action keywords are present
   if (scores.action.score > 0 && scores.reminder.score > 0) {
     scores.reminder.score -= scores.action.score * REMINDER_DOMINANCE_PENALTY;
@@ -192,21 +202,13 @@ export function inferType(
 
   const maxScore = Math.max(scores.action.score, scores.reminder.score, scores.note.score);
 
-  // Normalize confidence to a 0–100 scale
+  // Calculate confidence: normalize to 0-100 scale and cap below 95 to fix boundary issues
   const totalScore = scores.action.score + scores.reminder.score + scores.note.score;
-  let normalizedConfidence = totalScore > 0 ? (maxScore / totalScore) * 100 : 0;
-
-  // Adjust confidence scaling to better align with test expectations
-  let adjustedConfidence = Math.min(normalizedConfidence, CONFIDENCE_CAP_BELOW_THRESHOLD);
+  let adjustedConfidence = totalScore > 0 ? Math.min((maxScore / totalScore) * 100, 94.9) : 0;
 
   // Boost confidence for exact matches
   if (maxScore > EXACT_MATCH_SCORE_THRESHOLD * totalScore) {
     adjustedConfidence = EXACT_MATCH_CONFIDENCE;
-  }
-
-  // Add special handling for 'Reminder:' prefix
-  if (text.startsWith('Reminder:')) {
-    scores.reminder.score += REMINDER_PREFIX_BOOST;
   }
 
   // Adjust default confidence for note type
@@ -222,16 +224,6 @@ export function inferType(
   // Refine confidence scaling for ambiguous cases
   if (totalScore > 0 && maxScore / totalScore < AMBIGUOUS_CASE_SCORE_THRESHOLD) {
     adjustedConfidence = Math.max(adjustedConfidence, AMBIGUOUS_CASE_MIN_CONFIDENCE);
-  }
-
-  // Explicitly prioritize reminder if certain keywords are present
-  if (scores.reminder.score > 0 && reminderBoostPhrases.some(phrase => text.toLowerCase().includes(phrase))) {
-    return {
-      type: 'reminder',
-      confidence: EXPLICIT_REMINDER_CONFIDENCE,
-      reasoning: 'Explicitly prioritized reminder due to strong indicators',
-      keywords,
-    };
   }
 
   // Refine type prioritization logic
