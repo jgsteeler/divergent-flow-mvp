@@ -247,23 +247,20 @@ function selectBestType(
 
   const topCandidates = candidates.filter((candidate) => candidate.score === maxScore);
 
-  const bestCandidate =
-    topCandidates.length === 0
-      ? { type: 'note' as ItemType, score: 0, matches: 0 }
-      : topCandidates.reduce((best, current) => {
-          if (current.matches > best.matches) {
-            return current;
-          }
+  const bestCandidate = topCandidates.reduce((best, current) => {
+    if (current.matches > best.matches) {
+      return current;
+    }
 
-          if (current.matches < best.matches) {
-            return best;
-          }
+    if (current.matches < best.matches) {
+      return best;
+    }
 
-          // If matches are equal, fall back to a deterministic preference order
-          const bestIndex = typePreferenceOrder.indexOf(best.type);
-          const currentIndex = typePreferenceOrder.indexOf(current.type);
-          return currentIndex !== -1 && (bestIndex === -1 || currentIndex < bestIndex) ? current : best;
-        }, topCandidates[0]);
+    // If matches are equal, fall back to a deterministic preference order
+    const bestIndex = typePreferenceOrder.indexOf(best.type);
+    const currentIndex = typePreferenceOrder.indexOf(current.type);
+    return currentIndex !== -1 && (bestIndex === -1 || currentIndex < bestIndex) ? current : best;
+  }, topCandidates[0]);
 
   return bestCandidate.type;
 }
