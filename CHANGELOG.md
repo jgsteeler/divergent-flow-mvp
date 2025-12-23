@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-mvp-v1.1.1...divergent-flow-mvp-v1.2.0) (2025-12-21)
+
+
+### Features
+
+* implement comprehensive inference review UI with learning feedback loop ([#84](https://github.com/jgsteeler/divergent-flow-mvp/issues/84)) ([489d842](https://github.com/jgsteeler/divergent-flow-mvp/commit/489d842496bb9656c0c22e1e6453e2729d153231))
+
 ## [1.1.1](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-mvp-v1.1.0...divergent-flow-mvp-v1.1.1) (2025-12-20)
 
 
