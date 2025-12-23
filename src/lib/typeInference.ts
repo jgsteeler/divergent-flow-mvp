@@ -228,19 +228,21 @@ export function inferType(
     adjustedConfidence = 95;
   }
 
-  // Final edge case handling for action vs reminder prioritization
+  // Prepare final return values, allowing last-mile adjustments without extra exit paths
+  let returnType: ItemType | null = finalType;
+  let returnConfidence = adjustedConfidence;
+
+  // Final edge case handling for action vs note prioritization
   if (finalType === 'note' && scores.action.score > 0.8 * scores.note.score) {
-    return {
-      type: 'action',
-      confidence: 95,
-      reasoning: 'Prioritized action over note due to strong action indicators',
-      keywords,
-    };
+    returnType = 'action';
+    if (returnConfidence < 95) {
+      returnConfidence = 95;
+    }
   }
 
   return {
-    type: finalType,
-    confidence: adjustedConfidence, // Use refined confidence
+    type: returnType,
+    confidence: returnConfidence, // Use refined confidence
     reasoning: 'Determined by highest scoring type with refined prioritization',
     keywords,
   };
