@@ -168,12 +168,9 @@ export function inferType(
 
   const maxScore = Math.max(scores.action.score, scores.reminder.score, scores.note.score);
 
-  // Normalize confidence to a 0–100 scale
+  // Calculate confidence: normalize to 0-100 scale and cap below 95 to fix boundary issues
   const totalScore = scores.action.score + scores.reminder.score + scores.note.score;
-  let normalizedConfidence = totalScore > 0 ? (maxScore / totalScore) * 100 : 0;
-
-  // Adjust confidence scaling to better align with test expectations
-  let adjustedConfidence = Math.min(normalizedConfidence, 94.9); // Cap below 95 to fix boundary issues
+  let adjustedConfidence = totalScore > 0 ? Math.min((maxScore / totalScore) * 100, 94.9) : 0;
 
   // Boost confidence for exact matches
   if (maxScore > 0.9 * totalScore) {
