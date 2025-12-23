@@ -79,6 +79,7 @@ If you cannot confidently infer a field, set it to null. Be conservative - it's 
   const baseAttributes: InferredAttributes = {
     type: typeInference.type,
     typeConfidence: typeInference.confidence,
+    keywords: typeInference.keywords, // Store keywords for learning
     collection: collectionInference.collection,
     collectionConfidence: collectionInference.confidence,
     dueDate: extractedDate,

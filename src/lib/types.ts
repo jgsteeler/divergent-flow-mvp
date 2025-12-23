@@ -66,6 +66,7 @@ export interface InferredAttributes {
   remindTime?: number | null
   context?: string | null
   tags?: string[] | null
+  keywords?: string[] // Parsed keywords from text for type inference
   typeConfidence?: number
   collectionConfidence?: number
   priorityConfidence?: number

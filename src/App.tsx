@@ -9,7 +9,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { inferAttributes } from "@/lib/inference";
 import { inferPriority, inferEstimate, savePriorityLearning, saveEstimateLearning } from "@/lib/priorityEstimateInference";
 import { getTopReviewItems } from "@/lib/reviewPriority";
-import { initializeDefaultTypeLearning } from "@/lib/typeInference";
+import { initializeDefaultTypeLearning, saveTypeLearning } from "@/lib/typeInference";
 
 function App() {
   const [items, setItems] = useLocalStorage<Item[]>("items", []);
@@ -74,6 +74,7 @@ function App() {
       ...item,
       inferredType: attributes.type || undefined,
       typeConfidence: attributes.typeConfidence,
+      keywords: attributes.keywords, // Store keywords for future learning
       collection: attributes.collection || undefined,
       collectionConfidence: attributes.collectionConfidence,
       dueDate: attributes.dueDate || undefined,
@@ -94,7 +95,7 @@ function App() {
     const needsReview =
       !attributes.type ||
       !attributes.collection ||
-      (attributes.typeConfidence && attributes.typeConfidence < 85) ||
+      (attributes.typeConfidence && attributes.typeConfidence < 95) ||
       (attributes.collectionConfidence && attributes.collectionConfidence < 85) ||
       (priorityConf < 85) ||
       (estimateConf < 85);
@@ -102,10 +103,22 @@ function App() {
     if (needsReview) {
       setPendingConfirmation(updatedItem);
     } else {
+      // High confidence (>=95%), auto-confirm and save to learning
       const reviewedItem = { ...updatedItem, lastReviewedAt: Date.now() };
       setItems((current) =>
         (current || []).map((i) => (i.id === item.id ? reviewedItem : i))
       );
+      
+      // Save type learning for high-confidence inference
+      if (attributes.type && attributes.keywords && attributes.typeConfidence && attributes.typeConfidence >= 95) {
+        const newTypeLearning = await saveTypeLearning(
+          attributes.keywords,
+          attributes.type,
+          attributes.type,
+          attributes.typeConfidence
+        );
+        setTypeLearning((current) => [...(current || []), newTypeLearning]);
+      }
     }
   };
 
@@ -157,6 +170,17 @@ function App() {
     };
 
     setAttributeLearning((current) => [...(current || []), learningData]);
+
+    // Save type learning when user confirms type
+    if (updates.inferredType && item.keywords && item.keywords.length > 0) {
+      const newTypeLearning = await saveTypeLearning(
+        item.keywords,
+        item.inferredType || null,
+        updates.inferredType,
+        item.typeConfidence || 0
+      );
+      setTypeLearning((current) => [...(current || []), newTypeLearning]);
+    }
 
     if (updates.priority) {
       const newPriorityLearning = await savePriorityLearning(
