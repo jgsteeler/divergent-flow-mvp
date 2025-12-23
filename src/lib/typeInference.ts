@@ -240,10 +240,33 @@ export function inferType(
     }
   }
 
+  const scoreSummary = `Scores - note: ${scores.note.score.toFixed(2)}, action: ${scores.action.score.toFixed(2)}, reminder: ${scores.reminder.score.toFixed(2)}`;
+  const keywordSummary =
+    keywords.length > 0
+      ? `Matched keywords (${keywords.length}): ${keywords.join(', ')}`
+      : 'No specific keywords matched';
+
+  let reasoningDetail: string;
+  if (finalType === 'action') {
+    reasoningDetail =
+      'Classified as action because action-related patterns had the strongest score after refined prioritization.';
+  } else if (finalType === 'reminder') {
+    reasoningDetail =
+      'Classified as reminder because reminder-related patterns had the strongest score after refined prioritization.';
+  } else if (finalType === 'note') {
+    reasoningDetail =
+      'Classified as note because informational patterns outweighed action and reminder indicators after refined prioritization.';
+  } else {
+    reasoningDetail =
+      'Type could not be confidently determined; using highest available score with refined prioritization.';
+  }
+
+  const detailedReasoning = `${reasoningDetail} ${scoreSummary}. ${keywordSummary}.`;
+
   return {
-    type: returnType,
-    confidence: returnConfidence, // Use refined confidence
-    reasoning: 'Determined by highest scoring type with refined prioritization',
+    type: finalType,
+    confidence: adjustedConfidence, // Use refined confidence
+    reasoning: detailedReasoning,
     keywords,
   };
 }
