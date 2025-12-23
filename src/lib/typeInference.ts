@@ -140,7 +140,7 @@ export function inferType(
   const lowerText = text.toLowerCase();
 
   // Adjust reminder boost for specific phrases
-  const reminderBoostPhrases = ['remind me to', 'follow up on', "don't forget", 'remember to', 'need to remember', 'Reminder:'];
+  const reminderBoostPhrases = ['remind me to', 'follow up on', "don't forget", 'remember to', 'need to remember'];
   const reminderBoost = reminderBoostPhrases.reduce((total, phrase) => {
     if (!lowerText.includes(phrase)) {
       return total;
@@ -161,6 +161,11 @@ export function inferType(
   }, 0);
   scores.action.score += actionBoost;
 
+  // Add special handling for 'Reminder:' prefix (consolidated here to avoid double-boosting)
+  if (text.startsWith('Reminder:')) {
+    scores.reminder.score += 3; // Strong boost for explicit prefix
+  }
+
   // Reduce reminder dominance when action keywords are present
   if (scores.action.score > 0 && scores.reminder.score > 0) {
     scores.reminder.score -= scores.action.score * 0.2; // Slightly reduce penalty
@@ -178,11 +183,6 @@ export function inferType(
   // Boost confidence for exact matches
   if (maxScore > 0.9 * totalScore) {
     adjustedConfidence = 95; // Ensure exact matches hit 95
-  }
-
-  // Add special handling for 'Reminder:' prefix
-  if (text.startsWith('Reminder:')) {
-    scores.reminder.score += 3; // Strong boost for explicit prefix
   }
 
   // Adjust default confidence for note type
