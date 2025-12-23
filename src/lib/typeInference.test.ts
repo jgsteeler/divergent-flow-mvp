@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { inferType, getTypeLabel, getTypeDescription, initializeDefaultTypeLearning } from './typeInference'
-import { ItemType, TypeLearningData } from './types'
+import { describe, it, expect } from 'vitest'
+import { inferType, getTypeLabel, getTypeDescription } from './typeInference'
+import { ItemType } from './types'
 import { CATCHALL_NOTE_CONFIDENCE } from './constants'
 
 describe('typeInference', () => {
@@ -218,13 +218,13 @@ describe('typeInference', () => {
       it('should use catchall logic for ambiguous text', () => {
         const result = inferType('interesting observation about user behavior')
         expect(result.type).toBe('note')
-        expect(result.confidence).toBe(85)
+        expect(result.confidence).toBe(CATCHALL_NOTE_CONFIDENCE)
       })
 
       it('should use catchall logic for text without clear indicators', () => {
         const result = inferType('some thoughts about the new design')
         expect(result.type).toBe('note')
-        expect(result.confidence).toBe(85)
+        expect(result.confidence).toBe(CATCHALL_NOTE_CONFIDENCE)
       })
     })
 
@@ -232,7 +232,7 @@ describe('typeInference', () => {
       it('should default to note when no patterns match (catchall logic)', () => {
         const result = inferType('some random text without patterns')
         expect(result.type).toBe('note')
-        expect(result.confidence).toBe(85)
+        expect(result.confidence).toBe(CATCHALL_NOTE_CONFIDENCE)
         expect(result.reasoning).toBe('Default to note - no strong action or reminder indicators')
       })
     })
@@ -353,7 +353,7 @@ describe('typeInference', () => {
       it('should handle empty text', () => {
         const result = inferType('')
         expect(result.type).toBe('note')
-        expect(result.confidence).toBe(85)
+        expect(result.confidence).toBe(CATCHALL_NOTE_CONFIDENCE)
       })
 
       it('should handle text with special characters', () => {
