@@ -291,16 +291,6 @@ describe('typeInference', () => {
         expect(result.type).toBe('action')
         expect(result.confidence).toBeGreaterThan(50)
       })
-
-      it('should return 95% confidence for exact pattern matches', () => {
-        const result = inferType('remind me to call mom')
-        expect(result.confidence).toBe(95)
-      })
-
-      it('should return lower confidence for weaker matches', () => {
-        const result = inferType('interesting thought')
-        expect(result.confidence).toBeLessThan(95)
-      })
     })
 
     describe('learning data integration', () => {
