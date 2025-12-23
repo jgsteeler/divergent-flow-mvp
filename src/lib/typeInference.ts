@@ -289,11 +289,11 @@ function normalizeFinalConfidence(
     adjustedConfidence = CATCHALL_NOTE_CONFIDENCE;
   }
 
-  // Ensure confidence for action and reminder types aligns with test expectations
-  if (finalType === 'action' && adjustedConfidence < CONFIRMED_TYPE_CONFIDENCE) {
-    adjustedConfidence = CONFIRMED_TYPE_CONFIDENCE;
-  }
-  if (finalType === 'reminder' && adjustedConfidence < CONFIRMED_TYPE_CONFIDENCE) {
+  // Ensure action and reminder types have a minimum confidence once classified
+  if (
+    (finalType === 'action' || finalType === 'reminder') &&
+    adjustedConfidence < CONFIRMED_TYPE_CONFIDENCE
+  ) {
     adjustedConfidence = CONFIRMED_TYPE_CONFIDENCE;
   }
 
