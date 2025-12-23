@@ -250,14 +250,6 @@ export function inferType(
     adjustedConfidence = 85;
   }
 
-  // Ensure confidence for action and reminder types aligns with test expectations
-  if (finalType === 'action' && adjustedConfidence < 95) {
-    adjustedConfidence = 95;
-  }
-  if (finalType === 'reminder' && adjustedConfidence < 95) {
-    adjustedConfidence = 95;
-  }
-
   // Prepare final return values, allowing last-mile adjustments without extra exit paths
   let returnType: ItemType | null = finalType;
   let returnConfidence = adjustedConfidence;
