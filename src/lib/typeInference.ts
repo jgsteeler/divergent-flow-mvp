@@ -166,7 +166,7 @@ export function inferType(
 
   // Add special handling for 'Reminder:' prefix (case-insensitive) before final scoring
   if (text.toLowerCase().startsWith('reminder:')) {
-    scores.reminder.score += REMINDER_PREFIX_BOOST
+    scores.reminder.score += REMINDER_PREFIX_BOOST;
   }
 
   // Reduce reminder dominance when action keywords are present
