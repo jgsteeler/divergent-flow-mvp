@@ -338,13 +338,13 @@ function buildReasoning(
       : 'No specific keywords matched';
 
   let reasoningDetail: string;
-  if (selectedType === 'action') {
+  if (finalType === 'action') {
     reasoningDetail =
       'Classified as action because action-related patterns had the strongest score after refined prioritization.';
-  } else if (selectedType === 'reminder') {
+  } else if (finalType === 'reminder') {
     reasoningDetail =
       'Classified as reminder because reminder-related patterns had the strongest score after refined prioritization.';
-  } else if (selectedType === 'note') {
+  } else if (finalType === 'note') {
     reasoningDetail =
       'Classified as note because informational patterns outweighed action and reminder indicators after refined prioritization.';
   } else {
