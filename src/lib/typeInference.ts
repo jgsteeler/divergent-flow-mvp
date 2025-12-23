@@ -226,7 +226,7 @@ export function inferType(
     adjustedConfidence = Math.max(adjustedConfidence, AMBIGUOUS_CASE_MIN_CONFIDENCE);
   }
 
-  // Refine type prioritization logic
+  // Type prioritization logic - runs after all score adjustments and boosts
   const typePreferenceOrder: ItemType[] = ['reminder', 'action', 'note']
 
   const candidates: { type: ItemType; score: number; matches: number }[] = [
