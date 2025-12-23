@@ -140,7 +140,7 @@ export function inferType(
   const lowerText = text.toLowerCase();
 
   // Adjust reminder boost for specific phrases
-  const reminderBoostPhrases = ['remind me to', 'follow up on', "don't forget", 'remember to', 'need to remember', 'Reminder:'];
+  const reminderBoostPhrases = ['remind me to', 'follow up on', "don't forget", 'remember to', 'need to remember', 'reminder:'];
   const reminderBoost = reminderBoostPhrases.reduce((total, phrase) => {
     if (!lowerText.includes(phrase)) {
       return total;
@@ -200,15 +200,8 @@ export function inferType(
     adjustedConfidence = Math.max(adjustedConfidence, 75); // Ensure minimum confidence for ambiguous cases
   }
 
-  // Explicitly prioritize reminder if certain keywords are present
-  if (scores.reminder.score > 0 && reminderBoostPhrases.some(phrase => text.toLowerCase().includes(phrase))) {
-    return {
-      type: 'reminder',
-      confidence: 95,
-      reasoning: 'Explicitly prioritized reminder due to strong indicators',
-      keywords,
-    };
-  }
+  // Recalculate maxScore after all boosts have been applied
+  const finalMaxScore = Math.max(scores.action.score, scores.reminder.score, scores.note.score);
 
   // Refine type prioritization logic
   const typePreferenceOrder: ItemType[] = ['reminder', 'action', 'note']
@@ -219,7 +212,7 @@ export function inferType(
     { type: 'note', score: scores.note.score, matches: scores.note.matches },
   ]
 
-  const topCandidates = candidates.filter((candidate) => candidate.score === maxScore)
+  const topCandidates = candidates.filter((candidate) => candidate.score === finalMaxScore)
 
   const bestCandidate =
     topCandidates.length === 0
