@@ -31,7 +31,6 @@ const REMINDER_BOOST_PHRASES = ['remind me to', 'follow up on', "don't forget", 
 const ACTION_BOOST_PHRASES = ['create', 'make', 'write', 'send', 'call', 'email', 'fix', 'build', 'update', 'submit'];
 
 // Boost values for type inference scoring
-const REMINDER_PREFIX_BOOST = 3 // Boost for explicit "Reminder:" prefix
 const REMINDER_KEYWORD_STRONG_BOOST = 4 // Strong boost for reminder keywords like "remind me to"
 const REMINDER_KEYWORD_WEAK_BOOST = 3 // Weaker boost for phrases like "don't forget"
 
