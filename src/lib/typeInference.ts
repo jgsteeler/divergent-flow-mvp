@@ -4,6 +4,8 @@ import { CATCHALL_NOTE_CONFIDENCE, HIGH_CONFIDENCE_THRESHOLD } from './constants
 
 // Boost values for type inference scoring
 const REMINDER_PREFIX_BOOST = 3 // Boost for explicit "Reminder:" prefix
+const REMINDER_KEYWORD_STRONG_BOOST = 4 // Strong boost for reminder keywords like "remind me to"
+const REMINDER_KEYWORD_WEAK_BOOST = 3 // Weaker boost for phrases like "don't forget"
 
 // Default preloaded phrases for each type (will be stored in learning data)
 export const DEFAULT_ACTION_PHRASES = [
@@ -148,7 +150,7 @@ export function inferType(
     if (!lowerText.includes(phrase)) {
       return total;
     }
-    const boost = phrase === "don't forget" ? 3 : 4; // Reduce boost for "don't forget"
+    const boost = phrase === "don't forget" ? REMINDER_KEYWORD_WEAK_BOOST : REMINDER_KEYWORD_STRONG_BOOST;
     return total + boost;
   }, 0);
   scores.reminder.score += reminderBoost;
