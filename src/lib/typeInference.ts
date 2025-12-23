@@ -180,11 +180,6 @@ export function inferType(
     adjustedConfidence = 95; // Ensure exact matches hit 95
   }
 
-  // Add special handling for 'Reminder:' prefix
-  if (text.startsWith('Reminder:')) {
-    scores.reminder.score += 3; // Strong boost for explicit prefix
-  }
-
   // Adjust default confidence for note type
   if (maxScore === 0) {
     return {
