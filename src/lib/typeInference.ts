@@ -2,6 +2,9 @@ import { ItemType, TypeLearningData } from './types'
 import { extractDateTimeFromText } from './dateParser'
 import { CATCHALL_NOTE_CONFIDENCE, HIGH_CONFIDENCE_THRESHOLD } from './constants'
 
+// Boost values for type inference scoring
+const REMINDER_PREFIX_BOOST = 3 // Boost for explicit "Reminder:" prefix
+
 // Default preloaded phrases for each type (will be stored in learning data)
 export const DEFAULT_ACTION_PHRASES = [
   'create', 'build', 'fix', 'update', 'review', 'send', 'call', 'email',
@@ -161,6 +164,11 @@ export function inferType(
   }, 0);
   scores.action.score += actionBoost;
 
+  // Add special handling for 'Reminder:' prefix (case-insensitive) before final scoring
+  if (text.toLowerCase().startsWith('reminder:')) {
+    scores.reminder.score += REMINDER_PREFIX_BOOST
+  }
+
   // Reduce reminder dominance when action keywords are present
   if (scores.action.score > 0 && scores.reminder.score > 0) {
     scores.reminder.score -= scores.action.score * 0.2; // Slightly reduce penalty
@@ -180,11 +188,6 @@ export function inferType(
     adjustedConfidence = 95; // Ensure exact matches hit 95
   }
 
-  // Add special handling for 'Reminder:' prefix (case-insensitive)
-  if (text.toLowerCase().startsWith('reminder:')) {
-    scores.reminder.score += 3; // Strong boost for explicit prefix
-  }
-
   // Adjust default confidence for note type
   if (maxScore === 0) {
     return {
@@ -200,9 +203,6 @@ export function inferType(
     adjustedConfidence = Math.max(adjustedConfidence, 75); // Ensure minimum confidence for ambiguous cases
   }
 
-  // Recalculate maxScore after all boosts have been applied (including Reminder: prefix boost)
-  const finalMaxScore = Math.max(scores.action.score, scores.reminder.score, scores.note.score);
-
   // Refine type prioritization logic
   const typePreferenceOrder: ItemType[] = ['reminder', 'action', 'note']
 
@@ -212,7 +212,7 @@ export function inferType(
     { type: 'note', score: scores.note.score, matches: scores.note.matches },
   ]
 
-  const topCandidates = candidates.filter((candidate) => candidate.score === finalMaxScore)
+  const topCandidates = candidates.filter((candidate) => candidate.score === maxScore)
 
   const bestCandidate =
     topCandidates.length === 0
