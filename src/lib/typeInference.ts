@@ -1,4 +1,5 @@
 import { ItemType, TypeLearningData } from './types'
+import { extractDateTimeFromText } from './dateParser';
 import {
   CATCHALL_NOTE_CONFIDENCE,
   HIGH_CONFIDENCE_THRESHOLD,
@@ -23,7 +24,12 @@ import {
   DEFAULT_ACTION_PHRASE_CONFIDENCE,
   DEFAULT_REMINDER_PHRASE_CONFIDENCE,
   DEFAULT_NOTE_PHRASE_CONFIDENCE,
-} from './constants'
+  DATE_TIME_ACTION_MULTIPLIER
+} from './constants';
+
+// Phrase lists for type inference
+const REMINDER_BOOST_PHRASES = ['remind me to', 'follow up on', "don't forget", 'remember to', 'need to remember', 'reminder:'];
+const ACTION_BOOST_PHRASES = ['create', 'make', 'write', 'send', 'call', 'email', 'fix', 'build', 'update', 'submit'];
 
 // Boost values for type inference scoring
 const REMINDER_PREFIX_BOOST = 3 // Boost for explicit "Reminder:" prefix
@@ -152,10 +158,6 @@ function calculateTypeScores(
   return scores;
 }
 
-// Phrase lists for type inference
-const REMINDER_BOOST_PHRASES = ['remind me to', 'follow up on', "don't forget", 'remember to', 'need to remember', 'reminder:'];
-const ACTION_BOOST_PHRASES = ['create', 'make', 'write', 'send', 'call', 'email', 'fix', 'build', 'update', 'submit'];
-
 /**
  * Apply phrase-specific boosts to type scores
  */
@@ -210,6 +212,8 @@ function calculateBaseConfidence(
   scores: Record<ItemType, { score: number; matches: number }>
 ): number {
   const maxScore = Math.max(scores.action.score, scores.reminder.score, scores.note.score);
+
+  // Normalize confidence to a 0-100 scale
   const totalScore = scores.action.score + scores.reminder.score + scores.note.score;
   
   // Calculate confidence: normalize to 0-100 scale and cap below 95 to fix boundary issues
@@ -359,7 +363,16 @@ export function inferType(
   learningData: TypeLearningData[] = []
 ): { type: ItemType | null; confidence: number; reasoning: string; keywords: string[] } {
   const keywords = parseKeywords(text);
+  const { dateTime } = extractDateTimeFromText(text);
+  const hasDateTime = dateTime !== null;
+
   const scores = calculateTypeScores(keywords, learningData);
+
+  // Boost reminder score if date/time is present with action indicators
+  if (hasDateTime && scores.action.score > 0) {
+    scores.reminder.score += scores.action.score * DATE_TIME_ACTION_MULTIPLIER;
+    scores.reminder.matches += 1;
+  }
 
   // Apply phrase boosts and score adjustments
   applyPhraseBoosts(scores, text);
@@ -381,7 +394,7 @@ export function inferType(
   const baseConfidence = calculateBaseConfidence(scores);
   const finalType = selectBestType(scores);
   const normalizedConfidence = normalizeFinalConfidence(baseConfidence, finalType, scores);
-  
+
   // Apply final adjustments
   const { type: returnType, confidence: returnConfidence } = applyFinalAdjustments(
     finalType,
