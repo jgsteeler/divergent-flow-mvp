@@ -8,11 +8,16 @@ interface TypePattern {
 
 const REMINDER_PATTERNS: TypePattern = {
   patterns: [
+    // Core reminder phrases from Phase 2 requirements
     /remind\s+me(\s+to)?/i,
+    /remember\s+to/i,
+    /don't\s+forget(\s+to)?/i,
+    /need\s+to\s+remember/i,
+    /^reminder:/i,
+    /^remember:/i,
+    // Additional reminder indicators
     /follow\s+up(\s+on)?/i,
     /check\s+in(\s+on)?/i,
-    /don't\s+forget/i,
-    /remember\s+to/i,
     /ping\s+me/i,
     /alert\s+me/i,
     /notify\s+me/i,
@@ -24,24 +29,31 @@ const REMINDER_PATTERNS: TypePattern = {
 
 const ACTION_PATTERNS: TypePattern = {
   patterns: [
+    // Modal/imperative patterns
     /^(i\s+)?need\s+to/i,
     /^(i\s+)?(have\s+to|must)/i,
     /^(i\s+)?should/i,
+    // Phase 2 preloaded action phrases - "Create a...", "Build...", etc.
     /^create\s+(a\s+)?/i,
-    /^make\s+(a\s+)?/i,
-    /^write\s+(a\s+)?/i,
+    /^take\s+the/i,
+    /^build\s+/i,
+    /^fix\s+/i,
+    /^update\s+/i,
+    /^review\s+/i,
     /^send\s+(a\s+)?/i,
     /^call\s+/i,
     /^email\s+/i,
-    /^buy\s+/i,
-    /^fix\s+/i,
-    /^update\s+/i,
-    /^finish\s+/i,
-    /^complete\s+/i,
     /^schedule\s+/i,
-    /^book\s+(a\s+)?/i,
+    /^complete\s+/i,
+    /^finish\s+/i,
+    /^submit\s+/i,
     /^prepare\s+/i,
-    /^review\s+/i,
+    /^order\s+/i,
+    // Additional common action patterns
+    /^make\s+(a\s+)?/i,
+    /^write\s+(a\s+)?/i,
+    /^buy\s+/i,
+    /^book\s+(a\s+)?/i,
     /^research\s+/i,
     /^organize\s+/i,
     /^plan\s+/i,
@@ -135,8 +147,14 @@ export function inferType(
     if (learned.type === 'note') noteScore += learnedBoost
   }
 
-  if (maxScore === 0) {
-    return { type: null, confidence: 0, reasoning: 'No patterns matched' }
+  // Phase 2 Catchall Logic: If no patterns matched or all scores are low,
+  // default to note with high confidence
+  if (maxScore === 0 || (reminderScore < 0.5 && actionScore < 0.5 && noteScore < 0.8)) {
+    return { 
+      type: 'note', 
+      confidence: 85, 
+      reasoning: 'Default to note - no strong action or reminder indicators' 
+    }
   }
 
   let inferredType: ItemType

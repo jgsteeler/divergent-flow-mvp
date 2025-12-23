@@ -1,5 +1,5 @@
 // Confidence thresholds used throughout the app
-export const HIGH_CONFIDENCE_THRESHOLD = 85
+export const HIGH_CONFIDENCE_THRESHOLD = 95
 export const MEDIUM_CONFIDENCE_THRESHOLD = 70
 export const CONFIRMED_CONFIDENCE = 100
 
