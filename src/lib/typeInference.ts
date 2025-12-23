@@ -189,7 +189,7 @@ export function inferType(
   if (maxScore === 0) {
     return {
       type: 'note',
-      confidence: 85, // Ensure default confidence for note is consistently 85
+      confidence: CATCHALL_NOTE_CONFIDENCE,
       reasoning: 'Default to note - no strong action or reminder indicators',
       keywords,
     };
@@ -245,9 +245,9 @@ export function inferType(
     adjustedConfidence = Math.max(adjustedConfidence, 90); // Boost confidence for action
   }
 
-  // Ensure note confidence is capped at 85 in ambiguous cases
-  if (finalType === 'note' && adjustedConfidence > 85) {
-    adjustedConfidence = 85;
+  // Ensure note confidence is capped at CATCHALL_NOTE_CONFIDENCE in ambiguous cases
+  if (finalType === 'note' && adjustedConfidence > CATCHALL_NOTE_CONFIDENCE) {
+    adjustedConfidence = CATCHALL_NOTE_CONFIDENCE;
   }
 
   // Ensure confidence for action and reminder types aligns with test expectations
