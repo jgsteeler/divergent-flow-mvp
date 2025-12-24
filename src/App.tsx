@@ -16,7 +16,7 @@ function App() {
 
   const handleCapture = (text: string) => {
     const capture: Capture = {
-      id: `capture-${Date.now()}-${Math.random()}`,
+      id: `capture-${Date.now()}-${crypto.randomUUID()}`,
       text,
       createdAt: Date.now(),
     };

@@ -43,9 +43,12 @@ export function CaptureList({ captures, onBack }: CaptureListProps) {
               <p className="text-sm text-foreground whitespace-pre-wrap">
                 {capture.text}
               </p>
-              <p className="text-xs text-muted-foreground mt-2">
+              <time 
+                dateTime={new Date(capture.createdAt).toISOString()}
+                className="text-xs text-muted-foreground mt-2 block"
+              >
                 {new Date(capture.createdAt).toLocaleString()}
-              </p>
+              </time>
             </motion.div>
           ))}
         </div>
