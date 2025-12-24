@@ -17,16 +17,17 @@ This is a .NET 9 Web API that provides backend services for the Divergent Flow a
 
 ## Tech Stack
 
-- **.NET 9.0** - Latest .NET framework
+- **.NET 10.0** - Latest .NET framework
 - **ASP.NET Core Web API** - Web API framework
 - **Swashbuckle** - Swagger/OpenAPI documentation
+- **xUnit** - Testing framework
 - **C# 13** - Programming language
 
 ## Getting Started
 
 ### Prerequisites
 
-- .NET 9 SDK or later
+- .NET 10 SDK or later
 - Any IDE (Visual Studio, VS Code, Rider, etc.)
 
 ### Running the API
@@ -100,17 +101,22 @@ Delete a capture
 ## Project Structure
 
 ```
-DivergentFlow.Api/
-├── Controllers/
-│   └── CapturesController.cs    # API endpoints
-├── Models/
-│   ├── CaptureDto.cs            # Data transfer object
-│   ├── CreateCaptureRequest.cs  # Create request model
-│   └── UpdateCaptureRequest.cs  # Update request model
-├── Services/
-│   ├── ICaptureService.cs       # Service interface
-│   └── InMemoryCaptureService.cs # Temporary in-memory implementation
-└── Program.cs                    # Application startup
+api/
+├── DivergentFlow.Api/
+│   ├── Controllers/
+│   │   └── CapturesController.cs    # API endpoints
+│   ├── Models/
+│   │   ├── CaptureDto.cs            # Data transfer object
+│   │   ├── CreateCaptureRequest.cs  # Create request model
+│   │   └── UpdateCaptureRequest.cs  # Update request model
+│   ├── Services/
+│   │   ├── ICaptureService.cs       # Service interface
+│   │   └── InMemoryCaptureService.cs # Temporary in-memory implementation
+│   └── Program.cs                    # Application startup
+├── DivergentFlow.Api.Tests/
+│   └── CapturesControllerTests.cs   # Integration tests
+├── DivergentFlow.sln                 # Solution file
+└── version.txt                       # Version tracking for releases
 ```
 
 ## Architecture
@@ -161,6 +167,11 @@ dotnet build
 ```bash
 dotnet test
 ```
+
+Tests are located in `DivergentFlow.Api.Tests` and include:
+- Integration tests for all API endpoints
+- Tests use `WebApplicationFactory` for in-memory testing
+- All tests run automatically in CI/CD pipeline
 
 ### Adding a New Package
 
