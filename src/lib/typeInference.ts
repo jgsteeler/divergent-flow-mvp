@@ -215,7 +215,7 @@ function calculateBaseConfidence(
     // Calculate normalized confidence
     const normalizedConfidence = (maxScore / totalScore) * 100;
     
-    // Check for exact matches (>90% of total score)
+    // Check for exact matches (exceeds threshold of total score)
     if (maxScore > EXACT_MATCH_SCORE_THRESHOLD * totalScore) {
       adjustedConfidence = EXACT_MATCH_CONFIDENCE;
     } else {
