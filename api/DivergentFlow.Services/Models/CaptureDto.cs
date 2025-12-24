@@ -22,7 +22,7 @@ public class CaptureDto
     public long CreatedAt { get; set; }
 
     /// <summary>
-    /// The inferred type of the item (note, action, or reminder)
+    /// The inferred type of the item (e.g., note, action, reminder)
     /// </summary>
     public string? InferredType { get; set; }
 

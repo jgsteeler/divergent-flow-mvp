@@ -15,7 +15,7 @@ public class UpdateCaptureRequest
     public string Text { get; set; } = string.Empty;
 
     /// <summary>
-    /// Optional inferred type of the item (note, action, or reminder)
+    /// Optional inferred type of the item (e.g., note, action, reminder)
     /// </summary>
     public string? InferredType { get; set; }
 
