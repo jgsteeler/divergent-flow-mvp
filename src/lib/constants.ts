@@ -23,6 +23,7 @@ export const REMINDER_PHRASE_BOOST_DONT_FORGET = 3 // Reduced boost for "don't f
 export const ACTION_PHRASE_BOOST_DEFAULT = 2 // Default boost for action phrases
 export const ACTION_PHRASE_BOOST_SUBMIT = 3 // Stronger boost for "submit"
 export const REMINDER_DOMINANCE_PENALTY = 0.2 // Multiplier to reduce reminder score when action keywords present
+export const CONFIDENCE_CAP_NON_EXACT_MATCH = 94.9 // Cap confidence below exact match threshold
 export const EXACT_MATCH_SCORE_THRESHOLD = 0.9 // Threshold for considering a match as "exact" (90% of total)
 export const EXACT_MATCH_CONFIDENCE = 95 // Confidence for exact matches
 export const REMINDER_PREFIX_BOOST = 3 // Boost for explicit 'Reminder:' prefix
