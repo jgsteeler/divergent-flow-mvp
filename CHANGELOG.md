@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.0.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-mvp-v2.0.0...divergent-flow-mvp-v3.0.0) (2025-12-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* **app:** strip to minimal capture and view functionality ([#116](https://github.com/jgsteeler/divergent-flow-mvp/issues/116))
+
+### Code Refactoring
+
+* **app:** strip to minimal capture and view functionality ([#116](https://github.com/jgsteeler/divergent-flow-mvp/issues/116)) ([be6c374](https://github.com/jgsteeler/divergent-flow-mvp/commit/be6c374f9c1d8e2aed7f8f74017586fb98b2d86d))
+
 ## [2.0.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-mvp-v1.2.0...divergent-flow-mvp-v2.0.0) (2025-12-23)
 
 
