@@ -24,7 +24,6 @@ coverage
 *.suo
 *.ntvs*
 *.njsproj
-*.sln
 *.sw?
 
 # Environment variables (CRITICAL: Never commit API keys!)
@@ -41,3 +40,30 @@ pids
 .devcontainer/
 
 .spark-workbench-id
+
+# .NET
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+*.pidb
+*.pdb
+.vs/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+**/Properties/launchSettings.json
+*.dbmdl
+*.jfm
+_pkginfo.txt
+*.appx
+*.mdb
+*.opendb
+*.VC.db
+
+# Keep solution files - they should be committed
+# *.sln (removed - solution files should be in version control)

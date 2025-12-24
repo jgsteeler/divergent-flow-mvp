@@ -7,10 +7,10 @@
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true
     },
-    "backend": {
+    "api": {
       "release-type": "simple",
-      "package-name": "backend",
-      "changelog-path": "backend/CHANGELOG.md",
+      "package-name": "divergent-flow-api",
+      "changelog-path": "api/CHANGELOG.md",
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true
     }
