@@ -277,7 +277,7 @@ function normalizeFinalConfidence(
 ): number {
   let adjustedConfidence = baseConfidence;
 
-  // Boost action confidence when action has highest score and is the selected type
+  // Boost action confidence when action is the selected type and outscores other types
   if (
     finalType === 'action' &&
     scores.action.score > scores.reminder.score &&
