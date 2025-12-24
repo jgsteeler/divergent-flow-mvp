@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.2.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-mvp-v3.1.0...divergent-flow-mvp-v3.2.0) (2025-12-24)
+
+
+### Features
+
+* **services:** create DivergentFlow.Services project and refactor architecture ([#129](https://github.com/jgsteeler/divergent-flow-mvp/issues/129)) ([c9a031b](https://github.com/jgsteeler/divergent-flow-mvp/commit/c9a031b50e8bfcd601c74fc9dd0cf128c5dd2148))
+
 ## [3.1.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-mvp-v3.0.0...divergent-flow-mvp-v3.1.0) (2025-12-24)
 
 
