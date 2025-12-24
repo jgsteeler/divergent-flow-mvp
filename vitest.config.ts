@@ -29,4 +29,7 @@ export default defineConfig({
       '@': resolve(projectRoot, 'src'),
     },
   },
+  define: {
+    __APP_VERSION__: JSON.stringify('2.0.0'),
+  },
 })
