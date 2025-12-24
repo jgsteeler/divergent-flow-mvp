@@ -24,7 +24,6 @@ coverage
 *.suo
 *.ntvs*
 *.njsproj
-*.sln
 *.sw?
 
 # Environment variables (CRITICAL: Never commit API keys!)
@@ -65,3 +64,6 @@ _pkginfo.txt
 *.mdb
 *.opendb
 *.VC.db
+
+# Keep solution files - they should be committed
+# *.sln (removed - solution files should be in version control)
