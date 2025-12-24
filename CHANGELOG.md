@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-mvp-v1.2.0...divergent-flow-mvp-v2.0.0) (2025-12-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* **inference:** TypeLearningData structure changed from pattern-based to keyword-based
+
+### Code Refactoring
+
+* **inference:** implement keyword-based type learning system ([#93](https://github.com/jgsteeler/divergent-flow-mvp/issues/93)) ([0a6ce73](https://github.com/jgsteeler/divergent-flow-mvp/commit/0a6ce73a4c352c769098d75a022f0a0d32ec48ac))
+
 ## [1.2.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-mvp-v1.1.1...divergent-flow-mvp-v1.2.0) (2025-12-21)
 
 
