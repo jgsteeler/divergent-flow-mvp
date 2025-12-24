@@ -9,15 +9,12 @@ import {
   ACTION_PHRASE_BOOST_DEFAULT,
   ACTION_PHRASE_BOOST_SUBMIT,
   REMINDER_DOMINANCE_PENALTY,
-  CONFIDENCE_CAP_BELOW_THRESHOLD,
   EXACT_MATCH_SCORE_THRESHOLD,
   EXACT_MATCH_CONFIDENCE,
   REMINDER_PREFIX_BOOST,
   AMBIGUOUS_CASE_SCORE_THRESHOLD,
   AMBIGUOUS_CASE_MIN_CONFIDENCE,
-  EXPLICIT_REMINDER_CONFIDENCE,
   ACTION_TYPE_MIN_CONFIDENCE,
-  NOTE_TYPE_MAX_CONFIDENCE_AMBIGUOUS,
   CONFIRMED_TYPE_CONFIDENCE,
   ACTION_NOTE_PRIORITY_THRESHOLD,
   DEFAULT_ACTION_PHRASE_CONFIDENCE,
@@ -212,12 +209,19 @@ function calculateBaseConfidence(
   
   let adjustedConfidence: number;
 
-  // Check for exact matches first (before applying cap)
-  if (totalScore > 0 && maxScore > EXACT_MATCH_SCORE_THRESHOLD * totalScore) {
-    adjustedConfidence = EXACT_MATCH_CONFIDENCE;
+  if (totalScore === 0) {
+    adjustedConfidence = 0;
   } else {
-    // Calculate confidence: normalize to 0-100 scale and cap below 95 for non-exact matches
-    adjustedConfidence = totalScore > 0 ? Math.min((maxScore / totalScore) * 100, 94.9) : 0;
+    // Calculate normalized confidence
+    const normalizedConfidence = (maxScore / totalScore) * 100;
+    
+    // Check for exact matches (>90% of total score)
+    if (maxScore > EXACT_MATCH_SCORE_THRESHOLD * totalScore) {
+      adjustedConfidence = EXACT_MATCH_CONFIDENCE;
+    } else {
+      // Cap below 95 for non-exact matches
+      adjustedConfidence = Math.min(normalizedConfidence, 94.9);
+    }
   }
 
   // Refine confidence scaling for ambiguous cases
@@ -273,7 +277,7 @@ function normalizeFinalConfidence(
 ): number {
   let adjustedConfidence = baseConfidence;
 
-  // Add additional prioritization for action phrases
+  // Boost action confidence when action has highest score and is the selected type
   if (
     finalType === 'action' &&
     scores.action.score > scores.reminder.score &&
@@ -287,7 +291,7 @@ function normalizeFinalConfidence(
     adjustedConfidence = CATCHALL_NOTE_CONFIDENCE;
   }
 
-  // Ensure action and reminder types have a minimum confidence once classified
+  // Set minimum confidence for classified action and reminder types
   if (
     (finalType === 'action' || finalType === 'reminder') &&
     adjustedConfidence < CONFIRMED_TYPE_CONFIDENCE
