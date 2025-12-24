@@ -1,0 +1,6 @@
+@DivergentFlow.Api_HostAddress = http://localhost:5291
+
+GET {{DivergentFlow.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
