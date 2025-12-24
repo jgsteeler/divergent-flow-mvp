@@ -1,4 +1,4 @@
-using DivergentFlow.Api.Services;
+using DivergentFlow.Services.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,9 +17,8 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Register services for dependency injection
-// Using in-memory implementation for now, will be replaced with database later
-builder.Services.AddSingleton<ICaptureService, InMemoryCaptureService>();
+// Register services for dependency injection using extension method
+builder.Services.UseServices();
 
 // Add Swagger/OpenAPI documentation
 builder.Services.AddEndpointsApiExplorer();

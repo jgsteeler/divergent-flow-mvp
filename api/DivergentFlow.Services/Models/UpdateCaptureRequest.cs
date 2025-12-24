@@ -1,14 +1,14 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace DivergentFlow.Api.Models;
+namespace DivergentFlow.Services.Models;
 
 /// <summary>
-/// Request model for creating a new capture
+/// Request model for updating an existing capture
 /// </summary>
-public class CreateCaptureRequest
+public class UpdateCaptureRequest
 {
     /// <summary>
-    /// The text content to capture
+    /// The updated text content
     /// </summary>
     [Required]
     [MinLength(1)]

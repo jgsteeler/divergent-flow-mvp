@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using DivergentFlow.Api.Models;
-using DivergentFlow.Api.Services;
+using DivergentFlow.Services.Models;
+using DivergentFlow.Services.Services;
 
 namespace DivergentFlow.Api.Controllers;
 

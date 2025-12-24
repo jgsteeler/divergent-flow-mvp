@@ -1,4 +1,4 @@
-namespace DivergentFlow.Api.Models;
+namespace DivergentFlow.Services.Models;
 
 /// <summary>
 /// Data Transfer Object for Capture items
