@@ -210,12 +210,14 @@ function calculateBaseConfidence(
   // Normalize confidence to a 0-100 scale
   const totalScore = scores.action.score + scores.reminder.score + scores.note.score;
   
-  // Calculate confidence: normalize to 0-100 scale and cap below 95 to fix boundary issues
-  let adjustedConfidence = totalScore > 0 ? Math.min((maxScore / totalScore) * 100, 94.9) : 0;
+  let adjustedConfidence: number;
 
-  // Boost confidence for exact matches
-  if (maxScore > EXACT_MATCH_SCORE_THRESHOLD * totalScore) {
+  // Check for exact matches first (before applying cap)
+  if (totalScore > 0 && maxScore > EXACT_MATCH_SCORE_THRESHOLD * totalScore) {
     adjustedConfidence = EXACT_MATCH_CONFIDENCE;
+  } else {
+    // Calculate confidence: normalize to 0-100 scale and cap below 95 for non-exact matches
+    adjustedConfidence = totalScore > 0 ? Math.min((maxScore / totalScore) * 100, 94.9) : 0;
   }
 
   // Refine confidence scaling for ambiguous cases
