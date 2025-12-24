@@ -1,232 +1,28 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
-import { Item, ItemType, Priority, Estimate, TypeLearningData, PriorityLearningData, EstimateLearningData } from "@/lib/types";
+import { Capture } from "@/lib/types";
 import { CaptureInput } from "@/components/CaptureInput";
-import { AttributeConfirmation } from "@/components/AttributeConfirmation";
-import { ReviewQueue } from "@/components/ReviewQueue";
+import { CaptureList } from "@/components/CaptureList";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
-import { inferAttributes } from "@/lib/inference";
-import { inferPriority, inferEstimate, savePriorityLearning, saveEstimateLearning } from "@/lib/priorityEstimateInference";
-import { getTopReviewItems } from "@/lib/reviewPriority";
-import { initializeDefaultTypeLearning, saveTypeLearning } from "@/lib/typeInference";
+import { List } from "@phosphor-icons/react";
 
 function App() {
-  const [items, setItems] = useLocalStorage<Item[]>("items", []);
-  const [typeLearning, setTypeLearning] = useLocalStorage<TypeLearningData[]>("type-learning", []);
-  const [attributeLearning, setAttributeLearning] = useLocalStorage("attribute-learning", []);
-  const [priorityLearning, setPriorityLearning] = useLocalStorage<PriorityLearningData[]>("priority-learning", []);
-  const [estimateLearning, setEstimateLearning] = useLocalStorage<EstimateLearningData[]>("estimate-learning", []);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [pendingConfirmation, setPendingConfirmation] = useState<Item | null>(null);
+  const [captures, setCaptures] = useLocalStorage<Capture[]>("captures", []);
+  const [view, setView] = useState<"capture" | "list">("capture");
 
-  // Initialize default type learning data if empty
-  useEffect(() => {
-    if (!typeLearning || typeLearning.length === 0) {
-      const defaults = initializeDefaultTypeLearning()
-      setTypeLearning(defaults)
-    }
-  }, [])
+  const capturesArray = captures || [];
 
-  const itemsArray = items || [];
-  const typeLearningArray = typeLearning || [];
-  const attributeLearningArray = attributeLearning || [];
-  const priorityLearningArray = priorityLearning || [];
-  const estimateLearningArray = estimateLearning || [];
-
-  const reviewItems = getTopReviewItems(itemsArray, 3);
-
-  const handleCapture = async (text: string) => {
-    setIsProcessing(true);
-
-    const item: Item = {
-      id: `item-${Date.now()}-${Math.random()}`,
+  const handleCapture = (text: string) => {
+    const capture: Capture = {
+      id: `capture-${Date.now()}-${crypto.randomUUID()}`,
       text,
       createdAt: Date.now(),
-      migratedCapture: false,
     };
 
-    setItems((current) => [...(current || []), item]);
+    setCaptures((current) => [...(current || []), capture]);
     toast.success("Captured!");
-
-    setTimeout(async () => {
-      await processItem(item);
-      setIsProcessing(false);
-    }, 100);
-  };
-
-  const processItem = async (item: Item) => {
-    const attributes = await inferAttributes(item.text, attributeLearningArray, typeLearningArray);
-
-    const { priority, confidence: priorityConf, reasoning: priorityReason } = inferPriority(
-      item.text,
-      attributes.type,
-      priorityLearningArray
-    );
-
-    const { estimate, confidence: estimateConf, reasoning: estimateReason } = inferEstimate(
-      item.text,
-      attributes.type,
-      estimateLearningArray
-    );
-
-    const updatedItem: Item = {
-      ...item,
-      inferredType: attributes.type || undefined,
-      typeConfidence: attributes.typeConfidence,
-      keywords: attributes.keywords, // Store keywords for future learning
-      collection: attributes.collection || undefined,
-      collectionConfidence: attributes.collectionConfidence,
-      dueDate: attributes.dueDate || undefined,
-      priority: priority || undefined,
-      priorityConfidence: priorityConf,
-      priorityReasoning: priorityReason,
-      estimate: estimate || undefined,
-      estimateConfidence: estimateConf,
-      estimateReasoning: estimateReason,
-      context: attributes.context || undefined,
-      tags: attributes.tags || undefined,
-    };
-
-    setItems((current) =>
-      (current || []).map((i) => (i.id === item.id ? updatedItem : i))
-    );
-
-    const needsReview =
-      !attributes.type ||
-      !attributes.collection ||
-      (attributes.typeConfidence && attributes.typeConfidence < 95) ||
-      (attributes.collectionConfidence && attributes.collectionConfidence < 85) ||
-      (priorityConf < 85) ||
-      (estimateConf < 85);
-
-    if (needsReview) {
-      setPendingConfirmation(updatedItem);
-    } else {
-      // High confidence (>=95%), auto-confirm and save to learning
-      const reviewedItem = { ...updatedItem, lastReviewedAt: Date.now() };
-      setItems((current) =>
-        (current || []).map((i) => (i.id === item.id ? reviewedItem : i))
-      );
-      
-      // Save type learning for high-confidence inference
-      if (attributes.type && attributes.keywords && attributes.typeConfidence && attributes.typeConfidence >= 95) {
-        const newTypeLearning = await saveTypeLearning(
-          attributes.keywords,
-          attributes.type,
-          attributes.type,
-          attributes.typeConfidence
-        );
-        setTypeLearning((current) => [...(current || []), newTypeLearning]);
-      }
-    }
-  };
-
-  const handleAttributeConfirm = async (itemId: string, updates: Partial<Item>) => {
-    const item = itemsArray.find((i) => i.id === itemId);
-    if (!item) return;
-
-    const updatedItem: Item = {
-      ...item,
-      ...updates,
-    };
-
-    setItems((current) =>
-      (current || []).map((i) => (i.id === itemId ? updatedItem : i))
-    );
-
-    // Learning data: maps Item properties to normalized attribute names
-    // Item.inferredType → type, Item.collection → collection, etc.
-    const learningData = {
-      originalText: item.text,
-      inferredAttributes: {
-        type: item.inferredType,
-        collection: item.collection,
-        priority: item.priority,
-        estimate: item.estimate,
-        dueDate: item.dueDate,
-        context: item.context,
-        tags: item.tags,
-        typeConfidence: item.typeConfidence,
-        collectionConfidence: item.collectionConfidence,
-        priorityConfidence: item.priorityConfidence,
-        estimateConfidence: item.estimateConfidence,
-      },
-      correctedAttributes: {
-        type: updates.inferredType,
-        collection: updates.collection,
-        priority: updates.priority,
-        estimate: updates.estimate,
-        dueDate: updates.dueDate,
-        context: updates.context,
-        tags: updates.tags,
-        typeConfidence: 100,
-        collectionConfidence: 100,
-        priorityConfidence: updates.priority ? 100 : undefined,
-        estimateConfidence: updates.estimate ? 100 : undefined,
-      },
-      timestamp: Date.now(),
-      wasCorrect: item.inferredType === updates.inferredType && item.collection === updates.collection,
-    };
-
-    setAttributeLearning((current) => [...(current || []), learningData]);
-
-    // Save type learning when user confirms type
-    if (updates.inferredType && item.keywords && item.keywords.length > 0) {
-      const newTypeLearning = await saveTypeLearning(
-        item.keywords,
-        item.inferredType || null,
-        updates.inferredType,
-        item.typeConfidence || 0
-      );
-      setTypeLearning((current) => [...(current || []), newTypeLearning]);
-    }
-
-    if (updates.priority) {
-      const newPriorityLearning = await savePriorityLearning(
-        item.text,
-        item.priority || null,
-        updates.priority,
-        item.priorityConfidence || 0
-      );
-      if (newPriorityLearning) {
-        setPriorityLearning((current) => [...(current || []), newPriorityLearning]);
-      }
-    }
-
-    if (updates.estimate) {
-      const newEstimateLearning = await saveEstimateLearning(
-        item.text,
-        item.estimate || null,
-        updates.estimate,
-        item.estimateConfidence || 0
-      );
-      if (newEstimateLearning) {
-        setEstimateLearning((current) => [...(current || []), newEstimateLearning]);
-      }
-    }
-
-    setPendingConfirmation(null);
-
-    const wasTypeCorrect = item.inferredType === updates.inferredType;
-    const wasCollectionCorrect = item.collection === updates.collection;
-
-    if (wasTypeCorrect && wasCollectionCorrect) {
-      toast.success("Confirmed! I'm learning from your input.");
-    } else {
-      toast.success("Updated! I'll remember that for next time.");
-    }
-  };
-
-  const handleDismiss = (itemId: string) => {
-    setPendingConfirmation(null);
-  };
-
-  const handleReviewItem = (itemId: string) => {
-    const item = itemsArray.find((i) => i.id === itemId);
-    if (item) {
-      processItem(item);
-    }
   };
 
   return (
@@ -235,31 +31,31 @@ function App() {
       <div className="max-w-4xl mx-auto space-y-8">
         <header className="text-center space-y-2">
           <h1 className="text-2xl font-bold">Divergent Flow</h1>
+          <p className="text-sm text-muted-foreground">Capture your thoughts</p>
         </header>
 
-        <CaptureInput onCapture={handleCapture} isProcessing={isProcessing} />
-
-        {pendingConfirmation && (
-          <AttributeConfirmation
-            item={pendingConfirmation}
-            learningData={attributeLearningArray}
-            onConfirm={handleAttributeConfirm}
-            onDismiss={handleDismiss}
-          />
-        )}
-
-        {!pendingConfirmation && reviewItems.length > 0 && (
-          <ReviewQueue items={reviewItems} onReviewItem={handleReviewItem} />
-        )}
-
-        {itemsArray.length > 0 && (
-          <div className="space-y-4">
-            {itemsArray.map((item) => (
-              <div key={item.id} className="p-4 bg-white rounded shadow">
-                <p>{item.text}</p>
+        {view === "capture" ? (
+          <>
+            <CaptureInput onCapture={handleCapture} />
+            
+            {capturesArray.length > 0 && (
+              <div className="flex justify-center">
+                <Button
+                  onClick={() => setView("list")}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <List />
+                  View Captures ({capturesArray.length})
+                </Button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
+        ) : (
+          <CaptureList 
+            captures={capturesArray}
+            onBack={() => setView("capture")}
+          />
         )}
       </div>
       

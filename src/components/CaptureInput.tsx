@@ -6,10 +6,9 @@ import { motion } from 'framer-motion'
 
 interface CaptureInputProps {
   onCapture: (text: string) => void
-  isProcessing?: boolean
 }
 
-export function CaptureInput({ onCapture, isProcessing }: CaptureInputProps) {
+export function CaptureInput({ onCapture }: CaptureInputProps) {
   const [text, setText] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -18,7 +17,7 @@ export function CaptureInput({ onCapture, isProcessing }: CaptureInputProps) {
   }, [])
 
   const handleSubmit = () => {
-    if (text.trim() && !isProcessing) {
+    if (text.trim()) {
       onCapture(text.trim())
       setText('')
       setTimeout(() => textareaRef.current?.focus(), 100)
@@ -44,18 +43,17 @@ export function CaptureInput({ onCapture, isProcessing }: CaptureInputProps) {
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Capture anything... Try: 'How do I use this app?' or 'What can this do?' (Cmd/Ctrl+Enter to save)"
+          placeholder="Capture anything... (Cmd/Ctrl+Enter to save)"
           className="min-h-[100px] resize-none text-base border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
-          disabled={isProcessing}
         />
         <div className="flex justify-end">
           <Button
             onClick={handleSubmit}
-            disabled={!text.trim() || isProcessing}
+            disabled={!text.trim()}
             className="bg-accent hover:bg-accent/90 text-accent-foreground"
           >
             <Plus className="mr-2" />
-            {isProcessing ? 'Processing...' : 'Capture'}
+            Capture
           </Button>
         </div>
       </div>
