@@ -3,8 +3,8 @@ using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using DivergentFlow.Api.Models;
-using DivergentFlow.Api.Services;
+using DivergentFlow.Services.Models;
+using DivergentFlow.Services.Services;
 using Xunit;
 
 namespace DivergentFlow.Api.Tests;

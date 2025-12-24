@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DivergentFlow.Api\DivergentFlow.Api.csproj" />
+    <ProjectReference Include="..\DivergentFlow.Services\DivergentFlow.Services.csproj" />
   </ItemGroup>
 
 </Project>

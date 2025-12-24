@@ -1,6 +1,6 @@
-using DivergentFlow.Api.Models;
+using DivergentFlow.Services.Models;
 
-namespace DivergentFlow.Api.Services;
+namespace DivergentFlow.Services.Services;
 
 /// <summary>
 /// Temporary in-memory implementation of ICaptureService
