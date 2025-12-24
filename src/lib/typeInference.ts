@@ -9,6 +9,7 @@ import {
   ACTION_PHRASE_BOOST_DEFAULT,
   ACTION_PHRASE_BOOST_SUBMIT,
   REMINDER_DOMINANCE_PENALTY,
+  CONFIDENCE_CAP_NON_EXACT_MATCH,
   EXACT_MATCH_SCORE_THRESHOLD,
   EXACT_MATCH_CONFIDENCE,
   REMINDER_PREFIX_BOOST,
@@ -219,8 +220,8 @@ function calculateBaseConfidence(
     if (maxScore > EXACT_MATCH_SCORE_THRESHOLD * totalScore) {
       adjustedConfidence = EXACT_MATCH_CONFIDENCE;
     } else {
-      // Cap below 95 for non-exact matches
-      adjustedConfidence = Math.min(normalizedConfidence, 94.9);
+      // Cap below exact match confidence for non-exact matches
+      adjustedConfidence = Math.min(normalizedConfidence, CONFIDENCE_CAP_NON_EXACT_MATCH);
     }
   }
 
