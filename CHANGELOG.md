@@ -1,5 +1,35 @@
 # Changelog
 
+## [4.0.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/v3.3.0...v4.0.0) (2025-12-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* **app:** strip to minimal capture and view functionality ([#116](https://github.com/jgsteeler/divergent-flow-mvp/issues/116))
+* **inference:** TypeLearningData structure changed from pattern-based to keyword-based
+* **inference:** TypeLearningData structure changed from pattern-based to keyword-based
+
+### Features
+
+* **agent:** enforce conventional commits for all commits and PR titles ([#83](https://github.com/jgsteeler/divergent-flow-mvp/issues/83)) ([1b2fd15](https://github.com/jgsteeler/divergent-flow-mvp/commit/1b2fd151fb323b400d01dee9fd19b0ecd559ea39))
+* **api:** create .NET 10 Web API with CRUD endpoints, tests, and CI/CD ([#127](https://github.com/jgsteeler/divergent-flow-mvp/issues/127)) ([3129218](https://github.com/jgsteeler/divergent-flow-mvp/commit/31292186f5145021560bafd77c0bea8969c27f8f))
+* **capture:** add InferredType and TypeConfidence properties to backend capture model ([#131](https://github.com/jgsteeler/divergent-flow-mvp/issues/131)) ([04bf644](https://github.com/jgsteeler/divergent-flow-mvp/commit/04bf644fe36768f5eb3e77647933db767ee06391))
+* implement comprehensive inference review UI with learning feedback loop ([#84](https://github.com/jgsteeler/divergent-flow-mvp/issues/84)) ([489d842](https://github.com/jgsteeler/divergent-flow-mvp/commit/489d842496bb9656c0c22e1e6453e2729d153231))
+* **inference:** enhance confidence calculation logic ([#97](https://github.com/jgsteeler/divergent-flow-mvp/issues/97)) ([350666c](https://github.com/jgsteeler/divergent-flow-mvp/commit/350666ce126790a0f2ee89e39394f4a9032c2e1c))
+* replace @github/spark with localStorage for state management, update dependencies, and improve type inference ([#24](https://github.com/jgsteeler/divergent-flow-mvp/issues/24)) ([90d0781](https://github.com/jgsteeler/divergent-flow-mvp/commit/90d078195767d14df841ad1f4f35b03f09e64b70))
+* **services:** create DivergentFlow.Services project and refactor architecture ([#129](https://github.com/jgsteeler/divergent-flow-mvp/issues/129)) ([c9a031b](https://github.com/jgsteeler/divergent-flow-mvp/commit/c9a031b50e8bfcd601c74fc9dd0cf128c5dd2148))
+
+
+### Bug Fixes
+
+* **workflow:** update PR title validation to follow Conventional Commits format ([#89](https://github.com/jgsteeler/divergent-flow-mvp/issues/89)) ([bda1fa2](https://github.com/jgsteeler/divergent-flow-mvp/commit/bda1fa2a6a8026219d4c37e59b28e8b93c96dc1d))
+
+
+### Code Refactoring
+
+* **app:** strip to minimal capture and view functionality ([#116](https://github.com/jgsteeler/divergent-flow-mvp/issues/116)) ([be6c374](https://github.com/jgsteeler/divergent-flow-mvp/commit/be6c374f9c1d8e2aed7f8f74017586fb98b2d86d))
+* **inference:** implement keyword-based type learning system ([#93](https://github.com/jgsteeler/divergent-flow-mvp/issues/93)) ([0a6ce73](https://github.com/jgsteeler/divergent-flow-mvp/commit/0a6ce73a4c352c769098d75a022f0a0d32ec48ac))
+
 ## [3.3.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-mvp-v3.2.0...divergent-flow-mvp-v3.3.0) (2025-12-25)
 
 
