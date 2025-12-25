@@ -5,14 +5,20 @@
       "package-name": "divergent-flow-mvp",
       "changelog-path": "CHANGELOG.md",
       "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": true
+      "bump-patch-for-minor-pre-major": true,
+      "include-component-in-tag": false,
+      "exclude-paths": [
+        "api/**"
+      ]
     },
     "api": {
       "release-type": "simple",
       "package-name": "divergent-flow-api",
       "changelog-path": "api/CHANGELOG.md",
       "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": true
+      "bump-patch-for-minor-pre-major": true,
+      "include-component-in-tag": true
     }
-  }
+  },
+  "separate-pull-requests": true
 }
