@@ -20,4 +20,14 @@ public class CaptureDto
     /// Timestamp when the capture was created (Unix milliseconds)
     /// </summary>
     public long CreatedAt { get; set; }
+
+    /// <summary>
+    /// The inferred type of the item (e.g., note, action, reminder)
+    /// </summary>
+    public string? InferredType { get; set; }
+
+    /// <summary>
+    /// Confidence score for the type inference (0-100)
+    /// </summary>
+    public double? TypeConfidence { get; set; }
 }

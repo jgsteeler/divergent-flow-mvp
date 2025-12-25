@@ -36,7 +36,9 @@ public class InMemoryCaptureService : ICaptureService
             {
                 Id = Guid.NewGuid().ToString(),
                 Text = request.Text,
-                CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+                CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                InferredType = request.InferredType,
+                TypeConfidence = request.TypeConfidence
             };
 
             _captures.Add(capture);
@@ -55,6 +57,8 @@ public class InMemoryCaptureService : ICaptureService
             }
 
             capture.Text = request.Text;
+            capture.InferredType = request.InferredType;
+            capture.TypeConfidence = request.TypeConfidence;
             return Task.FromResult<CaptureDto?>(capture);
         }
     }

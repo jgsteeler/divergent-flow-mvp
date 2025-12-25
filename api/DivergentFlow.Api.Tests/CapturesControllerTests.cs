@@ -170,4 +170,102 @@ public class CapturesControllerTests : IClassFixture<CustomWebApplicationFactory
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Create_ReturnsCreatedCapture_WithTypeProperties()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+        var request = new CreateCaptureRequest
+        {
+            Text = "Test capture with type",
+            InferredType = "note",
+            TypeConfidence = 95.5
+        };
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/captures", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var capture = await response.Content.ReadFromJsonAsync<CaptureDto>();
+        Assert.NotNull(capture);
+        Assert.NotNull(capture.Id);
+        Assert.Equal("Test capture with type", capture.Text);
+        Assert.Equal("note", capture.InferredType);
+        Assert.Equal(95.5, capture.TypeConfidence);
+        Assert.True(capture.CreatedAt > 0);
+    }
+
+    [Fact]
+    public async Task Create_ReturnsCreatedCapture_WithoutTypeProperties()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+        var request = new CreateCaptureRequest
+        {
+            Text = "Test capture without type"
+        };
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/captures", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var capture = await response.Content.ReadFromJsonAsync<CaptureDto>();
+        Assert.NotNull(capture);
+        Assert.NotNull(capture.Id);
+        Assert.Equal("Test capture without type", capture.Text);
+        Assert.Null(capture.InferredType);
+        Assert.Null(capture.TypeConfidence);
+        Assert.True(capture.CreatedAt > 0);
+    }
+
+    [Fact]
+    public async Task Update_ReturnsUpdatedCapture_WithTypeProperties()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+        var createRequest = new CreateCaptureRequest { Text = "Original text" };
+        var createResponse = await client.PostAsJsonAsync("/api/captures", createRequest);
+        var createdCapture = await createResponse.Content.ReadFromJsonAsync<CaptureDto>();
+
+        var updateRequest = new UpdateCaptureRequest 
+        { 
+            Text = "Updated text",
+            InferredType = "action",
+            TypeConfidence = 87.3
+        };
+
+        // Act
+        var response = await client.PutAsJsonAsync($"/api/captures/{createdCapture!.Id}", updateRequest);
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+        var updatedCapture = await response.Content.ReadFromJsonAsync<CaptureDto>();
+        Assert.NotNull(updatedCapture);
+        Assert.Equal(createdCapture.Id, updatedCapture.Id);
+        Assert.Equal("Updated text", updatedCapture.Text);
+        Assert.Equal("action", updatedCapture.InferredType);
+        Assert.Equal(87.3, updatedCapture.TypeConfidence);
+    }
+
+    [Fact]
+    public async Task Create_ReturnsBadRequest_WhenTypeConfidenceOutOfRange()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+        var request = new CreateCaptureRequest
+        {
+            Text = "Test capture",
+            InferredType = "note",
+            TypeConfidence = 150.0 // Invalid: > 100
+        };
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/captures", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
 }
