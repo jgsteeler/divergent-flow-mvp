@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.3.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-mvp-v3.2.0...divergent-flow-mvp-v3.3.0) (2025-12-25)
+
+
+### Features
+
+* **capture:** add InferredType and TypeConfidence properties to backend capture model ([#131](https://github.com/jgsteeler/divergent-flow-mvp/issues/131)) ([04bf644](https://github.com/jgsteeler/divergent-flow-mvp/commit/04bf644fe36768f5eb3e77647933db767ee06391))
+
 ## [3.2.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-mvp-v3.1.0...divergent-flow-mvp-v3.2.0) (2025-12-24)
 
 
