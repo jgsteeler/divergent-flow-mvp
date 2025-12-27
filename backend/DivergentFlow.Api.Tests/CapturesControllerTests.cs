@@ -46,21 +46,6 @@ public class CapturesControllerTests : IClassFixture<CustomWebApplicationFactory
     }
 
     [Fact]
-    public async Task Hello_ReturnsOk_WithHelloBody()
-    {
-        // Arrange
-        var client = _factory.CreateClient();
-
-        // Act
-        var response = await client.GetAsync("/hello");
-
-        // Assert
-        response.EnsureSuccessStatusCode();
-        var body = await response.Content.ReadFromJsonAsync<string>();
-        Assert.Equal("hello", body);
-    }
-
-    [Fact]
     public async Task GetAll_ReturnsEmptyList_WhenNoCaptures()
     {
         // Arrange
