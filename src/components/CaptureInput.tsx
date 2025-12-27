@@ -6,9 +6,10 @@ import { motion } from 'framer-motion'
 
 interface CaptureInputProps {
   onCapture: (text: string) => void
+  isLoading?: boolean
 }
 
-export function CaptureInput({ onCapture }: CaptureInputProps) {
+export function CaptureInput({ onCapture, isLoading }: CaptureInputProps) {
   const [text, setText] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -49,11 +50,11 @@ export function CaptureInput({ onCapture }: CaptureInputProps) {
         <div className="flex justify-end">
           <Button
             onClick={handleSubmit}
-            disabled={!text.trim()}
+            disabled={!text.trim() || isLoading}
             className="bg-accent hover:bg-accent/90 text-accent-foreground"
           >
             <Plus className="mr-2" />
-            Capture
+            {isLoading ? 'Capturing...' : 'Capture'}
           </Button>
         </div>
       </div>

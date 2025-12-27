@@ -6,9 +6,11 @@ import { motion } from 'framer-motion'
 interface CaptureListProps {
   captures: Capture[]
   onBack: () => void
+  isLoading?: boolean
+  error?: Error | null
 }
 
-export function CaptureList({ captures, onBack }: CaptureListProps) {
+export function CaptureList({ captures, onBack, isLoading, error }: CaptureListProps) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -27,11 +29,25 @@ export function CaptureList({ captures, onBack }: CaptureListProps) {
         </Button>
       </div>
 
-      {captures.length === 0 ? (
+      {isLoading && (
+        <div className="text-center py-12 text-muted-foreground">
+          <p>Loading captures...</p>
+        </div>
+      )}
+
+      {error && (
+        <div className="text-center py-12 text-destructive">
+          <p>Failed to load captures: {error.message}</p>
+        </div>
+      )}
+
+      {!isLoading && !error && captures.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
           <p>No captures yet. Start capturing your thoughts!</p>
         </div>
-      ) : (
+      )}
+      
+      {!isLoading && !error && captures.length > 0 && (
         <div className="space-y-3">
           {captures.map((capture) => (
             <motion.div
