@@ -56,7 +56,7 @@ public class CapturesControllerTests : IClassFixture<CustomWebApplicationFactory
 
         // Assert
         response.EnsureSuccessStatusCode();
-        var body = await response.Content.ReadAsStringAsync();
+        var body = await response.Content.ReadFromJsonAsync<string>();
         Assert.Equal("hello", body);
     }
 
