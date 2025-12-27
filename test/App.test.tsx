@@ -1,30 +1,62 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import App from '../src/App'
+import * as capturesApi from '@/lib/api/capturesApi'
+
+// Mock the API module
+vi.mock('@/lib/api/capturesApi')
+
+// Helper to wrap component with QueryClient
+const renderWithQueryClient = (component: React.ReactElement) => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  })
+  return render(
+    <QueryClientProvider client={queryClient}>
+      {component}
+    </QueryClientProvider>
+  )
+}
 
 describe('App - Basic Capture and View', () => {
   beforeEach(() => {
-    // Clear localStorage before each test
-    localStorage.clear()
+    vi.clearAllMocks()
+    // Default mock: return empty array for captures
+    vi.mocked(capturesApi.fetchCaptures).mockResolvedValue([])
   })
 
-  it('should render the capture input', () => {
-    render(<App />)
+  it('should render the capture input', async () => {
+    renderWithQueryClient(<App />)
     
-    expect(screen.getByText('Divergent Flow')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('Divergent Flow')).toBeInTheDocument()
+    })
+    
     expect(screen.getByPlaceholderText(/Capture anything/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Capture/i })).toBeInTheDocument()
   })
 
-  it('should disable capture button when input is empty', () => {
-    render(<App />)
+  it('should disable capture button when input is empty', async () => {
+    renderWithQueryClient(<App />)
+    
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /^Capture$/i })).toBeInTheDocument()
+    })
     
     const captureButton = screen.getByRole('button', { name: /^Capture$/i })
     expect(captureButton).toBeDisabled()
   })
 
-  it('should enable capture button when input has text', () => {
-    render(<App />)
+  it('should enable capture button when input has text', async () => {
+    renderWithQueryClient(<App />)
+    
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/Capture anything/i)).toBeInTheDocument()
+    })
     
     const textarea = screen.getByPlaceholderText(/Capture anything/i)
     const captureButton = screen.getByRole('button', { name: /^Capture$/i })
@@ -35,7 +67,21 @@ describe('App - Basic Capture and View', () => {
   })
 
   it('should capture text and show view captures button', async () => {
-    render(<App />)
+    const mockCapture = {
+      id: '1',
+      text: 'My first capture',
+      createdAt: Date.now(),
+    }
+    
+    // Mock API responses
+    vi.mocked(capturesApi.createCapture).mockResolvedValue(mockCapture)
+    vi.mocked(capturesApi.fetchCaptures).mockResolvedValue([mockCapture])
+    
+    renderWithQueryClient(<App />)
+    
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/Capture anything/i)).toBeInTheDocument()
+    })
     
     const textarea = screen.getByPlaceholderText(/Capture anything/i)
     const captureButton = screen.getByRole('button', { name: /^Capture$/i })
@@ -44,7 +90,7 @@ describe('App - Basic Capture and View', () => {
     fireEvent.change(textarea, { target: { value: 'My first capture' } })
     fireEvent.click(captureButton)
     
-    // Should show view captures button
+    // Should show view captures button after refetch
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /View Captures \(1\)/i })).toBeInTheDocument()
     })
@@ -54,7 +100,20 @@ describe('App - Basic Capture and View', () => {
   })
 
   it('should navigate to list view and back', async () => {
-    render(<App />)
+    const mockCapture = {
+      id: '1',
+      text: 'Test item',
+      createdAt: Date.now(),
+    }
+    
+    vi.mocked(capturesApi.createCapture).mockResolvedValue(mockCapture)
+    vi.mocked(capturesApi.fetchCaptures).mockResolvedValue([mockCapture])
+    
+    renderWithQueryClient(<App />)
+    
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/Capture anything/i)).toBeInTheDocument()
+    })
     
     // Capture an item
     const textarea = screen.getByPlaceholderText(/Capture anything/i)
@@ -68,7 +127,9 @@ describe('App - Basic Capture and View', () => {
     })
     
     // Should show list view
-    expect(screen.getByText('Your Captures')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('Your Captures')).toBeInTheDocument()
+    })
     expect(screen.getByText('Test item')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Back to Capture/i })).toBeInTheDocument()
     
@@ -76,11 +137,30 @@ describe('App - Basic Capture and View', () => {
     fireEvent.click(screen.getByRole('button', { name: /Back to Capture/i }))
     
     // Should be back to capture view
-    expect(screen.getByPlaceholderText(/Capture anything/i)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/Capture anything/i)).toBeInTheDocument()
+    })
   })
 
   it('should display multiple captures in list view', async () => {
-    render(<App />)
+    const captures = [
+      { id: '1', text: 'First capture', createdAt: Date.now() },
+      { id: '2', text: 'Second capture', createdAt: Date.now() + 1000 },
+    ]
+    
+    let captureIndex = 0
+    vi.mocked(capturesApi.createCapture).mockImplementation(async (req) => {
+      const capture = { ...captures[captureIndex], text: req.text }
+      captureIndex++
+      return capture
+    })
+    vi.mocked(capturesApi.fetchCaptures).mockResolvedValue(captures)
+    
+    renderWithQueryClient(<App />)
+    
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/Capture anything/i)).toBeInTheDocument()
+    })
     
     const textarea = screen.getByPlaceholderText(/Capture anything/i)
     
@@ -88,7 +168,7 @@ describe('App - Basic Capture and View', () => {
     fireEvent.change(textarea, { target: { value: 'First capture' } })
     fireEvent.click(screen.getByRole('button', { name: /^Capture$/i }))
     
-    // Capture second item
+    // Wait for textarea to clear and capture second item
     await waitFor(() => expect(textarea).toHaveValue(''))
     fireEvent.change(textarea, { target: { value: 'Second capture' } })
     fireEvent.click(screen.getByRole('button', { name: /^Capture$/i }))
@@ -100,19 +180,40 @@ describe('App - Basic Capture and View', () => {
     })
     
     // Should show both captures
-    expect(screen.getByText('First capture')).toBeInTheDocument()
-    expect(screen.getByText('Second capture')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('First capture')).toBeInTheDocument()
+      expect(screen.getByText('Second capture')).toBeInTheDocument()
+    })
   })
 
-  it('should show empty state when no captures exist', () => {
-    render(<App />)
+  it('should show empty state when no captures exist', async () => {
+    vi.mocked(capturesApi.fetchCaptures).mockResolvedValue([])
+    
+    renderWithQueryClient(<App />)
+    
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/Capture anything/i)).toBeInTheDocument()
+    })
     
     // No view captures button should be shown initially
     expect(screen.queryByRole('button', { name: /View Captures/i })).not.toBeInTheDocument()
   })
 
-  it('should persist captures in localStorage', async () => {
-    const { unmount } = render(<App />)
+  it('should persist captures via API', async () => {
+    const mockCapture = {
+      id: '1',
+      text: 'Persisted capture',
+      createdAt: Date.now(),
+    }
+    
+    vi.mocked(capturesApi.createCapture).mockResolvedValue(mockCapture)
+    vi.mocked(capturesApi.fetchCaptures).mockResolvedValue([mockCapture])
+    
+    const { unmount } = renderWithQueryClient(<App />)
+    
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/Capture anything/i)).toBeInTheDocument()
+    })
     
     const textarea = screen.getByPlaceholderText(/Capture anything/i)
     
@@ -126,9 +227,11 @@ describe('App - Basic Capture and View', () => {
     
     // Unmount and remount
     unmount()
-    render(<App />)
+    renderWithQueryClient(<App />)
     
-    // Should still show view captures button
-    expect(screen.getByRole('button', { name: /View Captures \(1\)/i })).toBeInTheDocument()
+    // Should still show view captures button (data from API)
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /View Captures \(1\)/i })).toBeInTheDocument()
+    })
   })
 })

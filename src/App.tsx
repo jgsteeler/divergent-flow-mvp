@@ -1,28 +1,29 @@
 import { useState } from "react";
-import { useLocalStorage } from "./hooks/useLocalStorage";
-import { Capture } from "@/lib/types";
 import { CaptureInput } from "@/components/CaptureInput";
 import { CaptureList } from "@/components/CaptureList";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { List } from "@phosphor-icons/react";
+import { useCaptures, useCreateCapture } from "@/hooks/useCaptures";
 
 function App() {
-  const [captures, setCaptures] = useLocalStorage<Capture[]>("captures", []);
   const [view, setView] = useState<"capture" | "list">("capture");
-
-  const capturesArray = captures || [];
+  const { data: captures = [], isLoading, error } = useCaptures();
+  const createCaptureMutation = useCreateCapture();
 
   const handleCapture = (text: string) => {
-    const capture: Capture = {
-      id: `capture-${Date.now()}-${crypto.randomUUID()}`,
-      text,
-      createdAt: Date.now(),
-    };
-
-    setCaptures((current) => [...(current || []), capture]);
-    toast.success("Captured!");
+    createCaptureMutation.mutate(
+      { text },
+      {
+        onSuccess: () => {
+          toast.success("Captured!");
+        },
+        onError: (error) => {
+          toast.error(`Failed to capture: ${error.message}`);
+        },
+      }
+    );
   };
 
   return (
@@ -36,9 +37,24 @@ function App() {
 
         {view === "capture" ? (
           <>
-            <CaptureInput onCapture={handleCapture} />
+            <CaptureInput 
+              onCapture={handleCapture}
+              isLoading={createCaptureMutation.isPending}
+            />
             
-            {capturesArray.length > 0 && (
+            {isLoading && (
+              <div className="text-center text-muted-foreground">
+                Loading captures...
+              </div>
+            )}
+            
+            {error && (
+              <div className="text-center text-destructive">
+                Failed to load captures: {error.message}
+              </div>
+            )}
+            
+            {!isLoading && !error && captures.length > 0 && (
               <div className="flex justify-center">
                 <Button
                   onClick={() => setView("list")}
@@ -46,15 +62,17 @@ function App() {
                   className="flex items-center gap-2"
                 >
                   <List />
-                  View Captures ({capturesArray.length})
+                  View Captures ({captures.length})
                 </Button>
               </div>
             )}
           </>
         ) : (
           <CaptureList 
-            captures={capturesArray}
+            captures={captures}
             onBack={() => setView("capture")}
+            isLoading={isLoading}
+            error={error}
           />
         )}
       </div>
