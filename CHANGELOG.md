@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.1.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/v4.0.0...v4.1.0) (2025-12-27)
+
+
+### Features
+
+* **api:** replace localStorage with backend API for capture operations ([#135](https://github.com/jgsteeler/divergent-flow-mvp/issues/135)) ([6045230](https://github.com/jgsteeler/divergent-flow-mvp/commit/60452306b201b2f5d8866278805adb635b40211e))
+
 ## [4.0.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/v3.3.0...v4.0.0) (2025-12-25)
 
 
