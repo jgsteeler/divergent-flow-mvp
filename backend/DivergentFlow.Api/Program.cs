@@ -60,6 +60,8 @@ app.UseCors("AllowFrontend");
 
 app.UseAuthorization();
 
+app.MapGet("/health", () => Results.Ok(new { status = "Healthy" }));
+
 app.MapControllers();
 
 app.Run();
