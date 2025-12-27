@@ -35,6 +35,7 @@ The `conventional-commits.yml` workflow enforces Conventional Commits format on 
 ### Local Setup
 
 Run the setup script to configure local validation:
+
 ```bash
 ./scripts/setup-dev.sh
 ```
@@ -67,11 +68,13 @@ The `release-please.yml` workflow automates version management and changelog gen
 ### Multi-Package Support
 
 This repository is configured to support both:
+
 - **Frontend (root)**: TypeScript/React application (node release-type)
   - Changelog: `CHANGELOG.md`
 - **Backend**: Future .NET Web API project (simple release-type)
   - Changelog: `backend/CHANGELOG.md`
   - **Note**: When creating the backend project, update `.github/release-please-config.json` to add an `extra-files` array with the .csproj file path(s) for automatic version updates. For example:
+
     ```json
     "extra-files": [
       "backend/DivergentFlow.Api/DivergentFlow.Api.csproj"

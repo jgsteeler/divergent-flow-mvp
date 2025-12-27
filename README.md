@@ -2,8 +2,8 @@
 
 An ADHD-friendly brain management tool that helps you capture thoughts instantly and process them intelligently.
 
-> 📚 **New to the project?** See [DOCS-INDEX.md](./DOCS-INDEX.md) for a complete guide to all documentation.
-> 
+> 📚 **New to the project?** See [local.docs/DOCS-INDEX.md](./local.docs/DOCS-INDEX.md) for a complete guide to all documentation.
+>
 > ⚠️ **Contributing?** All commits must follow [Conventional Commits](https://www.conventionalcommits.org/) format. See [COMMIT-GUIDELINES.md](./COMMIT-GUIDELINES.md).
 
 ## Current Status
@@ -18,24 +18,31 @@ An ADHD-friendly brain management tool that helps you capture thoughts instantly
 **If you're looking for guidance on transitioning from Spark to AI coding agents**, start here:
 
 ### 🎯 Quick Reference (2 minutes)
-→ **[QUICK-REFERENCE.md](./QUICK-REFERENCE.md)** - Cheat sheet with timelines, prompts, and key info
+
+→ **[local.docs/QUICK-REFERENCE.md](./local.docs/QUICK-REFERENCE.md)** - Cheat sheet with timelines, prompts, and key info
 
 ### 📖 Quick Start (5 minutes)
-→ **[SPARK-TRANSITION-SUMMARY.md](./SPARK-TRANSITION-SUMMARY.md)** - Executive summary answering your key questions
+
+→ **[local.docs/SPARK-TRANSITION-SUMMARY.md](./local.docs/SPARK-TRANSITION-SUMMARY.md)** - Executive summary answering your key questions
 
 ### 🚀 Setup AI Agent (10 minutes)
-→ **[AI-AGENT-QUICK-START.md](./AI-AGENT-QUICK-START.md)** - Step-by-step setup for GitHub Copilot, Cursor, or Aider
+
+→ **[local.docs/AI-AGENT-QUICK-START.md](./local.docs/AI-AGENT-QUICK-START.md)** - Step-by-step setup for GitHub Copilot, Cursor, or Aider
 
 ### 📚 Complete Guide (30 minutes)
-→ **[TRANSITION-GUIDE.md](./TRANSITION-GUIDE.md)** - Full roadmap, architecture, and scaling plan
+
+→ **[local.docs/TRANSITION-GUIDE.md](./local.docs/TRANSITION-GUIDE.md)** - Full roadmap, architecture, and scaling plan
 
 ### 📋 Project Requirements
-→ **[PRD.md](./PRD.md)** - Product requirements document with all phases and features
+
+→ **[local.docs/PRD.md](./local.docs/PRD.md)** - Product requirements document with all phases and features
 
 ## Development
 
 ### Prerequisites
+
 ```bash
+cd frontend
 npm install
 
 # Optional: Configure git for conventional commits
@@ -45,7 +52,7 @@ npm install
 ### Commit Message Format ⚠️
 
 **All commits must follow [Conventional Commits](https://www.conventionalcommits.org/) format:**
-```
+```text
 <type>(<scope>): <description>
 ```
 
@@ -54,12 +61,16 @@ Example: `feat(capture): add keyboard shortcut`
 See [COMMIT-GUIDELINES.md](./COMMIT-GUIDELINES.md) for quick reference.
 
 ### Run Locally
+
 ```bash
+cd frontend
 npm run dev
 ```
 
 ### Build
+
 ```bash
+cd frontend
 npm run build
 ```
 
@@ -72,26 +83,23 @@ npm run build
 
 ## Project Structure
 
-```
-src/
-├── components/          # React components
-│   ├── ui/             # Reusable UI components
-│   ├── CaptureInput.tsx
-│   ├── ReviewQueue.tsx
-│   └── TypeConfirmation.tsx
-├── lib/                # Business logic
-│   ├── types.ts
-│   ├── typeInference.ts
-│   └── reviewPriority.ts
-└── App.tsx             # Main application
+```text
+frontend/                # React + Vite app
+└── src/
+    ├── components/      # React components
+    ├── hooks/           # Custom hooks
+    └── lib/             # Business logic
+
+backend/                 # .NET API
+└── DivergentFlow.Api/
 ```
 
 ## Next Steps
 
-1. Read [SPARK-TRANSITION-SUMMARY.md](./SPARK-TRANSITION-SUMMARY.md) to understand when/why to transition
-2. Follow [AI-AGENT-QUICK-START.md](./AI-AGENT-QUICK-START.md) to set up AI coding assistant
-3. Use AI agent to complete Phase 3-6 per [PRD.md](./PRD.md)
-4. Scale to backend when ready using [TRANSITION-GUIDE.md](./TRANSITION-GUIDE.md)
+1. Read [local.docs/SPARK-TRANSITION-SUMMARY.md](./local.docs/SPARK-TRANSITION-SUMMARY.md) to understand when/why to transition
+2. Follow [local.docs/AI-AGENT-QUICK-START.md](./local.docs/AI-AGENT-QUICK-START.md) to set up AI coding assistant
+3. Use AI agent to complete Phase 3-6 per [local.docs/PRD.md](./local.docs/PRD.md)
+4. Scale the backend when ready using [local.docs/TRANSITION-GUIDE.md](./local.docs/TRANSITION-GUIDE.md)
 
 ## Contributing
 

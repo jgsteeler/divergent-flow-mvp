@@ -4,7 +4,7 @@ ADHD-friendly brain management tool - Backend Web API
 
 ## Overview
 
-This is a .NET 9 Web API that provides backend services for the Divergent Flow application. The API provides CRUD operations for managing capture items.
+This is a .NET 10 Web API that provides backend services for the Divergent Flow application. The API provides CRUD operations for managing capture items.
 
 ## Features
 
@@ -33,7 +33,7 @@ This is a .NET 9 Web API that provides backend services for the Divergent Flow a
 ### Running the API
 
 ```bash
-cd api/DivergentFlow.Api
+cd backend/DivergentFlow.Api
 dotnet run
 ```
 
@@ -101,7 +101,7 @@ Delete a capture
 ## Project Structure
 
 ```
-api/
+backend/
 ├── DivergentFlow.Api/
 │   ├── Controllers/
 │   │   └── CapturesController.cs    # API endpoints

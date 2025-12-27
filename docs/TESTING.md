@@ -5,6 +5,9 @@ This project uses [Vitest](https://vitest.dev/) for unit testing.
 ## Running Tests
 
 ```bash
+# From the repo root:
+cd frontend
+
 # Run tests in watch mode (recommended during development)
 npm test
 
@@ -21,8 +24,9 @@ npm run test:coverage
 ## Test Structure
 
 Tests are located next to the files they test:
-- `src/lib/typeInference.test.ts` - Tests for type inference logic
-- `src/lib/reviewPriority.test.ts` - Tests for review priority calculations
+
+- `frontend/src/lib/...` - Tests for frontend business logic
+- `frontend/src/hooks/...` - Tests for React hooks
 
 ## Writing Tests
 
@@ -57,10 +61,12 @@ describe('myFunction', () => {
 ## CI/CD Integration
 
 Tests run automatically on:
+
 - Every branch push
 - Pull requests to main
 
 The CI pipeline runs:
+
 1. Linter (`npm run lint`)
 2. Tests (`npm run test:run`)
 3. Build (`npm run build`)
@@ -72,6 +78,7 @@ See `.github/workflows/test.yml` for the complete CI configuration.
 Run `npm run test:coverage` to generate a coverage report. The report will be available in the `coverage` directory.
 
 Coverage goals:
+
 - **Business logic** (`src/lib/`): >80%
 - **Components**: >60%
 - **Critical paths**: 100%

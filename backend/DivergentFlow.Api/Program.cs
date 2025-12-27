@@ -10,7 +10,18 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "http://localhost:5000")
+        policy
+              // Allow any localhost/127.0.0.1 origin so Vite can pick any port.
+              .SetIsOriginAllowed(origin =>
+              {
+                  if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+                  {
+                      return false;
+                  }
+
+                  return uri.Scheme is "http" or "https" &&
+                         (uri.Host == "localhost" || uri.Host == "127.0.0.1");
+              })
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();

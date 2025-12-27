@@ -67,3 +67,4 @@ _pkginfo.txt
 
 # Keep solution files - they should be committed
 # *.sln (removed - solution files should be in version control)
+local.docs/
