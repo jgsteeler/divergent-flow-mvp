@@ -5,14 +5,14 @@ This guide explains how to run both the frontend and backend together.
 ## Prerequisites
 
 - Node.js (for frontend)
-- .NET 9 SDK (for backend)
+- .NET 10 SDK (for backend)
 
 ## Quick Start
 
 ### Terminal 1: Start the Backend API
 
 ```bash
-cd api/DivergentFlow.Api
+cd backend/DivergentFlow.Api
 dotnet run
 ```
 
@@ -23,6 +23,7 @@ The API will be available at `http://localhost:5100`
 ### Terminal 2: Start the Frontend
 
 ```bash
+cd frontend
 npm run dev
 ```
 
@@ -50,18 +51,20 @@ These ports are configured in the CORS settings of the API.
 If you get a port conflict:
 
 **Frontend:**
+
 ```bash
 # Vite will automatically try the next available port
 npm run dev
 ```
 
 **Backend:**
+
 ```bash
 # Specify a different port
 dotnet run --urls "http://localhost:5101"
 ```
 
-Remember to update CORS settings in `api/DivergentFlow.Api/Program.cs` if you change ports.
+Remember to update CORS settings in `backend/DivergentFlow.Api/Program.cs` if you change ports.
 
 ### CORS Errors
 
@@ -95,7 +98,7 @@ If the frontend can't connect to the backend:
 For automatic backend reloading on code changes:
 
 ```bash
-cd api/DivergentFlow.Api
+cd backend/DivergentFlow.Api
 dotnet watch
 ```
 
