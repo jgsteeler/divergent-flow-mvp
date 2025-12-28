@@ -28,6 +28,15 @@ public class ProductionWebApplicationFactory : CustomWebApplicationFactory
     }
 }
 
+public class DevelopmentWebApplicationFactory : CustomWebApplicationFactory
+{
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.UseEnvironment("Development");
+        base.ConfigureWebHost(builder);
+    }
+}
+
 [Collection("CORS")]
 public class CorsPolicyTests
 {
@@ -152,6 +161,86 @@ public class CorsPolicyTests
             response.Headers.TryGetValues("Access-Control-Allow-Origin", out var values) &&
             values.Contains("https://app.getdivergentflow.com"),
             "Expected Access-Control-Allow-Origin to allow the custom domain origin in Production"
+        );
+    }
+
+    [Fact]
+    public async Task Development_Allows_Localhost_Origin()
+    {
+        // Arrange
+        await using var factory = new DevelopmentWebApplicationFactory();
+        var client = factory.CreateClient();
+        var request = new HttpRequestMessage(HttpMethod.Get, "/health");
+        request.Headers.Add("Origin", "http://localhost:5173");
+
+        // Act
+        var response = await client.SendAsync(request);
+
+        // Assert
+        Assert.True(
+            response.Headers.TryGetValues("Access-Control-Allow-Origin", out var values) &&
+            values.Contains("http://localhost:5173"),
+            "Expected Access-Control-Allow-Origin to allow localhost origin in Development"
+        );
+    }
+
+    [Fact]
+    public async Task Development_Allows_LocalhostHttps_Origin()
+    {
+        // Arrange
+        await using var factory = new DevelopmentWebApplicationFactory();
+        var client = factory.CreateClient();
+        var request = new HttpRequestMessage(HttpMethod.Get, "/health");
+        request.Headers.Add("Origin", "https://localhost:5173");
+
+        // Act
+        var response = await client.SendAsync(request);
+
+        // Assert
+        Assert.True(
+            response.Headers.TryGetValues("Access-Control-Allow-Origin", out var values) &&
+            values.Contains("https://localhost:5173"),
+            "Expected Access-Control-Allow-Origin to allow https localhost origin in Development"
+        );
+    }
+
+    [Fact]
+    public async Task Development_Allows_127_0_0_1_Origin()
+    {
+        // Arrange
+        await using var factory = new DevelopmentWebApplicationFactory();
+        var client = factory.CreateClient();
+        var request = new HttpRequestMessage(HttpMethod.Get, "/health");
+        request.Headers.Add("Origin", "http://127.0.0.1:3000");
+
+        // Act
+        var response = await client.SendAsync(request);
+
+        // Assert
+        Assert.True(
+            response.Headers.TryGetValues("Access-Control-Allow-Origin", out var values) &&
+            values.Contains("http://127.0.0.1:3000"),
+            "Expected Access-Control-Allow-Origin to allow 127.0.0.1 origin in Development"
+        );
+    }
+
+    [Fact]
+    public async Task Development_Sets_AllowCredentials()
+    {
+        // Arrange
+        await using var factory = new DevelopmentWebApplicationFactory();
+        var client = factory.CreateClient();
+        var request = new HttpRequestMessage(HttpMethod.Get, "/health");
+        request.Headers.Add("Origin", "http://localhost:5173");
+
+        // Act
+        var response = await client.SendAsync(request);
+
+        // Assert
+        Assert.True(
+            response.Headers.TryGetValues("Access-Control-Allow-Credentials", out var values) &&
+            values.Contains("true"),
+            "Expected Access-Control-Allow-Credentials to be true in Development"
         );
     }
 }
