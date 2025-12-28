@@ -24,15 +24,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Local dev convenience: load env vars from a .env file (if present).
 // Notes:
-// - Uses dotenv.net package for robust .env file parsing.
-// - It only sets variables that aren't already set in the process environment.
-// - Probes up to 4 levels up from AppContext.BaseDirectory (DLL location) to find .env file.
-//   Starting from bin/Debug/net10.0/, this will find .env at the project root.
-DotEnv.Load(options: new DotEnvOptions(
-    probeLevelsToSearch: 4,
-    probeForEnv: true,
+// - Uses dotenv.net package for .env file loading
+// - Starts searching from ContentRootPath/.env and searches up to 4 parent directories
+// - Only sets variables that aren't already set in the process environment
+// - Ignores missing .env files (doesn't throw exceptions)
+DotEnv.Load(new DotEnvOptions(
+    envFilePaths: new[] { Path.Combine(builder.Environment.ContentRootPath, ".env") },
+    ignoreExceptions: true,
     overwriteExistingVars: false,
-    trimValues: true
+    probeLevelsToSearch: 4
 ));
 
 // Add services to the container
