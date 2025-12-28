@@ -16,7 +16,6 @@ static string[] ParseOrigins(string? raw)
 
     return raw
         .Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-        .Where(o => !string.IsNullOrWhiteSpace(o))
         .ToArray();
 }
 
