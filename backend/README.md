@@ -181,13 +181,16 @@ dotnet add package <PackageName>
 
 ## Configuration
 
-Configuration is managed through `appsettings.json` and `appsettings.Development.json`.
+Configuration is managed through environment variables.
 
-Currently using default settings. Future configuration will include:
-- Database connection strings
-- API keys for external services
-- Authentication settings
-- Logging levels
+For local development, a gitignored [.env](.env) file in the [backend](.) folder is loaded automatically by the API at startup.
+
+### CORS
+
+- `CORS_PRODUCTION_ORIGINS`: semicolon or comma-separated list of allowed origins (e.g. `https://app.getdivergentflow.com`)
+- `CORS_STAGING_ORIGINS`: semicolon or comma-separated list of allowed origins
+- `CORS_NETLIFY_SITE_NAME`: Netlify site name (e.g. `div-flo-mvp`)
+- `CORS_ALLOW_NETLIFY_PREVIEWS`: `true`/`false` to allow Netlify deploy previews and branch deploys in Staging
 
 ## Contributing
 

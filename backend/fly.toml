@@ -11,6 +11,11 @@ primary_region = "iad"
 
 [env]
   ASPNETCORE_ENVIRONMENT = "Production"
+  CORS_PRODUCTION_ORIGINS = "https://app.getdivergentflow.com"
+
+  # Used only in Staging, but keeping defaults here is harmless.
+  CORS_NETLIFY_SITE_NAME = "div-flo-mvp"
+  CORS_ALLOW_NETLIFY_PREVIEWS = "false"
 
 [http_service]
   internal_port = 8080

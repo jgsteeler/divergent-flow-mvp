@@ -10,3 +10,7 @@
 
 # local settings
 **/appsettings.Development.json
+
+# local environment files
+**/.env
+**/.env.*

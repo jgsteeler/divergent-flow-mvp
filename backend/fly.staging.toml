@@ -11,6 +11,9 @@ primary_region = "iad"
 
 [env]
   ASPNETCORE_ENVIRONMENT = "Staging"
+  CORS_NETLIFY_SITE_NAME = "div-flo-mvp"
+  CORS_ALLOW_NETLIFY_PREVIEWS = "true"
+  CORS_STAGING_ORIGINS = "https://div-flo-mvp.netlify.app"
 
 [http_service]
   internal_port = 8080
