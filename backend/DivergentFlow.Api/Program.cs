@@ -26,7 +26,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Notes:
 // - Uses dotenv.net package for robust .env file parsing.
 // - It only sets variables that aren't already set in the process environment.
-// - Probes up to 4 levels up from the content root to find .env file.
+// - Probes up to 4 levels up from AppContext.BaseDirectory (DLL location) to find .env file.
+//   Starting from bin/Debug/net10.0/, this will find .env at the project root.
 DotEnv.Load(options: new DotEnvOptions(
     probeLevelsToSearch: 4,
     probeForEnv: true,
