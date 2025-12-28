@@ -40,6 +40,11 @@ public class DevelopmentWebApplicationFactory : WebApplicationFactory<Program>
 [Collection("CORS")]
 public class CorsPolicyTests
 {
+    /// <summary>
+    /// Sets environment variables temporarily and returns a disposable to restore them.
+    /// Using statement ensures cleanup happens even if test throws an exception.
+    /// The collection-level parallelization is disabled to prevent race conditions.
+    /// </summary>
     private static IDisposable WithEnv(params (string Key, string? Value)[] entries)
     {
         var previous = new Dictionary<string, string?>();
@@ -49,20 +54,34 @@ public class CorsPolicyTests
             Environment.SetEnvironmentVariable(key, value);
         }
 
-        return new DisposableAction(() =>
-        {
-            foreach (var (key, _) in entries)
-            {
-                Environment.SetEnvironmentVariable(key, previous[key]);
-            }
-        });
+        return new EnvironmentRestorer(previous);
     }
 
-    private sealed class DisposableAction : IDisposable
+    /// <summary>
+    /// Disposable helper that restores environment variables to their original state.
+    /// Guaranteed to run even if test throws an exception (via using statement).
+    /// </summary>
+    private sealed class EnvironmentRestorer : IDisposable
     {
-        private readonly Action _dispose;
-        public DisposableAction(Action dispose) => _dispose = dispose;
-        public void Dispose() => _dispose();
+        private readonly Dictionary<string, string?> _originalValues;
+        private bool _disposed;
+
+        public EnvironmentRestorer(Dictionary<string, string?> originalValues)
+        {
+            _originalValues = originalValues;
+        }
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            
+            foreach (var (key, originalValue) in _originalValues)
+            {
+                Environment.SetEnvironmentVariable(key, originalValue);
+            }
+            
+            _disposed = true;
+        }
     }
 
     [Fact]
