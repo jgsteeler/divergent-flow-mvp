@@ -18,10 +18,12 @@ public static class EnvironmentHelper
     }
 
     /// <summary>
-    /// Parses a semicolon or comma-separated list of origins from an environment variable value.
+    /// Parses a comma-separated list of allowed origins from an environment variable value.
+    /// Entries are normalized to the canonical Origin form: scheme://host[:port].
+    /// Invalid or non-http(s) entries are ignored.
     /// </summary>
     /// <param name="raw">The raw environment variable value containing origins.</param>
-    /// <returns>An array of origin strings, or an empty array if the input is null or whitespace.</returns>
+    /// <returns>An array of normalized origin strings, or an empty array if the input is null or whitespace.</returns>
     public static string[] ParseOrigins(string? raw)
     {
         if (string.IsNullOrWhiteSpace(raw))
@@ -30,7 +32,34 @@ public static class EnvironmentHelper
         }
 
         return raw
-            .Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(static entry => NormalizeOrigin(entry))
+            .Where(static origin => origin is not null)
+            .Select(static origin => origin!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
+    }
+
+    private static string? NormalizeOrigin(string rawOrigin)
+    {
+        if (!Uri.TryCreate(rawOrigin, UriKind.Absolute, out var uri))
+        {
+            return null;
+        }
+
+        if (uri.Scheme is not ("http" or "https"))
+        {
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(uri.Host))
+        {
+            return null;
+        }
+
+        // Normalize to origin (no path/query/fragment). Also strips trailing slash.
+        return uri.IsDefaultPort
+            ? $"{uri.Scheme}://{uri.Host}"
+            : $"{uri.Scheme}://{uri.Host}:{uri.Port}";
     }
 }
