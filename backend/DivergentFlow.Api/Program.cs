@@ -24,9 +24,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Local dev convenience: load env vars from a .env file (if present).
 // Notes:
-// - Uses dotenv.net package which searches for .env files starting from the content root.
-// - Only sets variables that aren't already set in the process environment.
-// - Searches up to 4 parent directories by default.
+// - Uses dotenv.net package for .env file loading
+// - Starts searching from ContentRootPath/.env and searches up to 4 parent directories
+// - Only sets variables that aren't already set in the process environment
+// - Ignores missing .env files (doesn't throw exceptions)
 DotEnv.Load(new DotEnvOptions(
     envFilePaths: new[] { Path.Combine(builder.Environment.ContentRootPath, ".env") },
     ignoreExceptions: true,
