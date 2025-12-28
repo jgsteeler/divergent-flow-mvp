@@ -1,60 +1,5 @@
 using DivergentFlow.Services.Extensions;
-
-static void LoadDotEnvUpwards(string startDirectory, int maxDepth = 4)
-{
-    var current = new DirectoryInfo(startDirectory);
-
-    for (var depth = 0; depth < maxDepth && current != null; depth++)
-    {
-        var candidate = Path.Combine(current.FullName, ".env");
-        if (File.Exists(candidate))
-        {
-            foreach (var rawLine in File.ReadAllLines(candidate))
-            {
-                var line = rawLine.Trim();
-                if (string.IsNullOrWhiteSpace(line) || line.StartsWith('#'))
-                {
-                    continue;
-                }
-
-                if (line.StartsWith("export ", StringComparison.OrdinalIgnoreCase))
-                {
-                    line = line[7..].TrimStart();
-                }
-
-                var equalsIndex = line.IndexOf('=');
-                if (equalsIndex <= 0)
-                {
-                    continue;
-                }
-
-                var key = line[..equalsIndex].Trim();
-                var value = line[(equalsIndex + 1)..].Trim();
-
-                if (value.Length >= 2 &&
-                    ((value.StartsWith('"') && value.EndsWith('"')) || (value.StartsWith('\'') && value.EndsWith('\''))))
-                {
-                    value = value[1..^1];
-                }
-
-                if (string.IsNullOrWhiteSpace(key))
-                {
-                    continue;
-                }
-
-                // Don't override real environment variables (e.g., Fly, CI)
-                if (Environment.GetEnvironmentVariable(key) == null)
-                {
-                    Environment.SetEnvironmentVariable(key, value);
-                }
-            }
-
-            return;
-        }
-
-        current = current.Parent;
-    }
-}
+using dotenv.net;
 
 static bool GetBoolEnv(string key, bool defaultValue)
 {
@@ -79,9 +24,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Local dev convenience: load env vars from a .env file (if present).
 // Notes:
-// - This is intentionally dependency-free.
-// - It only sets variables that aren't already set in the process environment.
-LoadDotEnvUpwards(builder.Environment.ContentRootPath);
+// - Uses dotenv.net package which searches for .env files starting from the content root.
+// - Only sets variables that aren't already set in the process environment.
+// - Searches up to 4 parent directories by default.
+DotEnv.Load(new DotEnvOptions(
+    envFilePaths: new[] { Path.Combine(builder.Environment.ContentRootPath, ".env") },
+    ignoreExceptions: true,
+    overwriteExistingVars: false,
+    probeLevelsToSearch: 4
+));
 
 // Add services to the container
 builder.Services.AddControllers();
