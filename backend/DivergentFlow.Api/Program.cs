@@ -1,23 +1,6 @@
+using DivergentFlow.Api.Extensions;
 using DivergentFlow.Services.Extensions;
 using dotenv.net;
-
-static bool GetBoolEnv(string key, bool defaultValue)
-{
-    var value = Environment.GetEnvironmentVariable(key);
-    return bool.TryParse(value, out var parsed) ? parsed : defaultValue;
-}
-
-static string[] ParseOrigins(string? raw)
-{
-    if (string.IsNullOrWhiteSpace(raw))
-    {
-        return Array.Empty<string>();
-    }
-
-    return raw
-        .Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-        .ToArray();
-}
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,106 +20,8 @@ DotEnv.Load(new DotEnvOptions(
 // Add services to the container
 builder.Services.AddControllers();
 
-// CORS (env-var driven)
-// - Development: allow localhost/127.0.0.1 (any port)
-// - Staging: allow Netlify site + deploy previews/branch deploys (optional) + any explicitly configured origins
-// - Production: allow only explicitly configured origins
-//
-// Env vars:
-// - CORS_PRODUCTION_ORIGINS: semicolon or comma-separated list of allowed origins
-// - CORS_STAGING_ORIGINS: semicolon or comma-separated list of allowed origins
-// - CORS_NETLIFY_SITE_NAME: e.g. div-flo-mvp
-// - CORS_ALLOW_NETLIFY_PREVIEWS: true/false (enables *.netlify.app dynamic preview/branch origins in Staging)
-var netlifySiteName = Environment.GetEnvironmentVariable("CORS_NETLIFY_SITE_NAME") ?? "div-flo-mvp";
-var allowNetlifyDynamicOrigins = GetBoolEnv("CORS_ALLOW_NETLIFY_PREVIEWS", false);
-var stagingOrigins = ParseOrigins(Environment.GetEnvironmentVariable("CORS_STAGING_ORIGINS"));
-var productionOrigins = ParseOrigins(Environment.GetEnvironmentVariable("CORS_PRODUCTION_ORIGINS"));
-
-builder.Services.AddCors(options =>
-{
-    options.AddDefaultPolicy(policy =>
-    {
-        if (builder.Environment.IsDevelopment())
-        {
-            policy
-                // Allow any localhost/127.0.0.1 origin so Vite can pick any port.
-                .SetIsOriginAllowed(static origin =>
-                {
-                    if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
-                    {
-                        return false;
-                    }
-
-                    return uri.Scheme is "http" or "https" &&
-                           (uri.Host == "localhost" || uri.Host == "127.0.0.1");
-                })
-                .AllowAnyMethod()
-                .AllowAnyHeader()
-                .AllowCredentials();
-
-            return;
-        }
-
-        if (builder.Environment.IsStaging())
-        {
-            policy
-                .SetIsOriginAllowed(origin =>
-                {
-                    if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
-                    {
-                        return false;
-                    }
-
-                    if (uri.Scheme is not ("http" or "https"))
-                    {
-                        return false;
-                    }
-
-                    // Explicitly allowed origins (exact match)
-                    if (stagingOrigins.Contains(origin, StringComparer.OrdinalIgnoreCase))
-                    {
-                        return true;
-                    }
-
-                    // Netlify staging + deploy previews/branch deploys
-                    var host = uri.Host;
-                    var mainNetlifyHost = $"{netlifySiteName}.netlify.app";
-                    if (string.Equals(host, mainNetlifyHost, StringComparison.OrdinalIgnoreCase))
-                    {
-                        return true;
-                    }
-
-                    // Covers both:
-                    // - Deploy previews: deploy-preview-123--{site}.netlify.app
-                    // - Branch deploys:   feature-some-branch--{site}.netlify.app
-                    if (allowNetlifyDynamicOrigins && host.EndsWith($"--{netlifySiteName}.netlify.app", StringComparison.OrdinalIgnoreCase))
-                    {
-                        return true;
-                    }
-
-                    return false;
-                })
-                .AllowAnyMethod()
-                .AllowAnyHeader();
-
-            return;
-        }
-
-        // Production: only explicit origins
-        if (productionOrigins.Length == 0)
-        {
-            // Fail closed if not configured.
-            policy.SetIsOriginAllowed(static _ => false);
-            return;
-        }
-
-        policy
-            .WithOrigins(productionOrigins)
-            .AllowAnyMethod()
-            .AllowAnyHeader()
-            .DisallowCredentials();
-    });
-});
+// Add CORS policy (environment-driven)
+builder.Services.AddCorsPolicy(builder.Environment);
 
 // Register services for dependency injection using extension method
 builder.Services.UseServices();

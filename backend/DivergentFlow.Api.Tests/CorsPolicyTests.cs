@@ -103,7 +103,7 @@ public class CorsPolicyTests
         // Arrange
         await using var factory = new StagingWebApplicationFactory();
         var client = factory.CreateClient();
-        var request = new HttpRequestMessage(HttpMethod.Get, "/health");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/health");
         request.Headers.Add("Origin", "https://feature-cool-thing--div-flo-mvp.netlify.app");
 
         // Act
@@ -129,7 +129,7 @@ public class CorsPolicyTests
         // Arrange
         await using var factory = new StagingWebApplicationFactory();
         var client = factory.CreateClient();
-        var request = new HttpRequestMessage(HttpMethod.Get, "/health");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/health");
         request.Headers.Add("Origin", "https://staging.example.com");
 
         // Act
@@ -153,7 +153,7 @@ public class CorsPolicyTests
         // Arrange
         await using var factory = new ProductionWebApplicationFactory();
         var client = factory.CreateClient();
-        var request = new HttpRequestMessage(HttpMethod.Get, "/health");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/health");
         request.Headers.Add("Origin", "https://deploy-preview-123--div-flo-mvp.netlify.app");
 
         // Act
@@ -176,7 +176,7 @@ public class CorsPolicyTests
         // Arrange
         await using var factory = new ProductionWebApplicationFactory();
         var client = factory.CreateClient();
-        var request = new HttpRequestMessage(HttpMethod.Get, "/health");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/health");
         request.Headers.Add("Origin", "https://app.getdivergentflow.com");
 
         // Act
@@ -196,7 +196,7 @@ public class CorsPolicyTests
         // Arrange
         await using var factory = new DevelopmentWebApplicationFactory();
         var client = factory.CreateClient();
-        var request = new HttpRequestMessage(HttpMethod.Get, "/health");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/health");
         request.Headers.Add("Origin", "http://localhost:5173");
 
         // Act
@@ -216,7 +216,7 @@ public class CorsPolicyTests
         // Arrange
         await using var factory = new DevelopmentWebApplicationFactory();
         var client = factory.CreateClient();
-        var request = new HttpRequestMessage(HttpMethod.Get, "/health");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/health");
         request.Headers.Add("Origin", "https://localhost:5173");
 
         // Act
@@ -236,7 +236,7 @@ public class CorsPolicyTests
         // Arrange
         await using var factory = new DevelopmentWebApplicationFactory();
         var client = factory.CreateClient();
-        var request = new HttpRequestMessage(HttpMethod.Get, "/health");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/health");
         request.Headers.Add("Origin", "http://127.0.0.1:3000");
 
         // Act
@@ -256,7 +256,7 @@ public class CorsPolicyTests
         // Arrange
         await using var factory = new DevelopmentWebApplicationFactory();
         var client = factory.CreateClient();
-        var request = new HttpRequestMessage(HttpMethod.Get, "/health");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/health");
         request.Headers.Add("Origin", "http://localhost:5173");
 
         // Act
