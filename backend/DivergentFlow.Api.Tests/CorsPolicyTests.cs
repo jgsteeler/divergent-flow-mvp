@@ -73,7 +73,10 @@ public class CorsPolicyTests
 
         public void Dispose()
         {
-            if (_disposed) return;
+            if (_disposed)
+            {
+                return;
+            }
             
             foreach (var (key, originalValue) in _originalValues)
             {
