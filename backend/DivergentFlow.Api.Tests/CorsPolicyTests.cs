@@ -10,30 +10,30 @@ public class CorsCollectionDefinition
 {
 }
 
-public class StagingWebApplicationFactory : CustomWebApplicationFactory
+public class StagingWebApplicationFactory : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        base.ConfigureWebHost(builder);
         builder.UseEnvironment("Staging");
-        base.ConfigureWebHost(builder);
     }
 }
 
-public class ProductionWebApplicationFactory : CustomWebApplicationFactory
+public class ProductionWebApplicationFactory : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        base.ConfigureWebHost(builder);
         builder.UseEnvironment("Production");
-        base.ConfigureWebHost(builder);
     }
 }
 
-public class DevelopmentWebApplicationFactory : CustomWebApplicationFactory
+public class DevelopmentWebApplicationFactory : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseEnvironment("Development");
         base.ConfigureWebHost(builder);
+        builder.UseEnvironment("Development");
     }
 }
 
