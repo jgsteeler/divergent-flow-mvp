@@ -183,10 +183,13 @@ dotnet add package <PackageName>
 
 Configuration is managed through environment variables.
 
-For local development, a gitignored [.env](.env) file in the [backend](.) folder is loaded automatically by the API at startup.
+For local development:
+- Copy `.env.example` to `.env` in the `backend` folder.
+- Adjust the values as needed for your local environment; the `.env` file is gitignored and is loaded automatically by the API at startup.
 
 ### CORS
 
+The `.env.example` file includes the following CORS-related variables with dummy values:
 - `CORS_PRODUCTION_ORIGINS`: semicolon or comma-separated list of allowed origins (e.g. `https://app.getdivergentflow.com`)
 - `CORS_STAGING_ORIGINS`: semicolon or comma-separated list of allowed origins
 - `CORS_NETLIFY_SITE_NAME`: Netlify site name (e.g. `div-flo-mvp`)
