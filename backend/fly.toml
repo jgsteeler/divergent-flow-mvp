@@ -11,7 +11,8 @@ primary_region = "iad"
 
 [env]
   ASPNETCORE_ENVIRONMENT = "Production"
-  
+  # Set CORS_ALLOWED_ORIGINS via Fly secrets:
+  # fly secrets set CORS_ALLOWED_ORIGINS="https://app.getdivergentflow.com"
 
 [http_service]
   internal_port = 8080
