@@ -1,0 +1,32 @@
+# Fly.io app configuration for the backend API (staging)
+# One-time setup:
+# - create the Fly app (e.g. `fly apps create divergent-flow-api-staging`)
+# - set GitHub secret FLY_API_TOKEN
+
+app = "divergent-flow-api-staging"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  ASPNETCORE_ENVIRONMENT = "Staging"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_start_machines = true
+  auto_stop_machines = "stop"
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 50
+    hard_limit = 100
+
+  [[http_service.checks]]
+    interval = "15s"
+    timeout = "2s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/health"
