@@ -1,32 +1,27 @@
+using DivergentFlow.Api.Extensions;
 using DivergentFlow.Services.Extensions;
+using dotenv.net;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Local dev convenience: load env vars from a .env file (if present).
+// Notes:
+// - Uses dotenv.net package for .env file loading
+// - Starts searching from ContentRootPath/.env and searches up to 4 parent directories
+// - Only sets variables that aren't already set in the process environment
+// - Ignores missing .env files (doesn't throw exceptions)
+DotEnv.Load(new DotEnvOptions(
+    envFilePaths: new[] { Path.Combine(builder.Environment.ContentRootPath, ".env") },
+    ignoreExceptions: true,
+    overwriteExistingVars: false,
+    probeLevelsToSearch: 4
+));
 
 // Add services to the container
 builder.Services.AddControllers();
 
-// Add CORS to allow frontend access
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend", policy =>
-    {
-        policy
-              // Allow any localhost/127.0.0.1 origin so Vite can pick any port.
-              .SetIsOriginAllowed(origin =>
-              {
-                  if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
-                  {
-                      return false;
-                  }
-
-                  return uri.Scheme is "http" or "https" &&
-                         (uri.Host == "localhost" || uri.Host == "127.0.0.1");
-              })
-              .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials();
-    });
-});
+// Add CORS policy (environment-driven)
+builder.Services.AddCorsPolicy(builder.Environment);
 
 // Register services for dependency injection using extension method
 builder.Services.UseServices();
@@ -56,7 +51,7 @@ if (app.Environment.IsDevelopment())
 }
 
 // Enable CORS
-app.UseCors("AllowFrontend");
+app.UseCors();
 
 app.UseAuthorization();
 
