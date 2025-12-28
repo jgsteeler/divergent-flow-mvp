@@ -411,4 +411,86 @@ public class CorsPolicyTests
             "Expected non-HTTP/HTTPS scheme to be rejected"
         );
     }
+
+    [Fact]
+    public async Task Production_NormalizesOrigins_WithDefaultPort()
+    {
+        using var _ = WithEnv(
+            ("CORS_ALLOWED_ORIGINS", "https://app.example.com:443,http://test.example.com:80")
+        );
+        
+        // Arrange
+        await using var factory = new ProductionWebApplicationFactory();
+        var client = factory.CreateClient();
+        
+        // Act - Test HTTPS with default port
+        using var request1 = new HttpRequestMessage(HttpMethod.Get, "/health");
+        request1.Headers.Add("Origin", "https://app.example.com");
+        var response1 = await client.SendAsync(request1);
+        
+        // Act - Test HTTP with default port
+        using var request2 = new HttpRequestMessage(HttpMethod.Get, "/health");
+        request2.Headers.Add("Origin", "http://test.example.com");
+        var response2 = await client.SendAsync(request2);
+        
+        // Assert
+        Assert.True(
+            response1.Headers.TryGetValues("Access-Control-Allow-Origin", out var values1) &&
+            values1.Contains("https://app.example.com"),
+            "Expected :443 to be removed for HTTPS"
+        );
+        Assert.True(
+            response2.Headers.TryGetValues("Access-Control-Allow-Origin", out var values2) &&
+            values2.Contains("http://test.example.com"),
+            "Expected :80 to be removed for HTTP"
+        );
+    }
+
+    [Fact]
+    public async Task Production_DeduplicatesOrigins()
+    {
+        using var _ = WithEnv(
+            ("CORS_ALLOWED_ORIGINS", "https://app.example.com,https://APP.example.com,https://app.example.com")
+        );
+        
+        // Arrange
+        await using var factory = new ProductionWebApplicationFactory();
+        var client = factory.CreateClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/health");
+        request.Headers.Add("Origin", "https://app.example.com");
+        
+        // Act
+        var response = await client.SendAsync(request);
+        
+        // Assert
+        Assert.True(
+            response.Headers.TryGetValues("Access-Control-Allow-Origin", out var values) &&
+            values.Contains("https://app.example.com"),
+            "Expected duplicate origins to be deduplicated"
+        );
+    }
+
+    [Fact]
+    public async Task Production_NormalizesOrigins_WithPathQueryFragment()
+    {
+        using var _ = WithEnv(
+            ("CORS_ALLOWED_ORIGINS", "https://app.example.com/path?query=1#fragment")
+        );
+        
+        // Arrange
+        await using var factory = new ProductionWebApplicationFactory();
+        var client = factory.CreateClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/health");
+        request.Headers.Add("Origin", "https://app.example.com");
+        
+        // Act
+        var response = await client.SendAsync(request);
+        
+        // Assert
+        Assert.True(
+            response.Headers.TryGetValues("Access-Control-Allow-Origin", out var values) &&
+            values.Contains("https://app.example.com"),
+            "Expected origin with path/query/fragment to be normalized to origin form"
+        );
+    }
 }
