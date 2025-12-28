@@ -77,7 +77,7 @@ public class CorsPolicyTests
         // Arrange
         await using var factory = new StagingWebApplicationFactory();
         var client = factory.CreateClient();
-        var request = new HttpRequestMessage(HttpMethod.Get, "/health");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/health");
         request.Headers.Add("Origin", "https://deploy-preview-123--div-flo-mvp.netlify.app");
 
         // Act
