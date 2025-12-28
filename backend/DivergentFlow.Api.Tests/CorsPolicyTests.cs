@@ -109,6 +109,32 @@ public class CorsPolicyTests
     }
 
     [Fact]
+    public async Task Staging_Allows_Explicitly_Configured_Origins()
+    {
+        using var _ = WithEnv(
+            ("CORS_STAGING_ORIGINS", "https://staging.example.com,https://test.example.com"),
+            ("CORS_NETLIFY_SITE_NAME", "div-flo-mvp"),
+            ("CORS_ALLOW_NETLIFY_PREVIEWS", "false")
+        );
+
+        // Arrange
+        await using var factory = new StagingWebApplicationFactory();
+        var client = factory.CreateClient();
+        var request = new HttpRequestMessage(HttpMethod.Get, "/health");
+        request.Headers.Add("Origin", "https://staging.example.com");
+
+        // Act
+        var response = await client.SendAsync(request);
+
+        // Assert
+        Assert.True(
+            response.Headers.TryGetValues("Access-Control-Allow-Origin", out var values) &&
+            values.Contains("https://staging.example.com"),
+            "Expected Access-Control-Allow-Origin to allow explicitly configured staging origin"
+        );
+    }
+
+    [Fact]
     public async Task Production_DoesNotAllow_Netlify_DeployPreview_Origin()
     {
         using var _ = WithEnv(
