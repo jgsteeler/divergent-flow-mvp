@@ -47,7 +47,7 @@ public sealed class InfrastructureUnitTests
     public async Task InMemoryCaptureRepository_UpdateMissing_ReturnsNull()
     {
         var repo = new InMemoryCaptureRepository();
-        var updated = await repo.UpdateAsync("missing", new Capture { Text = "x" });
+        var updated = await repo.UpdateAsync("missing", new Capture { Id = "id", Text = "x", CreatedAt = 1 });
         Assert.Null(updated);
     }
 }
