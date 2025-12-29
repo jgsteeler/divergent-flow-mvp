@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using DivergentFlow.Services.Models;
-using DivergentFlow.Services.Services;
+using DivergentFlow.Application.Features.TypeInference.Commands;
+using DivergentFlow.Application.Features.TypeInference.Queries;
+using DivergentFlow.Application.Models;
+using MediatR;
 
 namespace DivergentFlow.Api.Controllers;
 
@@ -13,14 +15,14 @@ namespace DivergentFlow.Api.Controllers;
 [Produces("application/json")]
 public class TypeController : ControllerBase
 {
-    private readonly ITypeService _typeService;
+    private readonly IMediator _mediator;
     private readonly ILogger<TypeController> _logger;
 
     public TypeController(
-        ITypeService typeService,
+        IMediator mediator,
         ILogger<TypeController> logger)
     {
-        _typeService = typeService;
+        _mediator = mediator;
         _logger = logger;
     }
 
@@ -34,14 +36,9 @@ public class TypeController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<TypeInferenceResult>> Infer([FromBody] TypeInferenceRequest request)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
-
         _logger.LogInformation("Inferring type for capture text");
 
-        var result = await _typeService.InferAsync(request.Text!);
+        var result = await _mediator.Send(new InferTypeQuery(request.Text ?? string.Empty));
         return Ok(result);
     }
 
@@ -55,14 +52,9 @@ public class TypeController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Confirm([FromBody] TypeConfirmationRequest request)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
-
         _logger.LogInformation("Confirming type for capture");
 
-        await _typeService.ConfirmAsync(request);
+        await _mediator.Send(new ConfirmTypeCommand(request));
         return NoContent();
     }
 }

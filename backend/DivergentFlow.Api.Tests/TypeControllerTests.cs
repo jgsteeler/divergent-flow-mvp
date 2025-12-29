@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
-using DivergentFlow.Services.Models;
+using DivergentFlow.Application.Models;
 using Xunit;
 
 namespace DivergentFlow.Api.Tests;
