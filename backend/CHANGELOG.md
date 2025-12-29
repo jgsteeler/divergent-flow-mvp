@@ -5,6 +5,13 @@ All notable changes to the Divergent Flow API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-api-v0.2.1...divergent-flow-api-v0.2.2) (2025-12-29)
+
+
+### Features
+
+* **type:** create type inference interface and controller ([#156](https://github.com/jgsteeler/divergent-flow-mvp/issues/156)) ([64278d0](https://github.com/jgsteeler/divergent-flow-mvp/commit/64278d0c23b858826ad12367f45de206f0cbddf9))
+
 ## [Unreleased]
 
 ## [0.1.0] - 2025-12-24
