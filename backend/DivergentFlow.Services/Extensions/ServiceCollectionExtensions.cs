@@ -1,3 +1,4 @@
+using DivergentFlow.Services.Repositories;
 using DivergentFlow.Services.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,9 +16,12 @@ public static class ServiceCollectionExtensions
     /// <returns>The service collection for method chaining</returns>
     public static IServiceCollection UseServices(this IServiceCollection services)
     {
+        // Register capture repository
+        // Using Redis implementation with Upstash
+        services.AddSingleton<ICaptureRepository, RedisCaptureRepository>();
+
         // Register capture service
-        // Using in-memory implementation for now, will be replaced with database later
-        services.AddSingleton<ICaptureService, InMemoryCaptureService>();
+        services.AddScoped<ICaptureService, CaptureService>();
 
         // Register type inference service
         // Using basic implementation for MVP, will be replaced with ML-based inference later
