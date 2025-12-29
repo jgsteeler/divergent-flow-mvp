@@ -19,6 +19,10 @@ public static class ServiceCollectionExtensions
         // Using in-memory implementation for now, will be replaced with database later
         services.AddSingleton<ICaptureService, InMemoryCaptureService>();
 
+        // Register type inference service
+        // Using basic implementation for MVP, will be replaced with ML-based inference later
+        services.AddSingleton<ITypeService, BasicTypeService>();
+
         return services;
     }
 }
