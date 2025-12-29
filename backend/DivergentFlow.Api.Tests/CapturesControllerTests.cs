@@ -4,13 +4,14 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using DivergentFlow.Services.Models;
+using DivergentFlow.Services.Repositories;
 using DivergentFlow.Services.Services;
 using Xunit;
 
 namespace DivergentFlow.Api.Tests;
 
 /// <summary>
-/// Custom factory for integration tests that uses a fresh in-memory service for each test
+/// Custom factory for integration tests that uses a fresh in-memory repository for each test
 /// </summary>
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
@@ -18,17 +19,29 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     {
         builder.ConfigureServices(services =>
         {
-            // Remove the existing service registration
-            var descriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(ICaptureService));
+            // Remove the existing repository registration
+            var repoDescriptor = services.SingleOrDefault(
+                d => d.ServiceType == typeof(ICaptureRepository));
 
-            if (descriptor != null)
+            if (repoDescriptor != null)
             {
-                services.Remove(descriptor);
+                services.Remove(repoDescriptor);
             }
 
-            // Add a fresh in-memory service for each test
-            services.AddSingleton<ICaptureService, InMemoryCaptureService>();
+            // Remove the existing service registration
+            var serviceDescriptor = services.SingleOrDefault(
+                d => d.ServiceType == typeof(ICaptureService));
+
+            if (serviceDescriptor != null)
+            {
+                services.Remove(serviceDescriptor);
+            }
+
+            // Add a fresh in-memory repository for each test
+            services.AddSingleton<ICaptureRepository, InMemoryCaptureRepository>();
+
+            // Add the service with the in-memory repository
+            services.AddScoped<ICaptureService, CaptureService>();
         });
     }
 }
