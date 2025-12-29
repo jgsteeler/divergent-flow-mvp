@@ -16,9 +16,12 @@ public static class ServiceCollectionExtensions
     /// <returns>The service collection for method chaining</returns>
     public static IServiceCollection UseServices(this IServiceCollection services)
     {
+        // Register Redis services (connection provider, etc.)
+        services.AddRedisServices();
+
         // Register capture repository
-        // Using Redis implementation with Upstash
-        services.AddSingleton<ICaptureRepository, RedisCaptureRepository>();
+        // Using Scoped lifetime for proper request handling
+        services.AddScoped<ICaptureRepository, RedisCaptureRepository>();
 
         // Register capture service
         services.AddScoped<ICaptureService, CaptureService>();

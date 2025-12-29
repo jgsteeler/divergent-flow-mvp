@@ -1,5 +1,4 @@
 using DivergentFlow.Services.Models;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Redis.OM;
 using Redis.OM.Searching;
@@ -12,49 +11,17 @@ namespace DivergentFlow.Services.Repositories;
 /// </summary>
 public class RedisCaptureRepository : ICaptureRepository
 {
-    private readonly RedisConnectionProvider _provider;
     private readonly IRedisCollection<CaptureEntity> _captures;
     private readonly ILogger<RedisCaptureRepository> _logger;
 
     public RedisCaptureRepository(
-        IConfiguration configuration,
+        RedisConnectionProvider provider,
         ILogger<RedisCaptureRepository> logger)
     {
         _logger = logger;
         
-        // Get Redis connection string from environment variables
-        var redisUrl = configuration["REDIS_URL"] 
-            ?? throw new InvalidOperationException("REDIS_URL environment variable is not set");
-        
-        var redisToken = configuration["REDIS_TOKEN"] 
-            ?? throw new InvalidOperationException("REDIS_TOKEN environment variable is not set");
-
-        // Clean up URL - remove http:// or https:// if present
-        redisUrl = redisUrl.Replace("http://", "").Replace("https://", "");
-
-        // Build connection string with authentication
-        // Upstash Redis format: redis://default:{token}@{host}:{port}
-        var connectionString = $"redis://default:{redisToken}@{redisUrl}";
-        
-        _logger.LogInformation("Connecting to Redis at {RedisUrl}", redisUrl);
-        
-        // Initialize Redis connection provider
-        _provider = new RedisConnectionProvider(connectionString);
-        
-        // Get collection for CaptureEntity
-        _captures = _provider.RedisCollection<CaptureEntity>();
-        
-        // Create index if it doesn't exist
-        try
-        {
-            _provider.Connection.CreateIndex(typeof(CaptureEntity));
-            _logger.LogInformation("Redis index created or already exists for CaptureEntity");
-        }
-        catch (Exception ex)
-        {
-            // Index might already exist, which is fine
-            _logger.LogDebug(ex, "Index creation attempt (may already exist)");
-        }
+        // Get collection for CaptureEntity from the provider
+        _captures = provider.RedisCollection<CaptureEntity>();
     }
 
     public async Task<IEnumerable<CaptureDto>> GetAllAsync()
@@ -97,10 +64,17 @@ public class RedisCaptureRepository : ICaptureRepository
         {
             var entity = CaptureEntity.FromDto(capture);
             
-            // Insert the entity and get the generated ID
+            // Redis.OM will generate an ID if not provided
+            // If capture.Id is empty, let Redis generate it
+            if (string.IsNullOrEmpty(entity.Id))
+            {
+                entity.Id = null; // Let Redis.OM generate
+            }
+            
+            // Insert the entity
             var insertedId = await _captures.InsertAsync(entity);
             
-            // Update the entity with the generated ID
+            // Update the entity with the ID (either generated or existing)
             entity.Id = insertedId;
             
             _logger.LogInformation("Saved capture with ID {Id} to Redis", insertedId);
