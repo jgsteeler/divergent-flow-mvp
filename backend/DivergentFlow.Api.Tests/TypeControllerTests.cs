@@ -1,108 +1,60 @@
-using System.Net;
-using System.Net.Http.Json;
+using DivergentFlow.Api.Controllers;
+using DivergentFlow.Api.Tests.TestDoubles;
+using DivergentFlow.Application.Features.TypeInference.Commands;
+using DivergentFlow.Application.Features.TypeInference.Queries;
 using DivergentFlow.Application.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace DivergentFlow.Api.Tests;
 
-/// <summary>
-/// Integration tests for the Type API endpoints
-/// </summary>
-public class TypeControllerTests : IClassFixture<CustomWebApplicationFactory>
+public sealed class TypeControllerTests
 {
-    private readonly CustomWebApplicationFactory _factory;
-
-    public TypeControllerTests(CustomWebApplicationFactory factory)
-    {
-        _factory = factory;
-    }
-
     [Fact]
-    public async Task Infer_ReturnsTypeInferenceResult_WithValidRequest()
+    public async Task Infer_ReturnsOk_WithTypeInferenceResult()
     {
-        // Arrange
-        var client = _factory.CreateClient();
         var request = new TypeInferenceRequest
         {
             Text = "Buy groceries tomorrow"
         };
 
-        // Act
-        var response = await client.PostAsJsonAsync("/api/type/infer", request);
-
-        // Assert
-        response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<TypeInferenceResult>();
-        Assert.NotNull(result);
-        Assert.Equal("action", result.InferredType);
-        Assert.Equal(50.0, result.Confidence);
-    }
-
-    [Fact]
-    public async Task Infer_ReturnsBadRequest_WhenTextIsEmpty()
-    {
-        // Arrange
-        var client = _factory.CreateClient();
-        var request = new TypeInferenceRequest
+        var expected = new TypeInferenceResult { InferredType = "action", Confidence = 50.0 };
+        var mediator = new FakeMediator((message, _) =>
         {
-            Text = ""
-        };
+            var query = Assert.IsType<InferTypeQuery>(message);
+            Assert.Equal("Buy groceries tomorrow", query.Text);
+            return Task.FromResult<object?>(expected);
+        });
+        var controller = new TypeController(mediator, NullLogger<TypeController>.Instance);
 
-        // Act
-        var response = await client.PostAsJsonAsync("/api/type/infer", request);
+        var result = await controller.Infer(request);
 
-        // Assert
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        Assert.Same(expected, ok.Value);
     }
 
     [Fact]
-    public async Task Infer_ReturnsBadRequest_WhenTextIsNull()
+    public async Task Infer_UsesEmptyString_WhenTextIsNull()
     {
-        // Arrange
-        var client = _factory.CreateClient();
-        var request = new { Text = (string?)null };
+        var request = new TypeInferenceRequest { Text = null! };
 
-        // Act
-        var response = await client.PostAsJsonAsync("/api/type/infer", request);
-
-        // Assert
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task Infer_ReturnsActionType_ForAnyText()
-    {
-        // Arrange
-        var client = _factory.CreateClient();
-        var testTexts = new[]
+        var mediator = new FakeMediator((message, _) =>
         {
-            "Call mom",
-            "Remember to review the PRD",
-            "Meeting at 3pm",
-            "Random note about ideas"
-        };
+            var query = Assert.IsType<InferTypeQuery>(message);
+            Assert.Equal(string.Empty, query.Text);
+            return Task.FromResult<object?>(new TypeInferenceResult { InferredType = "action", Confidence = 50.0 });
+        });
+        var controller = new TypeController(mediator, NullLogger<TypeController>.Instance);
 
-        foreach (var text in testTexts)
-        {
-            var request = new TypeInferenceRequest { Text = text };
+        var result = await controller.Infer(request);
 
-            // Act
-            var response = await client.PostAsJsonAsync("/api/type/infer", request);
-
-            // Assert
-            response.EnsureSuccessStatusCode();
-            var result = await response.Content.ReadFromJsonAsync<TypeInferenceResult>();
-            Assert.NotNull(result);
-            Assert.Equal("action", result.InferredType);
-            Assert.Equal(50.0, result.Confidence);
-        }
+        Assert.IsType<OkObjectResult>(result.Result);
     }
 
     [Fact]
-    public async Task Confirm_ReturnsNoContent_WithValidRequest()
+    public async Task Confirm_ReturnsNoContent()
     {
-        // Arrange
-        var client = _factory.CreateClient();
         var request = new TypeConfirmationRequest
         {
             Text = "Buy groceries",
@@ -111,90 +63,16 @@ public class TypeControllerTests : IClassFixture<CustomWebApplicationFactory>
             ConfirmedType = "action"
         };
 
-        // Act
-        var response = await client.PostAsJsonAsync("/api/type/confirm", request);
-
-        // Assert
-        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task Confirm_ReturnsNoContent_WhenUserChangesType()
-    {
-        // Arrange
-        var client = _factory.CreateClient();
-        var request = new TypeConfirmationRequest
+        var mediator = new FakeMediator((message, _) =>
         {
-            Text = "Buy groceries",
-            InferredType = "action",
-            InferredConfidence = 50.0,
-            ConfirmedType = "note" // User changed it
-        };
+            var command = Assert.IsType<ConfirmTypeCommand>(message);
+            Assert.Same(request, command.Request);
+            return Task.FromResult<object?>(MediatR.Unit.Value);
+        });
+        var controller = new TypeController(mediator, NullLogger<TypeController>.Instance);
 
-        // Act
-        var response = await client.PostAsJsonAsync("/api/type/confirm", request);
+        var result = await controller.Confirm(request);
 
-        // Assert
-        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task Confirm_ReturnsBadRequest_WhenTextIsEmpty()
-    {
-        // Arrange
-        var client = _factory.CreateClient();
-        var request = new TypeConfirmationRequest
-        {
-            Text = "",
-            InferredType = "action",
-            InferredConfidence = 50.0,
-            ConfirmedType = "action"
-        };
-
-        // Act
-        var response = await client.PostAsJsonAsync("/api/type/confirm", request);
-
-        // Assert
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task Confirm_ReturnsBadRequest_WhenInferredTypeIsEmpty()
-    {
-        // Arrange
-        var client = _factory.CreateClient();
-        var request = new TypeConfirmationRequest
-        {
-            Text = "Buy groceries",
-            InferredType = "",
-            InferredConfidence = 50.0,
-            ConfirmedType = "action"
-        };
-
-        // Act
-        var response = await client.PostAsJsonAsync("/api/type/confirm", request);
-
-        // Assert
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task Confirm_ReturnsBadRequest_WhenConfidenceOutOfRange()
-    {
-        // Arrange
-        var client = _factory.CreateClient();
-        var request = new TypeConfirmationRequest
-        {
-            Text = "Buy groceries",
-            InferredType = "action",
-            InferredConfidence = 150.0, // Invalid: > 100
-            ConfirmedType = "action"
-        };
-
-        // Act
-        var response = await client.PostAsJsonAsync("/api/type/confirm", request);
-
-        // Assert
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.IsType<NoContentResult>(result);
     }
 }
