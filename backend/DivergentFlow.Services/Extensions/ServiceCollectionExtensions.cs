@@ -1,3 +1,4 @@
+using DivergentFlow.Services.Repositories;
 using DivergentFlow.Services.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,9 +16,17 @@ public static class ServiceCollectionExtensions
     /// <returns>The service collection for method chaining</returns>
     public static IServiceCollection UseServices(this IServiceCollection services)
     {
+        // Register Redis services (connection provider, etc.)
+        services.AddRedisServices();
+
+        // Register capture repository
+        // Using Scoped lifetime for proper request handling
+        // Note: Scoped repository with Singleton provider is intentional -
+        // the provider manages connection pooling while each request gets its own repository instance
+        services.AddScoped<ICaptureRepository, RedisCaptureRepository>();
+
         // Register capture service
-        // Using in-memory implementation for now, will be replaced with database later
-        services.AddSingleton<ICaptureService, InMemoryCaptureService>();
+        services.AddScoped<ICaptureService, CaptureService>();
 
         // Register type inference service
         // Using basic implementation for MVP, will be replaced with ML-based inference later

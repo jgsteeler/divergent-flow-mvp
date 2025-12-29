@@ -9,6 +9,7 @@ COPY DivergentFlow.sln ./
 COPY DivergentFlow.Api/DivergentFlow.Api.csproj DivergentFlow.Api/
 COPY DivergentFlow.Services/DivergentFlow.Services.csproj DivergentFlow.Services/
 COPY DivergentFlow.Api.Tests/DivergentFlow.Api.Tests.csproj DivergentFlow.Api.Tests/
+COPY DivergentFlow.Services.Tests/DivergentFlow.Services.Tests.csproj DivergentFlow.Services.Tests/
 
 RUN dotnet restore DivergentFlow.sln
 
