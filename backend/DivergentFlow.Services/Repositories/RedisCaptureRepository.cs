@@ -64,14 +64,7 @@ public class RedisCaptureRepository : ICaptureRepository
         {
             var entity = CaptureEntity.FromDto(capture);
             
-            // Redis.OM will generate an ID if not provided
-            // If capture.Id is empty, let Redis generate it
-            if (string.IsNullOrEmpty(entity.Id))
-            {
-                entity.Id = null; // Let Redis.OM generate
-            }
-            
-            // Insert the entity
+            // Insert the entity - Redis.OM will generate ID if entity.Id is null
             var insertedId = await _captures.InsertAsync(entity);
             
             // Update the entity with the ID (either generated or existing)

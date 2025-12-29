@@ -21,6 +21,8 @@ public static class ServiceCollectionExtensions
 
         // Register capture repository
         // Using Scoped lifetime for proper request handling
+        // Note: Scoped repository with Singleton provider is intentional -
+        // the provider manages connection pooling while each request gets its own repository instance
         services.AddScoped<ICaptureRepository, RedisCaptureRepository>();
 
         // Register capture service
