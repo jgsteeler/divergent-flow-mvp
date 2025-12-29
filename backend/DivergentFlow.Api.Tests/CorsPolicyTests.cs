@@ -88,64 +88,10 @@ public class CorsPolicyTests
     }
 
     [Fact]
-    public async Task Staging_Allows_Netlify_DeployPreview_Origin()
+    public async Task Staging_Allows_Configured_Origin()
     {
         using var _ = WithEnv(
-            ("CORS_NETLIFY_SITE_NAME", "div-flo-mvp"),
-            ("CORS_ALLOW_NETLIFY_PREVIEWS", "true"),
-            ("CORS_STAGING_ORIGINS", "")
-        );
-
-        // Arrange
-        await using var factory = new StagingWebApplicationFactory();
-        var client = factory.CreateClient();
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/health");
-        request.Headers.Add("Origin", "https://deploy-preview-123--div-flo-mvp.netlify.app");
-
-        // Act
-        var response = await client.SendAsync(request);
-
-        // Assert
-        Assert.True(
-            response.Headers.TryGetValues("Access-Control-Allow-Origin", out var values) &&
-            values.Contains("https://deploy-preview-123--div-flo-mvp.netlify.app"),
-            "Expected Access-Control-Allow-Origin to echo the Netlify deploy preview origin in Staging"
-        );
-    }
-
-    [Fact]
-    public async Task Staging_Allows_Netlify_BranchDeploy_Origin()
-    {
-        using var _ = WithEnv(
-            ("CORS_NETLIFY_SITE_NAME", "div-flo-mvp"),
-            ("CORS_ALLOW_NETLIFY_PREVIEWS", "true"),
-            ("CORS_STAGING_ORIGINS", "")
-        );
-
-        // Arrange
-        await using var factory = new StagingWebApplicationFactory();
-        var client = factory.CreateClient();
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/health");
-        request.Headers.Add("Origin", "https://feature-cool-thing--div-flo-mvp.netlify.app");
-
-        // Act
-        var response = await client.SendAsync(request);
-
-        // Assert
-        Assert.True(
-            response.Headers.TryGetValues("Access-Control-Allow-Origin", out var values) &&
-            values.Contains("https://feature-cool-thing--div-flo-mvp.netlify.app"),
-            "Expected Access-Control-Allow-Origin to echo the Netlify branch deploy origin in Staging"
-        );
-    }
-
-    [Fact]
-    public async Task Staging_Allows_Explicitly_Configured_Origins()
-    {
-        using var _ = WithEnv(
-            ("CORS_STAGING_ORIGINS", "https://staging.example.com,https://test.example.com"),
-            ("CORS_NETLIFY_SITE_NAME", "div-flo-mvp"),
-            ("CORS_ALLOW_NETLIFY_PREVIEWS", "false")
+            ("CORS_ALLOWED_ORIGINS", "https://staging.example.com,https://test.example.com")
         );
 
         // Arrange
@@ -161,22 +107,22 @@ public class CorsPolicyTests
         Assert.True(
             response.Headers.TryGetValues("Access-Control-Allow-Origin", out var values) &&
             values.Contains("https://staging.example.com"),
-            "Expected Access-Control-Allow-Origin to allow explicitly configured staging origin"
+            "Expected Access-Control-Allow-Origin to allow configured origin in Staging"
         );
     }
 
     [Fact]
-    public async Task Production_DoesNotAllow_Netlify_DeployPreview_Origin()
+    public async Task Staging_BlocksUnauthorizedOrigins()
     {
         using var _ = WithEnv(
-            ("CORS_PRODUCTION_ORIGINS", "https://app.getdivergentflow.com")
+            ("CORS_ALLOWED_ORIGINS", "https://staging.example.com")
         );
 
         // Arrange
-        await using var factory = new ProductionWebApplicationFactory();
+        await using var factory = new StagingWebApplicationFactory();
         var client = factory.CreateClient();
         using var request = new HttpRequestMessage(HttpMethod.Get, "/health");
-        request.Headers.Add("Origin", "https://deploy-preview-123--div-flo-mvp.netlify.app");
+        request.Headers.Add("Origin", "https://evil.com");
 
         // Act
         var response = await client.SendAsync(request);
@@ -184,15 +130,15 @@ public class CorsPolicyTests
         // Assert
         Assert.False(
             response.Headers.Contains("Access-Control-Allow-Origin"),
-            "Did not expect Access-Control-Allow-Origin for Netlify deploy preview origin in Production"
+            "Expected no Access-Control-Allow-Origin for unauthorized origin in Staging"
         );
     }
 
     [Fact]
-    public async Task Production_Allows_Custom_Domain_Origin()
+    public async Task Production_Allows_Configured_Origin()
     {
         using var _ = WithEnv(
-            ("CORS_PRODUCTION_ORIGINS", "https://app.getdivergentflow.com")
+            ("CORS_ALLOWED_ORIGINS", "https://app.getdivergentflow.com")
         );
 
         // Arrange
@@ -208,7 +154,64 @@ public class CorsPolicyTests
         Assert.True(
             response.Headers.TryGetValues("Access-Control-Allow-Origin", out var values) &&
             values.Contains("https://app.getdivergentflow.com"),
-            "Expected Access-Control-Allow-Origin to allow the custom domain origin in Production"
+            "Expected Access-Control-Allow-Origin to allow configured origin in Production"
+        );
+    }
+
+    [Fact]
+    public async Task Production_BlocksAllOrigins_WhenNoCorsAllowedOriginsSet()
+    {
+        using var _ = WithEnv(
+            ("CORS_ALLOWED_ORIGINS", "")
+        );
+
+        // Arrange
+        await using var factory = new ProductionWebApplicationFactory();
+        var client = factory.CreateClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/health");
+        request.Headers.Add("Origin", "https://any-origin.com");
+
+        // Act
+        var response = await client.SendAsync(request);
+
+        // Assert
+        Assert.False(
+            response.Headers.Contains("Access-Control-Allow-Origin"),
+            "Expected no Access-Control-Allow-Origin when CORS_ALLOWED_ORIGINS is not set (fail closed)"
+        );
+    }
+
+    [Fact]
+    public async Task Production_AllowsMultipleOrigins_CommaSeparated()
+    {
+        using var _ = WithEnv(
+            ("CORS_ALLOWED_ORIGINS", "https://app.example.com,https://www.example.com")
+        );
+
+        // Arrange
+        await using var factory = new ProductionWebApplicationFactory();
+        var client = factory.CreateClient();
+
+        // Test first origin
+        using var request1 = new HttpRequestMessage(HttpMethod.Get, "/health");
+        request1.Headers.Add("Origin", "https://app.example.com");
+        var response1 = await client.SendAsync(request1);
+
+        // Test second origin
+        using var request2 = new HttpRequestMessage(HttpMethod.Get, "/health");
+        request2.Headers.Add("Origin", "https://www.example.com");
+        var response2 = await client.SendAsync(request2);
+
+        // Assert
+        Assert.True(
+            response1.Headers.TryGetValues("Access-Control-Allow-Origin", out var values1) &&
+            values1.Contains("https://app.example.com"),
+            "Expected first origin to be allowed"
+        );
+        Assert.True(
+            response2.Headers.TryGetValues("Access-Control-Allow-Origin", out var values2) &&
+            values2.Contains("https://www.example.com"),
+            "Expected second origin to be allowed"
         );
     }
 
@@ -293,179 +296,10 @@ public class CorsPolicyTests
     }
 
     [Fact]
-    public async Task Production_BlocksAllOrigins_WhenNoCorsProductionOriginsSet()
-    {
-        using var _ = WithEnv(
-            ("CORS_PRODUCTION_ORIGINS", "")
-        );
-
-        // Arrange
-        await using var factory = new ProductionWebApplicationFactory();
-        var client = factory.CreateClient();
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/health");
-        request.Headers.Add("Origin", "https://any-origin.com");
-
-        // Act
-        var response = await client.SendAsync(request);
-
-        // Assert
-        Assert.False(
-            response.Headers.Contains("Access-Control-Allow-Origin"),
-            "Expected no Access-Control-Allow-Origin when CORS_PRODUCTION_ORIGINS is not set (fail closed)"
-        );
-    }
-
-    [Fact]
-    public async Task Staging_BlocksNetlifyPreview_WhenPreviewsDisabled()
-    {
-        using var _ = WithEnv(
-            ("CORS_NETLIFY_SITE_NAME", "div-flo-mvp"),
-            ("CORS_ALLOW_NETLIFY_PREVIEWS", "false"),
-            ("CORS_STAGING_ORIGINS", "")
-        );
-
-        // Arrange
-        await using var factory = new StagingWebApplicationFactory();
-        var client = factory.CreateClient();
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/health");
-        request.Headers.Add("Origin", "https://deploy-preview-123--div-flo-mvp.netlify.app");
-
-        // Act
-        var response = await client.SendAsync(request);
-
-        // Assert
-        Assert.False(
-            response.Headers.Contains("Access-Control-Allow-Origin"),
-            "Expected no Access-Control-Allow-Origin for Netlify preview when CORS_ALLOW_NETLIFY_PREVIEWS is false"
-        );
-    }
-
-    [Fact]
-    public async Task Staging_AllowsMainNetlifySite_WhenSiteNameConfigured()
-    {
-        using var _ = WithEnv(
-            ("CORS_NETLIFY_SITE_NAME", "my-custom-site"),
-            ("CORS_ALLOW_NETLIFY_PREVIEWS", "false"),
-            ("CORS_STAGING_ORIGINS", "")
-        );
-
-        // Arrange
-        await using var factory = new StagingWebApplicationFactory();
-        var client = factory.CreateClient();
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/health");
-        request.Headers.Add("Origin", "https://my-custom-site.netlify.app");
-
-        // Act
-        var response = await client.SendAsync(request);
-
-        // Assert
-        Assert.True(
-            response.Headers.TryGetValues("Access-Control-Allow-Origin", out var values) &&
-            values.Contains("https://my-custom-site.netlify.app"),
-            "Expected Access-Control-Allow-Origin to allow main Netlify site when CORS_NETLIFY_SITE_NAME is configured"
-        );
-    }
-
-    [Fact]
-    public async Task Staging_BlocksUnauthorizedOrigins()
-    {
-        using var _ = WithEnv(
-            ("CORS_NETLIFY_SITE_NAME", "div-flo-mvp"),
-            ("CORS_ALLOW_NETLIFY_PREVIEWS", "false"),
-            ("CORS_STAGING_ORIGINS", "https://staging.example.com")
-        );
-
-        // Arrange
-        await using var factory = new StagingWebApplicationFactory();
-        var client = factory.CreateClient();
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/health");
-        request.Headers.Add("Origin", "https://evil.com");
-
-        // Act
-        var response = await client.SendAsync(request);
-
-        // Assert
-        Assert.False(
-            response.Headers.Contains("Access-Control-Allow-Origin"),
-            "Expected no Access-Control-Allow-Origin for unauthorized origin in Staging"
-        );
-    }
-
-    [Fact]
-    public async Task Production_AllowsMultipleOrigins_CommaSeparated()
-    {
-        using var _ = WithEnv(
-            ("CORS_PRODUCTION_ORIGINS", "https://app.example.com,https://www.example.com")
-        );
-
-        // Arrange
-        await using var factory = new ProductionWebApplicationFactory();
-        var client = factory.CreateClient();
-
-        // Test first origin
-        using var request1 = new HttpRequestMessage(HttpMethod.Get, "/health");
-        request1.Headers.Add("Origin", "https://app.example.com");
-        var response1 = await client.SendAsync(request1);
-
-        // Test second origin
-        using var request2 = new HttpRequestMessage(HttpMethod.Get, "/health");
-        request2.Headers.Add("Origin", "https://www.example.com");
-        var response2 = await client.SendAsync(request2);
-
-        // Assert
-        Assert.True(
-            response1.Headers.TryGetValues("Access-Control-Allow-Origin", out var values1) &&
-            values1.Contains("https://app.example.com"),
-            "Expected first origin to be allowed"
-        );
-        Assert.True(
-            response2.Headers.TryGetValues("Access-Control-Allow-Origin", out var values2) &&
-            values2.Contains("https://www.example.com"),
-            "Expected second origin to be allowed"
-        );
-    }
-
-    [Fact]
-    public async Task Production_AllowsMultipleOrigins_SemicolonSeparated()
-    {
-        using var _ = WithEnv(
-            ("CORS_PRODUCTION_ORIGINS", "https://app.example.com;https://www.example.com")
-        );
-
-        // Arrange
-        await using var factory = new ProductionWebApplicationFactory();
-        var client = factory.CreateClient();
-
-        // Test first origin
-        using var request1 = new HttpRequestMessage(HttpMethod.Get, "/health");
-        request1.Headers.Add("Origin", "https://app.example.com");
-        var response1 = await client.SendAsync(request1);
-
-        // Test second origin
-        using var request2 = new HttpRequestMessage(HttpMethod.Get, "/health");
-        request2.Headers.Add("Origin", "https://www.example.com");
-        var response2 = await client.SendAsync(request2);
-
-        // Assert
-        Assert.True(
-            response1.Headers.TryGetValues("Access-Control-Allow-Origin", out var values1) &&
-            values1.Contains("https://app.example.com"),
-            "Expected first origin to be allowed with semicolon separator"
-        );
-        Assert.True(
-            response2.Headers.TryGetValues("Access-Control-Allow-Origin", out var values2) &&
-            values2.Contains("https://www.example.com"),
-            "Expected second origin to be allowed with semicolon separator"
-        );
-    }
-
-    [Fact]
     public async Task Staging_HandlesOriginsWithWhitespace()
     {
         using var _ = WithEnv(
-            ("CORS_STAGING_ORIGINS", "  https://staging.example.com  ,  https://test.example.com  "),
-            ("CORS_NETLIFY_SITE_NAME", "div-flo-mvp"),
-            ("CORS_ALLOW_NETLIFY_PREVIEWS", "false")
+            ("CORS_ALLOWED_ORIGINS", "  https://staging.example.com  ,  https://test.example.com  ")
         );
 
         // Arrange
@@ -486,12 +320,57 @@ public class CorsPolicyTests
     }
 
     [Fact]
+    public async Task Staging_NormalizesOrigins_WithTrailingSlash()
+    {
+        using var _ = WithEnv(
+            ("CORS_ALLOWED_ORIGINS", "https://app.example.com/")
+        );
+
+        // Arrange
+        await using var factory = new StagingWebApplicationFactory();
+        var client = factory.CreateClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/health");
+        request.Headers.Add("Origin", "https://app.example.com");
+
+        // Act
+        var response = await client.SendAsync(request);
+
+        // Assert
+        Assert.True(
+            response.Headers.TryGetValues("Access-Control-Allow-Origin", out var values) &&
+            values.Contains("https://app.example.com"),
+            "Expected configured origin with trailing slash to be normalized and allowed"
+        );
+    }
+
+    [Fact]
+    public async Task Production_DoesNotAllow_SemicolonSeparatedList()
+    {
+        using var _ = WithEnv(
+            ("CORS_ALLOWED_ORIGINS", "https://app.example.com;https://www.example.com")
+        );
+
+        // Arrange
+        await using var factory = new ProductionWebApplicationFactory();
+        var client = factory.CreateClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/health");
+        request.Headers.Add("Origin", "https://app.example.com");
+
+        // Act
+        var response = await client.SendAsync(request);
+
+        // Assert
+        Assert.False(
+            response.Headers.Contains("Access-Control-Allow-Origin"),
+            "Expected semicolon-separated list to be rejected (CORS_ALLOWED_ORIGINS must be comma-separated)"
+        );
+    }
+
+    [Fact]
     public async Task Staging_BlocksInvalidOrigins_MalformedUrl()
     {
         using var _ = WithEnv(
-            ("CORS_NETLIFY_SITE_NAME", "div-flo-mvp"),
-            ("CORS_ALLOW_NETLIFY_PREVIEWS", "false"),
-            ("CORS_STAGING_ORIGINS", "")
+            ("CORS_ALLOWED_ORIGINS", "https://staging.example.com")
         );
 
         // Arrange
@@ -514,9 +393,7 @@ public class CorsPolicyTests
     public async Task Staging_BlocksNonHttpSchemes()
     {
         using var _ = WithEnv(
-            ("CORS_NETLIFY_SITE_NAME", "div-flo-mvp"),
-            ("CORS_ALLOW_NETLIFY_PREVIEWS", "false"),
-            ("CORS_STAGING_ORIGINS", "")
+            ("CORS_ALLOWED_ORIGINS", "https://staging.example.com")
         );
 
         // Arrange
@@ -532,6 +409,88 @@ public class CorsPolicyTests
         Assert.False(
             response.Headers.Contains("Access-Control-Allow-Origin"),
             "Expected non-HTTP/HTTPS scheme to be rejected"
+        );
+    }
+
+    [Fact]
+    public async Task Production_NormalizesOrigins_WithDefaultPort()
+    {
+        using var _ = WithEnv(
+            ("CORS_ALLOWED_ORIGINS", "https://app.example.com:443,http://test.example.com:80")
+        );
+        
+        // Arrange
+        await using var factory = new ProductionWebApplicationFactory();
+        var client = factory.CreateClient();
+        
+        // Act - Test HTTPS with default port
+        using var request1 = new HttpRequestMessage(HttpMethod.Get, "/health");
+        request1.Headers.Add("Origin", "https://app.example.com");
+        var response1 = await client.SendAsync(request1);
+        
+        // Act - Test HTTP with default port
+        using var request2 = new HttpRequestMessage(HttpMethod.Get, "/health");
+        request2.Headers.Add("Origin", "http://test.example.com");
+        var response2 = await client.SendAsync(request2);
+        
+        // Assert
+        Assert.True(
+            response1.Headers.TryGetValues("Access-Control-Allow-Origin", out var values1) &&
+            values1.Contains("https://app.example.com"),
+            "Expected :443 to be removed for HTTPS"
+        );
+        Assert.True(
+            response2.Headers.TryGetValues("Access-Control-Allow-Origin", out var values2) &&
+            values2.Contains("http://test.example.com"),
+            "Expected :80 to be removed for HTTP"
+        );
+    }
+
+    [Fact]
+    public async Task Production_DeduplicatesOrigins()
+    {
+        using var _ = WithEnv(
+            ("CORS_ALLOWED_ORIGINS", "https://app.example.com,https://APP.example.com,https://app.example.com")
+        );
+        
+        // Arrange
+        await using var factory = new ProductionWebApplicationFactory();
+        var client = factory.CreateClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/health");
+        request.Headers.Add("Origin", "https://app.example.com");
+        
+        // Act
+        var response = await client.SendAsync(request);
+        
+        // Assert
+        Assert.True(
+            response.Headers.TryGetValues("Access-Control-Allow-Origin", out var values) &&
+            values.Contains("https://app.example.com"),
+            "Expected duplicate origins to be deduplicated"
+        );
+    }
+
+    [Fact]
+    public async Task Production_NormalizesOrigins_WithPathQueryFragment()
+    {
+        using var _ = WithEnv(
+            ("CORS_ALLOWED_ORIGINS", "https://app.example.com/path?query=1#fragment")
+        );
+        
+        // Arrange
+        await using var factory = new ProductionWebApplicationFactory();
+        var client = factory.CreateClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/health");
+        request.Headers.Add("Origin", "https://app.example.com");
+        
+        // Act
+        var response = await client.SendAsync(request);
+        
+        // Assert
+        Assert.True(
+            response.Headers.TryGetValues("Access-Control-Allow-Origin", out var values) &&
+            values.Contains("https://app.example.com"),
+            "Expected origin with path/query/fragment to be normalized to origin form"
         );
     }
 }

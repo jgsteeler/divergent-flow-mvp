@@ -42,6 +42,7 @@ The API will start at `http://localhost:5100` by default.
 ### Accessing Swagger UI
 
 Once the API is running, navigate to:
+
 ```
 http://localhost:5100/swagger
 ```
@@ -53,43 +54,58 @@ This provides an interactive UI to test all API endpoints.
 ### Captures
 
 #### GET /api/captures
+
 Get all captures
+
 - **Response**: `200 OK` with array of `CaptureDto`
 
 #### GET /api/captures/{id}
+
 Get a specific capture by ID
+
 - **Parameters**: `id` (string) - Capture ID
 - **Response**: `200 OK` with `CaptureDto` or `404 Not Found`
 
 #### POST /api/captures
+
 Create a new capture
+
 - **Request Body**: `CreateCaptureRequest`
+
   ```json
   {
     "text": "Your capture text here"
   }
   ```
+
 - **Response**: `201 Created` with `CaptureDto`
 
 #### PUT /api/captures/{id}
+
 Update an existing capture
+
 - **Parameters**: `id` (string) - Capture ID
 - **Request Body**: `UpdateCaptureRequest`
+
   ```json
   {
     "text": "Updated capture text"
   }
   ```
+
 - **Response**: `200 OK` with `CaptureDto` or `404 Not Found`
 
 #### DELETE /api/captures/{id}
+
 Delete a capture
+
 - **Parameters**: `id` (string) - Capture ID
 - **Response**: `204 No Content` or `404 Not Found`
 
 ## Data Models
 
 ### CaptureDto
+
 ```csharp
 {
   "id": "string",           // UUID
@@ -140,6 +156,7 @@ This allows for easy swapping of implementations (e.g., replacing in-memory stor
 ## CORS Configuration
 
 CORS is configured to allow requests from the frontend:
+
 - `http://localhost:5173` (Vite dev server)
 - `http://localhost:5000` (Alternative port)
 
@@ -169,6 +186,7 @@ dotnet test
 ```
 
 Tests are located in `DivergentFlow.Api.Tests` and include:
+
 - Integration tests for all API endpoints
 - Tests use `WebApplicationFactory` for in-memory testing
 - All tests run automatically in CI/CD pipeline
@@ -184,22 +202,27 @@ dotnet add package <PackageName>
 Configuration is managed through environment variables.
 
 For local development:
+
 - Copy `.env.example` to `.env` in the `backend` folder.
 - Adjust the values as needed for your local environment; the `.env` file is gitignored and is loaded automatically by the API at startup.
 
 ### CORS
 
-The `.env.example` file includes the following CORS-related variables with dummy values:
-- `CORS_PRODUCTION_ORIGINS`: semicolon or comma-separated list of allowed origins (e.g. `https://app.getdivergentflow.com`)
-- `CORS_STAGING_ORIGINS`: semicolon or comma-separated list of allowed origins
-- `CORS_NETLIFY_SITE_NAME`: Netlify site name (e.g. `div-flo-mvp`)
-- `CORS_ALLOW_NETLIFY_PREVIEWS`: `true`/`false` to allow Netlify deploy previews and branch deploys in Staging
+The `.env.example` file includes the following CORS-related variable with a dummy value:
+
+- `CORS_ALLOWED_ORIGINS`: comma-separated list of allowed origins (e.g. `http://localhost:5173,https://app.getdivergentflow.com`)
+
+Notes:
+
+- In `Development`, the API also allows `localhost`/`127.0.0.1` on any port to keep local Vite workflows frictionless.
+- In `Staging` and `Production`, the API fails closed if `CORS_ALLOWED_ORIGINS` is not set.
 
 ## Contributing
 
 Follow the project's [Conventional Commits](https://www.conventionalcommits.org/) guidelines when making changes.
 
 All commits must follow the format:
+
 ```
 <type>(<scope>): <description>
 ```
