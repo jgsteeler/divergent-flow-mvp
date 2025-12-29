@@ -1,35 +1,12 @@
-using DivergentFlow.Services.Models;
+using DivergentFlow.Services.Domain;
 
 namespace DivergentFlow.Services.Repositories;
 
-/// <summary>
-/// Repository interface for managing capture items storage
-/// Provides abstraction over the data persistence layer
-/// </summary>
 public interface ICaptureRepository
 {
-    /// <summary>
-    /// Get all captures from storage
-    /// </summary>
-    Task<IEnumerable<CaptureDto>> GetAllAsync();
-
-    /// <summary>
-    /// Get a capture by ID from storage
-    /// </summary>
-    Task<CaptureDto?> GetByIdAsync(string id);
-
-    /// <summary>
-    /// Save a new capture to storage
-    /// </summary>
-    Task<CaptureDto> SaveAsync(CaptureDto capture);
-
-    /// <summary>
-    /// Update an existing capture in storage
-    /// </summary>
-    Task<CaptureDto?> UpdateAsync(CaptureDto capture);
-
-    /// <summary>
-    /// Delete a capture from storage
-    /// </summary>
-    Task<bool> DeleteAsync(string id);
+    Task<IReadOnlyList<Capture>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<Capture?> GetByIdAsync(string id, CancellationToken cancellationToken = default);
+    Task<Capture> CreateAsync(Capture capture, CancellationToken cancellationToken = default);
+    Task<Capture?> UpdateAsync(string id, Capture updated, CancellationToken cancellationToken = default);
+    Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default);
 }

@@ -1,3 +1,4 @@
+using DivergentFlow.Services.Domain;
 using DivergentFlow.Services.Models;
 using Microsoft.Extensions.Logging;
 using Redis.OM;
@@ -24,14 +25,14 @@ public class RedisCaptureRepository : ICaptureRepository
         _captures = provider.RedisCollection<CaptureEntity>();
     }
 
-    public async Task<IEnumerable<CaptureDto>> GetAllAsync()
+    public async Task<IReadOnlyList<Capture>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Getting all captures from Redis");
         
         try
         {
             var entities = await _captures.ToListAsync();
-            return entities.Select(e => e.ToDto()).ToList();
+            return entities.Select(ToDomain).ToList();
         }
         catch (Exception ex)
         {
@@ -40,14 +41,14 @@ public class RedisCaptureRepository : ICaptureRepository
         }
     }
 
-    public async Task<CaptureDto?> GetByIdAsync(string id)
+    public async Task<Capture?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Getting capture {Id} from Redis", id);
         
         try
         {
             var entity = await _captures.FindByIdAsync(id);
-            return entity?.ToDto();
+            return entity is null ? null : ToDomain(entity);
         }
         catch (Exception ex)
         {
@@ -56,23 +57,23 @@ public class RedisCaptureRepository : ICaptureRepository
         }
     }
 
-    public async Task<CaptureDto> SaveAsync(CaptureDto capture)
+    public async Task<Capture> CreateAsync(Capture capture, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Saving new capture to Redis");
         
         try
         {
-            var entity = CaptureEntity.FromDto(capture);
-            
+            var entity = FromDomain(capture);
+
             // Insert the entity - Redis.OM will generate ID if entity.Id is null
             var insertedId = await _captures.InsertAsync(entity);
-            
+
             // Update the entity with the ID (either generated or existing)
             entity.Id = insertedId;
-            
+
             _logger.LogInformation("Saved capture with ID {Id} to Redis", insertedId);
-            
-            return entity.ToDto();
+
+            return ToDomain(entity);
         }
         catch (Exception ex)
         {
@@ -81,36 +82,38 @@ public class RedisCaptureRepository : ICaptureRepository
         }
     }
 
-    public async Task<CaptureDto?> UpdateAsync(CaptureDto capture)
+    public async Task<Capture?> UpdateAsync(string id, Capture updated, CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Updating capture {Id} in Redis", capture.Id);
+        _logger.LogDebug("Updating capture {Id} in Redis", id);
         
         try
         {
             // Check if the entity exists
-            var existingEntity = await _captures.FindByIdAsync(capture.Id);
+            var existingEntity = await _captures.FindByIdAsync(id);
             if (existingEntity == null)
             {
-                _logger.LogWarning("Capture {Id} not found for update", capture.Id);
+                _logger.LogWarning("Capture {Id} not found for update", id);
                 return null;
             }
             
             // Update the entity
-            var entity = CaptureEntity.FromDto(capture);
+            var entity = FromDomain(updated);
+            entity.Id = id;
+            entity.CreatedAt = existingEntity.CreatedAt;
             await _captures.UpdateAsync(entity);
             
-            _logger.LogInformation("Updated capture {Id} in Redis", capture.Id);
+            _logger.LogInformation("Updated capture {Id} in Redis", id);
             
-            return entity.ToDto();
+            return ToDomain(entity);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating capture {Id} in Redis", capture.Id);
+            _logger.LogError(ex, "Error updating capture {Id} in Redis", id);
             throw;
         }
     }
 
-    public async Task<bool> DeleteAsync(string id)
+    public async Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Deleting capture {Id} from Redis", id);
         
@@ -137,4 +140,22 @@ public class RedisCaptureRepository : ICaptureRepository
             throw;
         }
     }
+
+    private static Capture ToDomain(CaptureEntity entity) => new()
+    {
+        Id = entity.Id ?? string.Empty,
+        Text = entity.Text,
+        CreatedAt = entity.CreatedAt,
+        InferredType = entity.InferredType,
+        TypeConfidence = entity.TypeConfidence
+    };
+
+    private static CaptureEntity FromDomain(Capture capture) => new()
+    {
+        Id = string.IsNullOrEmpty(capture.Id) ? null : capture.Id,
+        Text = capture.Text,
+        CreatedAt = capture.CreatedAt,
+        InferredType = capture.InferredType,
+        TypeConfidence = capture.TypeConfidence
+    };
 }

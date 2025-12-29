@@ -1,5 +1,9 @@
+using AutoMapper;
+using DivergentFlow.Services.Behaviors;
 using DivergentFlow.Services.Repositories;
 using DivergentFlow.Services.Services;
+using FluentValidation;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DivergentFlow.Services.Extensions;
@@ -16,6 +20,12 @@ public static class ServiceCollectionExtensions
     /// <returns>The service collection for method chaining</returns>
     public static IServiceCollection UseServices(this IServiceCollection services)
     {
+        services.AddMediatR(typeof(ServiceCollectionExtensions).Assembly);
+
+        services.AddAutoMapper(typeof(ServiceCollectionExtensions).Assembly);
+        services.AddValidatorsFromAssembly(typeof(ServiceCollectionExtensions).Assembly);
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
         // Register Redis services (connection provider, etc.)
         services.AddRedisServices();
 
@@ -25,7 +35,7 @@ public static class ServiceCollectionExtensions
         // the provider manages connection pooling while each request gets its own repository instance
         services.AddScoped<ICaptureRepository, RedisCaptureRepository>();
 
-        // Register capture service
+        // Legacy registration (can be removed once controllers fully migrate)
         services.AddScoped<ICaptureService, CaptureService>();
 
         // Register type inference service

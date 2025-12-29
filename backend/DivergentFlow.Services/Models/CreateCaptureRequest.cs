@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace DivergentFlow.Services.Models;
 
 /// <summary>
@@ -10,8 +8,6 @@ public class CreateCaptureRequest
     /// <summary>
     /// The text content to capture
     /// </summary>
-    [Required]
-    [MinLength(1)]
     public string Text { get; set; } = string.Empty;
 
     /// <summary>
@@ -22,6 +18,5 @@ public class CreateCaptureRequest
     /// <summary>
     /// Optional confidence score for the type inference (0-100)
     /// </summary>
-    [Range(0, 100)]
     public double? TypeConfidence { get; set; }
 }

@@ -1,60 +1,82 @@
-using DivergentFlow.Services.Models;
+using DivergentFlow.Services.Domain;
 
 namespace DivergentFlow.Services.Repositories;
 
-/// <summary>
-/// In-memory implementation of ICaptureRepository for testing
-/// </summary>
-public class InMemoryCaptureRepository : ICaptureRepository
+public sealed class InMemoryCaptureRepository : ICaptureRepository
 {
-    private readonly Dictionary<string, CaptureDto> _captures = new();
+    private readonly List<Capture> _captures = new();
     private readonly object _lock = new();
 
-    public Task<IEnumerable<CaptureDto>> GetAllAsync()
+    public Task<IReadOnlyList<Capture>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         lock (_lock)
         {
-            return Task.FromResult<IEnumerable<CaptureDto>>(_captures.Values.ToList());
+            IReadOnlyList<Capture> snapshot = _captures
+                .Select(c => Clone(c))
+                .ToList();
+
+            return Task.FromResult(snapshot);
         }
     }
 
-    public Task<CaptureDto?> GetByIdAsync(string id)
+    public Task<Capture?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {
         lock (_lock)
         {
-            _captures.TryGetValue(id, out var capture);
-            return Task.FromResult(capture);
+            var capture = _captures.FirstOrDefault(c => c.Id == id);
+            return Task.FromResult(capture is null ? null : Clone(capture));
         }
     }
 
-    public Task<CaptureDto> SaveAsync(CaptureDto capture)
+    public Task<Capture> CreateAsync(Capture capture, CancellationToken cancellationToken = default)
     {
         lock (_lock)
         {
-            _captures[capture.Id] = capture;
-            return Task.FromResult(capture);
+            var toStore = Clone(capture);
+            _captures.Add(toStore);
+            return Task.FromResult(Clone(toStore));
         }
     }
 
-    public Task<CaptureDto?> UpdateAsync(CaptureDto capture)
+    public Task<Capture?> UpdateAsync(string id, Capture updated, CancellationToken cancellationToken = default)
     {
         lock (_lock)
         {
-            if (!_captures.ContainsKey(capture.Id))
+            var existing = _captures.FirstOrDefault(c => c.Id == id);
+            if (existing is null)
             {
-                return Task.FromResult<CaptureDto?>(null);
+                return Task.FromResult<Capture?>(null);
             }
 
-            _captures[capture.Id] = capture;
-            return Task.FromResult<CaptureDto?>(capture);
+            existing.Text = updated.Text;
+            existing.InferredType = updated.InferredType;
+            existing.TypeConfidence = updated.TypeConfidence;
+
+            return Task.FromResult<Capture?>(Clone(existing));
         }
     }
 
-    public Task<bool> DeleteAsync(string id)
+    public Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
         lock (_lock)
         {
-            return Task.FromResult(_captures.Remove(id));
+            var existing = _captures.FirstOrDefault(c => c.Id == id);
+            if (existing is null)
+            {
+                return Task.FromResult(false);
+            }
+
+            _captures.Remove(existing);
+            return Task.FromResult(true);
         }
     }
+
+    private static Capture Clone(Capture capture) => new()
+    {
+        Id = capture.Id,
+        Text = capture.Text,
+        CreatedAt = capture.CreatedAt,
+        InferredType = capture.InferredType,
+        TypeConfidence = capture.TypeConfidence
+    };
 }

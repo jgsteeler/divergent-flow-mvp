@@ -1,4 +1,5 @@
 using DivergentFlow.Api.Extensions;
+using DivergentFlow.Api.Middleware;
 using DivergentFlow.Services.Extensions;
 using dotenv.net;
 
@@ -52,6 +53,9 @@ if (app.Environment.IsDevelopment())
 
 // Enable CORS
 app.UseCors();
+
+// Map FluentValidation (MediatR pipeline) failures to HTTP 400
+app.UseMiddleware<ValidationExceptionMiddleware>();
 
 app.UseAuthorization();
 
