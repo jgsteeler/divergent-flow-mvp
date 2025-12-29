@@ -9,7 +9,7 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
-        services.AddSingleton<ICaptureRepository, InMemoryCaptureRepository>();
+        services.AddScoped<ICaptureRepository, InMemoryCaptureRepository>();
         services.AddSingleton<ITypeInferenceService, BasicTypeInferenceService>();
         return services;
     }
