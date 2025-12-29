@@ -3,9 +3,9 @@ using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using DivergentFlow.Services.Models;
-using DivergentFlow.Services.Repositories;
-using DivergentFlow.Services.Services;
+using DivergentFlow.Application.Models;
+using DivergentFlow.Application.Abstractions;
+using DivergentFlow.Infrastructure.Repositories;
 using Xunit;
 
 namespace DivergentFlow.Api.Tests;
@@ -28,20 +28,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 services.Remove(repoDescriptor);
             }
 
-            // Remove the existing service registration
-            var serviceDescriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(ICaptureService));
-
-            if (serviceDescriptor != null)
-            {
-                services.Remove(serviceDescriptor);
-            }
-
             // Add a fresh in-memory repository for each test
             services.AddSingleton<ICaptureRepository, InMemoryCaptureRepository>();
-
-            // Add the service with the in-memory repository
-            services.AddScoped<ICaptureService, CaptureService>();
         });
     }
 }

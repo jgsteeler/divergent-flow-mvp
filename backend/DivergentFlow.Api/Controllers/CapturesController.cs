@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using DivergentFlow.Services.Models;
-using DivergentFlow.Services.Features.Captures.Commands;
-using DivergentFlow.Services.Features.Captures.Queries;
+using DivergentFlow.Application.Features.Captures.Commands;
+using DivergentFlow.Application.Features.Captures.Queries;
+using DivergentFlow.Application.Models;
 using MediatR;
 
 namespace DivergentFlow.Api.Controllers;
