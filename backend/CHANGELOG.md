@@ -5,6 +5,13 @@ All notable changes to the Divergent Flow API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-api-v0.2.2...divergent-flow-api-v0.2.3) (2025-12-29)
+
+
+### Features
+
+* **storage:** replace in-memory storage with Redis/Upstash repository pattern ([#155](https://github.com/jgsteeler/divergent-flow-mvp/issues/155)) ([4964198](https://github.com/jgsteeler/divergent-flow-mvp/commit/496419847db3d991b491128c61c68729534c4a42))
+
 ## [0.2.2](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-api-v0.2.1...divergent-flow-api-v0.2.2) (2025-12-29)
 
 
