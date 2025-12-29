@@ -43,17 +43,16 @@ public sealed class InMemoryCaptureRepository : ICaptureRepository
     {
         lock (_lock)
         {
-            var existing = _captures.FirstOrDefault(c => c.Id == id);
-            if (existing is null)
+            var index = _captures.FindIndex(c => c.Id == id);
+            if (index == -1)
             {
                 return Task.FromResult<Capture?>(null);
             }
 
-            existing.Text = updated.Text;
-            existing.InferredType = updated.InferredType;
-            existing.TypeConfidence = updated.TypeConfidence;
+            var toStore = Clone(updated);
+            _captures[index] = toStore;
 
-            return Task.FromResult<Capture?>(Clone(existing));
+            return Task.FromResult<Capture?>(Clone(toStore));
         }
     }
 
