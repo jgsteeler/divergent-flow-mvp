@@ -34,12 +34,12 @@ public class TypeController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<TypeInferenceResult>> Infer([FromBody] TypeInferenceRequest request)
     {
-        _logger.LogInformation("Inferring type for text with length: {Length}", request.Text?.Length ?? 0);
-
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
+
+        _logger.LogInformation("Inferring type for capture text");
 
         var result = await _typeService.InferAsync(request.Text!);
         return Ok(result);
@@ -55,13 +55,12 @@ public class TypeController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Confirm([FromBody] TypeConfirmationRequest request)
     {
-        _logger.LogInformation("Confirming type: {ConfirmedType} (was inferred as: {InferredType})",
-            request.ConfirmedType, request.InferredType);
-
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
+
+        _logger.LogInformation("Confirming type for capture");
 
         await _typeService.ConfirmAsync(request);
         return NoContent();
