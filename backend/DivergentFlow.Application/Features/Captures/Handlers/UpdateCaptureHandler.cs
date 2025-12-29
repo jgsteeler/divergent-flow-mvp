@@ -20,16 +20,17 @@ public sealed class UpdateCaptureHandler : IRequestHandler<UpdateCaptureCommand,
 
     public async Task<CaptureDto?> Handle(UpdateCaptureCommand request, CancellationToken cancellationToken)
     {
-        var updated = new Capture
+        var existing = await _repository.GetByIdAsync(request.Id, cancellationToken);
+        if (existing is null)
         {
-            Id = request.Id,
-            Text = request.Text,
-            CreatedAt = 0,
-            InferredType = request.InferredType,
-            TypeConfidence = request.TypeConfidence
-        };
+            return null;
+        }
 
-        var saved = await _repository.UpdateAsync(request.Id, updated, cancellationToken);
+        existing.Text = request.Text;
+        existing.InferredType = request.InferredType;
+        existing.TypeConfidence = request.TypeConfidence;
+
+        var saved = await _repository.UpdateAsync(request.Id, existing, cancellationToken);
         return saved is null ? null : _mapper.Map<CaptureDto>(saved);
     }
 }
