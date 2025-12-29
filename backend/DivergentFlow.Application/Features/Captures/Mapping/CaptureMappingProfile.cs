@@ -8,6 +8,6 @@ public sealed class CaptureMappingProfile : Profile
 {
     public CaptureMappingProfile()
     {
-        CreateMap<Capture, CaptureDto>();
+        CreateMap<Capture, CaptureDto>().ReverseMap();
     }
 }
