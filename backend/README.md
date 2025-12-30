@@ -276,9 +276,26 @@ Notes:
 
 ### Redis
 
-The `.env.example` file includes the following Redis-related variables:
+This project supports two Redis connectivity modes:
 
-- `REDIS_URL`: Redis endpoint in `host:port` format (e.g., `fly-div-flo-staging.upstash.io:6379`)
+- **Local Docker Redis (TCP via StackExchange.Redis)**
+- **Upstash Redis (REST API via HttpClient)**
+
+#### Upstash (REST) configuration (recommended for Upstash)
+
+- `UPSTASH_REDIS_REST_URL`: HTTPS REST URL from the Upstash console (e.g. `https://us1-merry-cat-32748.upstash.io`)
+- `UPSTASH_REDIS_REST_TOKEN`: Upstash REST token (Bearer)
+- `UPSTASH_REDIS_REST_READONLY_TOKEN`: optional readonly token
+
+Back-compat:
+
+- `REDIS_URL` + `REDIS_TOKEN` can also be used for Upstash REST if you already have those wired as secrets.
+
+#### Local Docker Redis (TCP) configuration
+
+The `.env.example` file includes these TCP-related variables:
+
+- `REDIS_URL`: Redis endpoint in `host:port` format (e.g. `redis:6379` in docker-compose or `localhost:6379` when running the API directly)
 - `REDIS_TOKEN`: Redis password/token (optional for local Redis without auth)
 - Optional: `REDIS_SSL`: `true`/`false` override (helpful for hosted Redis)
 
@@ -291,10 +308,8 @@ Alternative configuration:
 **Important Notes:**
 
 - The API will throw an exception at startup if no Redis configuration is provided
-- For Upstash Redis: Get these values from your Upstash dashboard
-- For local Redis: Use `localhost:6379` and leave token empty if no auth is configured
-- The URL format should **not** include the `redis://` scheme (it's added automatically)
-- If your Upstash URL includes `http://` or `https://`, it will be stripped automatically
+- For Upstash REST: copy the **HTTPS REST URL** + **REST token** from the Upstash console.
+- For local Redis: use `localhost:6379` and leave token empty if no auth is configured.
 
 ## Contributing
 

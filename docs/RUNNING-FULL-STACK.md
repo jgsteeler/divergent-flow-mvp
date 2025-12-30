@@ -19,9 +19,15 @@ cp backend/.env.example backend/.env
 
 Set Redis values in `backend/.env`:
 
-- `REDIS_URL` (host:port)
-- `REDIS_TOKEN` (optional for local Redis)
-- `REDIS_SSL` (`true` for Upstash; `false` for local Redis)
+- Local Docker Redis (TCP):
+	- `REDIS_URL` (host:port)
+	- `REDIS_TOKEN` (optional for local Redis)
+	- `REDIS_SSL` (`false` for local Redis)
+
+- Upstash (REST API):
+	- `UPSTASH_REDIS_REST_URL` (HTTPS REST URL from Upstash console)
+	- `UPSTASH_REDIS_REST_TOKEN` (Bearer token)
+	- `UPSTASH_REDIS_REST_READONLY_TOKEN` (optional)
 
 ### Terminal 1: Start the Backend API
 
