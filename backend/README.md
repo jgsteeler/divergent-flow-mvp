@@ -52,6 +52,7 @@ This API uses Redis for data persistence via Upstash (serverless Redis hosting).
 #### Option 2: Using Local Redis (Development)
 
 1. Install Redis locally:
+
    ```bash
    # macOS
    brew install redis
@@ -161,50 +162,35 @@ backend/
 │   ├── Controllers/
 │   │   └── CapturesController.cs    # API endpoints
 │   └── Program.cs                    # Application startup
-├── DivergentFlow.Services/
-│   ├── Models/
-│   │   ├── CaptureDto.cs            # Data transfer object
-│   │   ├── CaptureEntity.cs         # Redis entity model
-│   │   ├── CreateCaptureRequest.cs  # Create request model
-│   │   └── UpdateCaptureRequest.cs  # Update request model
-│   ├── Repositories/
-│   │   ├── ICaptureRepository.cs    # Repository interface
-│   │   ├── RedisCaptureRepository.cs # Redis implementation
-│   │   └── InMemoryCaptureRepository.cs # Testing implementation
-│   ├── Services/
-│   │   ├── ICaptureService.cs       # Service interface
-│   │   └── CaptureService.cs        # Service implementation
-│   └── Extensions/
-│       └── ServiceCollectionExtensions.cs # DI registration
+├── DivergentFlow.Domain/             # Core domain entities
+├── DivergentFlow.Application/        # Use-cases, handlers, abstractions
+├── DivergentFlow.Infrastructure/     # Redis + external services implementations
 ├── DivergentFlow.Api.Tests/
-│   └── CapturesControllerTests.cs   # Integration tests
-├── DivergentFlow.Services.Tests/
-│   ├── Repositories/
-│   │   └── InMemoryCaptureRepositoryTests.cs # Repository tests
-│   └── Services/
-│       └── CaptureServiceTests.cs   # Service tests
+│   └── CapturesControllerTests.cs   # API tests
+├── DivergentFlow.Application.Tests/  # Application-layer unit tests
+├── DivergentFlow.Infrastructure.Tests/ # Infrastructure-layer unit tests
 ├── DivergentFlow.sln                 # Solution file
 └── version.txt                       # Version tracking for releases
 ```
 
 ## Architecture
 
-The API follows a clean architecture pattern with repository pattern:
+The API follows a layered/clean architecture pattern:
 
-1. **Controllers** - Handle HTTP requests and responses
-2. **Services** - Business logic layer (injected via DI)
-3. **Repositories** - Data persistence layer (injected via DI)
-4. **Models** - Data transfer objects (DTOs) and entities
+1. **Api** - HTTP controllers
+2. **Application** - Use-cases (MediatR handlers), validation, abstractions
+3. **Domain** - Core entities
+4. **Infrastructure** - Concrete integrations (Redis, etc.)
 
 ### Layered Architecture
 
 ```
-Controller → Service → Repository → Redis/Storage
+Controller → MediatR Handler → Repository → Redis/Storage
 ```
 
-- **Controllers** depend on **Services** (not repositories)
-- **Services** depend on **Repositories** (abstraction via interface)
-- **Repositories** implement data persistence (Redis, in-memory, etc.)
+- **Controllers** depend on **MediatR**
+- **Handlers** depend on **abstractions** (e.g. `ICaptureRepository`)
+- **Infrastructure** provides concrete implementations (Redis)
 
 This allows for easy swapping of implementations and comprehensive testing.
 
@@ -221,6 +207,7 @@ services.AddScoped<ICaptureService, CaptureService>();
 ```
 
 This allows for:
+
 - Easy swapping of implementations (e.g., Redis → PostgreSQL)
 - Comprehensive unit testing with mocks
 - Clear separation of concerns
@@ -259,18 +246,11 @@ dotnet test
 
 Tests are located in:
 
-- `DivergentFlow.Api.Tests` - Integration tests for API endpoints
-- `DivergentFlow.Services.Tests` - Unit tests for services and repositories
+- `DivergentFlow.Api.Tests` - API/controller tests
+- `DivergentFlow.Application.Tests` - Application-layer unit tests
+- `DivergentFlow.Infrastructure.Tests` - Infrastructure-layer unit tests
 
-Test coverage includes:
-
-- Integration tests for all API endpoints using `WebApplicationFactory`
-- Unit tests for `CaptureService` with mocked repository
-- Unit tests for `InMemoryCaptureRepository`
-- Tests use in-memory repository to avoid Redis dependency
-- All tests run automatically in CI/CD pipeline
-
-Current test status: **45 tests passing** ✅
+All tests run automatically in CI/CD pipeline.
 
 ### Adding a New Package
 
@@ -302,13 +282,19 @@ Notes:
 
 The `.env.example` file includes the following Redis-related variables:
 
-- `REDIS_URL`: Redis connection URL (host:port format, e.g., `fly-div-flo-staging.upstash.io:6379`)
-- `REDIS_TOKEN`: Redis authentication token/password
+- `REDIS_URL`: Redis endpoint in `host:port` format (e.g., `fly-div-flo-staging.upstash.io:6379`)
+- `REDIS_TOKEN`: Redis password/token (optional for local Redis without auth)
+- Optional: `REDIS_SSL`: `true`/`false` override (helpful for hosted Redis)
+
+Alternative configuration:
+
+- `REDIS_CONNECTION_STRING` (StackExchange.Redis format)
+- `ConnectionStrings:Redis` (appsettings / environment)
+- `Redis:ConnectionString` (appsettings / environment)
 
 **Important Notes:**
 
-- Both variables are **required** for the API to start
-- The API will throw an exception if these are not set
+- The API will throw an exception at startup if no Redis configuration is provided
 - For Upstash Redis: Get these values from your Upstash dashboard
 - For local Redis: Use `localhost:6379` and leave token empty if no auth is configured
 - The URL format should **not** include the `redis://` scheme (it's added automatically)
