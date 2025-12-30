@@ -55,7 +55,7 @@ public sealed class ValidationExceptionMiddlewareTests
         Assert.StartsWith("application/json", context.Response.ContentType);
 
         context.Response.Body.Seek(0, SeekOrigin.Begin);
-        var reader = new StreamReader(context.Response.Body);
+        using var reader = new StreamReader(context.Response.Body);
         var responseBody = await reader.ReadToEndAsync();
         var response = JsonSerializer.Deserialize<JsonElement>(responseBody);
 
