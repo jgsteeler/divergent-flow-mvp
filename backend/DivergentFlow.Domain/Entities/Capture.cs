@@ -29,4 +29,9 @@ public sealed class Capture
     /// Gets or sets the confidence level (0-100) of the type inference.
     /// </summary>
     public double? TypeConfidence { get; set; }
+    
+    /// <summary>
+    /// Gets or sets whether the capture has been migrated/processed to its final state.
+    /// </summary>
+    public bool IsMigrated { get; set; }
 }

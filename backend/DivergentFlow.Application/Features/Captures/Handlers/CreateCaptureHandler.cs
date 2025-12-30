@@ -17,6 +17,7 @@ public sealed class CreateCaptureHandler : IRequestHandler<CreateCaptureCommand,
     private readonly ICaptureRepository _repository;
     private readonly IMapper _mapper;
     private readonly ILogger<CreateCaptureHandler> _logger;
+    private readonly ITypeInferenceWorkflowTrigger _workflowTrigger;
 
     
     
@@ -26,11 +27,13 @@ public sealed class CreateCaptureHandler : IRequestHandler<CreateCaptureCommand,
     public CreateCaptureHandler(
         ICaptureRepository repository,
         IMapper mapper,
-        ILogger<CreateCaptureHandler> logger)
+        ILogger<CreateCaptureHandler> logger,
+        ITypeInferenceWorkflowTrigger workflowTrigger)
     {
         _repository = repository;
         _mapper = mapper;
         _logger = logger;
+        _workflowTrigger = workflowTrigger;
     }
 
     
@@ -72,6 +75,9 @@ public sealed class CreateCaptureHandler : IRequestHandler<CreateCaptureCommand,
             "CreateAsync returned capture {CaptureId} (sameId={SameId})",
             created.Id,
             string.Equals(created.Id, capture.Id, StringComparison.Ordinal));
+
+        // Trigger background re-inference workflow (non-blocking)
+        _workflowTrigger.TriggerInferenceWorkflow(created.Id);
 
         return _mapper.Map<CaptureDto>(created);
     }

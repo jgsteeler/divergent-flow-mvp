@@ -219,6 +219,13 @@ public sealed class UpdateCaptureHandlerTests
         {
             throw new NotImplementedException();
         }
+
+        public Task<IReadOnlyList<Capture>> GetCapturesNeedingReInferenceAsync(
+            double confidenceThreshold,
+            CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     private sealed class CancellationAwareFakeRepository : ICaptureRepository
@@ -253,6 +260,13 @@ public sealed class UpdateCaptureHandlerTests
         }
 
         public Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IReadOnlyList<Capture>> GetCapturesNeedingReInferenceAsync(
+            double confidenceThreshold,
+            CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }

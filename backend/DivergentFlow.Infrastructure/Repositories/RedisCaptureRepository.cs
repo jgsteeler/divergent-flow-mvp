@@ -169,4 +169,27 @@ public sealed class RedisCaptureRepository : ICaptureRepository
 
         return deleted;
     }
+
+    public async Task<IReadOnlyList<Capture>> GetCapturesNeedingReInferenceAsync(
+        double confidenceThreshold,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        // Get all captures and filter in memory
+        var allCaptures = await GetAllAsync(cancellationToken).ConfigureAwait(false);
+
+        // Filter for non-migrated captures with null confidence or confidence below threshold
+        var capturesNeedingInference = allCaptures
+            .Where(c => !c.IsMigrated && 
+                       (c.TypeConfidence == null || c.TypeConfidence < confidenceThreshold))
+            .ToList();
+
+        _logger.LogDebug(
+            "RedisCaptureRepository.GetCapturesNeedingReInferenceAsync found {Count} captures (threshold={Threshold})",
+            capturesNeedingInference.Count,
+            confidenceThreshold);
+
+        return capturesNeedingInference;
+    }
 }
