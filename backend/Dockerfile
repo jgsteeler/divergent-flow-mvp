@@ -7,9 +7,12 @@ WORKDIR /src
 # Restore (cache-friendly)
 COPY DivergentFlow.sln ./
 COPY DivergentFlow.Api/DivergentFlow.Api.csproj DivergentFlow.Api/
-COPY DivergentFlow.Services/DivergentFlow.Services.csproj DivergentFlow.Services/
+COPY DivergentFlow.Domain/DivergentFlow.Domain.csproj DivergentFlow.Domain/
+COPY DivergentFlow.Application/DivergentFlow.Application.csproj DivergentFlow.Application/
+COPY DivergentFlow.Infrastructure/DivergentFlow.Infrastructure.csproj DivergentFlow.Infrastructure/
 COPY DivergentFlow.Api.Tests/DivergentFlow.Api.Tests.csproj DivergentFlow.Api.Tests/
-COPY DivergentFlow.Services.Tests/DivergentFlow.Services.Tests.csproj DivergentFlow.Services.Tests/
+COPY DivergentFlow.Application.Tests/DivergentFlow.Application.Tests.csproj DivergentFlow.Application.Tests/
+COPY DivergentFlow.Infrastructure.Tests/DivergentFlow.Infrastructure.Tests.csproj DivergentFlow.Infrastructure.Tests/
 
 RUN dotnet restore DivergentFlow.sln
 
