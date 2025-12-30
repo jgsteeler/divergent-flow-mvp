@@ -144,6 +144,11 @@ public sealed class UpstashRestCaptureRepository : ICaptureRepository
     {
         cancellationToken.ThrowIfCancellationRequested();
 
+        // TODO: For better scalability, implement database-level filtering using Redis queries
+        // or indexing to avoid loading all captures into memory. This MVP implementation
+        // fetches all and filters in-memory, which is acceptable for small datasets but
+        // should be optimized before reaching production scale.
+        
         // Get all captures and filter in memory
         var allCaptures = await GetAllAsync(cancellationToken).ConfigureAwait(false);
 
