@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using DivergentFlow.Services.Models;
-using DivergentFlow.Services.Services;
+using DivergentFlow.Application.Features.Captures.Commands;
+using DivergentFlow.Application.Features.Captures.Queries;
+using DivergentFlow.Application.Models;
+using MediatR;
 
 namespace DivergentFlow.Api.Controllers;
 
@@ -12,14 +14,14 @@ namespace DivergentFlow.Api.Controllers;
 [Produces("application/json")]
 public class CapturesController : ControllerBase
 {
-    private readonly ICaptureService _captureService;
+    private readonly IMediator _mediator;
     private readonly ILogger<CapturesController> _logger;
 
     public CapturesController(
-        ICaptureService captureService,
+        IMediator mediator,
         ILogger<CapturesController> logger)
     {
-        _captureService = captureService;
+        _mediator = mediator;
         _logger = logger;
     }
 
@@ -32,7 +34,7 @@ public class CapturesController : ControllerBase
     public async Task<ActionResult<IEnumerable<CaptureDto>>> GetAll()
     {
         _logger.LogInformation("Getting all captures");
-        var captures = await _captureService.GetAllAsync();
+        var captures = await _mediator.Send(new GetAllCapturesQuery());
         return Ok(captures);
     }
 
@@ -47,7 +49,7 @@ public class CapturesController : ControllerBase
     public async Task<ActionResult<CaptureDto>> GetById(string id)
     {
         _logger.LogInformation("Getting capture with ID: {Id}", id);
-        var capture = await _captureService.GetByIdAsync(id);
+        var capture = await _mediator.Send(new GetCaptureByIdQuery(id));
 
         if (capture == null)
         {
@@ -70,12 +72,11 @@ public class CapturesController : ControllerBase
     {
         _logger.LogInformation("Creating new capture");
 
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
-
-        var capture = await _captureService.CreateAsync(request);
+        var capture = await _mediator.Send(new CreateCaptureCommand(
+            Text: request.Text,
+            InferredType: request.InferredType,
+            TypeConfidence: request.TypeConfidence
+        ));
         return CreatedAtAction(nameof(GetById), new { id = capture.Id }, capture);
     }
 
@@ -93,12 +94,12 @@ public class CapturesController : ControllerBase
     {
         _logger.LogInformation("Updating capture with ID: {Id}", id);
 
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
-
-        var capture = await _captureService.UpdateAsync(id, request);
+        var capture = await _mediator.Send(new UpdateCaptureCommand(
+            Id: id,
+            Text: request.Text,
+            InferredType: request.InferredType,
+            TypeConfidence: request.TypeConfidence
+        ));
 
         if (capture == null)
         {
@@ -121,7 +122,7 @@ public class CapturesController : ControllerBase
     {
         _logger.LogInformation("Deleting capture with ID: {Id}", id);
 
-        var deleted = await _captureService.DeleteAsync(id);
+        var deleted = await _mediator.Send(new DeleteCaptureCommand(id));
 
         if (!deleted)
         {

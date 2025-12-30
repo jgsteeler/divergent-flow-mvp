@@ -1,3 +1,4 @@
+using DivergentFlow.Services.Domain;
 using DivergentFlow.Services.Models;
 using DivergentFlow.Services.Repositories;
 using Microsoft.Extensions.Logging;
@@ -24,20 +25,22 @@ public class CaptureService : ICaptureService
     public async Task<IEnumerable<CaptureDto>> GetAllAsync()
     {
         _logger.LogDebug("Getting all captures");
-        return await _repository.GetAllAsync();
+        var captures = await _repository.GetAllAsync();
+        return captures.Select(ToDto);
     }
 
     public async Task<CaptureDto?> GetByIdAsync(string id)
     {
         _logger.LogDebug("Getting capture {Id}", id);
-        return await _repository.GetByIdAsync(id);
+        var capture = await _repository.GetByIdAsync(id);
+        return capture is null ? null : ToDto(capture);
     }
 
     public async Task<CaptureDto> CreateAsync(CreateCaptureRequest request)
     {
         _logger.LogDebug("Creating new capture");
         
-        var capture = new CaptureDto
+        var capture = new Capture
         {
             Id = Guid.NewGuid().ToString(),
             Text = request.Text,
@@ -46,7 +49,8 @@ public class CaptureService : ICaptureService
             TypeConfidence = request.TypeConfidence
         };
 
-        return await _repository.SaveAsync(capture);
+        var created = await _repository.CreateAsync(capture);
+        return ToDto(created);
     }
 
     public async Task<CaptureDto?> UpdateAsync(string id, UpdateCaptureRequest request)
@@ -66,7 +70,8 @@ public class CaptureService : ICaptureService
         existingCapture.InferredType = request.InferredType;
         existingCapture.TypeConfidence = request.TypeConfidence;
 
-        return await _repository.UpdateAsync(existingCapture);
+        var updated = await _repository.UpdateAsync(id, existingCapture);
+        return updated is null ? null : ToDto(updated);
     }
 
     public async Task<bool> DeleteAsync(string id)
@@ -74,4 +79,13 @@ public class CaptureService : ICaptureService
         _logger.LogDebug("Deleting capture {Id}", id);
         return await _repository.DeleteAsync(id);
     }
+
+    private static CaptureDto ToDto(Capture capture) => new()
+    {
+        Id = capture.Id,
+        Text = capture.Text,
+        CreatedAt = capture.CreatedAt,
+        InferredType = capture.InferredType,
+        TypeConfidence = capture.TypeConfidence
+    };
 }

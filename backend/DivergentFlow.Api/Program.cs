@@ -1,5 +1,7 @@
 using DivergentFlow.Api.Extensions;
-using DivergentFlow.Services.Extensions;
+using DivergentFlow.Api.Middleware;
+using DivergentFlow.Application.DependencyInjection;
+using DivergentFlow.Infrastructure.DependencyInjection;
 using dotenv.net;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,7 +26,8 @@ builder.Services.AddControllers();
 builder.Services.AddCorsPolicy(builder.Environment);
 
 // Register services for dependency injection using extension method
-builder.Services.UseServices();
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure();
 
 // Add Swagger/OpenAPI documentation
 builder.Services.AddEndpointsApiExplorer();
@@ -52,6 +55,9 @@ if (app.Environment.IsDevelopment())
 
 // Enable CORS
 app.UseCors();
+
+// Map FluentValidation (MediatR pipeline) failures to HTTP 400
+app.UseMiddleware<ValidationExceptionMiddleware>();
 
 app.UseAuthorization();
 

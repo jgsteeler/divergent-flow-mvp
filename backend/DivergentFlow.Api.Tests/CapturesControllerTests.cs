@@ -1,284 +1,192 @@
-using System.Net;
-using System.Net.Http.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.DependencyInjection;
-using DivergentFlow.Services.Models;
-using DivergentFlow.Services.Repositories;
-using DivergentFlow.Services.Services;
+using DivergentFlow.Api.Controllers;
+using DivergentFlow.Api.Tests.TestDoubles;
+using DivergentFlow.Application.Features.Captures.Commands;
+using DivergentFlow.Application.Features.Captures.Queries;
+using DivergentFlow.Application.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace DivergentFlow.Api.Tests;
 
-/// <summary>
-/// Custom factory for integration tests that uses a fresh in-memory repository for each test
-/// </summary>
-public class CustomWebApplicationFactory : WebApplicationFactory<Program>
+public sealed class CapturesControllerTests
 {
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    [Fact]
+    public async Task GetAll_ReturnsOk_WithList()
     {
-        builder.ConfigureServices(services =>
+        var expected = new List<CaptureDto>();
+        var mediator = new FakeMediator((request, _) =>
         {
-            // Remove the existing repository registration
-            var repoDescriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(ICaptureRepository));
-
-            if (repoDescriptor != null)
-            {
-                services.Remove(repoDescriptor);
-            }
-
-            // Remove the existing service registration
-            var serviceDescriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(ICaptureService));
-
-            if (serviceDescriptor != null)
-            {
-                services.Remove(serviceDescriptor);
-            }
-
-            // Add a fresh in-memory repository for each test
-            services.AddSingleton<ICaptureRepository, InMemoryCaptureRepository>();
-
-            // Add the service with the in-memory repository
-            services.AddScoped<ICaptureService, CaptureService>();
+            Assert.IsType<GetAllCapturesQuery>(request);
+            return Task.FromResult<object?>(expected);
         });
-    }
-}
 
-/// <summary>
-/// Integration tests for the Captures API endpoints
-/// </summary>
-public class CapturesControllerTests : IClassFixture<CustomWebApplicationFactory>
-{
-    private readonly CustomWebApplicationFactory _factory;
+        var controller = new CapturesController(mediator, NullLogger<CapturesController>.Instance);
 
-    public CapturesControllerTests(CustomWebApplicationFactory factory)
-    {
-        _factory = factory;
+        var result = await controller.GetAll();
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        Assert.Same(expected, ok.Value);
     }
 
     [Fact]
-    public async Task GetAll_ReturnsEmptyList_WhenNoCaptures()
+    public async Task GetById_ReturnsOk_WhenExists()
     {
-        // Arrange
-        var client = _factory.CreateClient();
+        var expected = new CaptureDto { Id = "capture-1", Text = "Test capture", CreatedAt = 123 };
+        var mediator = new FakeMediator((request, _) =>
+        {
+            var query = Assert.IsType<GetCaptureByIdQuery>(request);
+            Assert.Equal("capture-1", query.Id);
+            return Task.FromResult<object?>(expected);
+        });
 
-        // Act
-        var response = await client.GetAsync("/api/captures");
+        var controller = new CapturesController(mediator, NullLogger<CapturesController>.Instance);
 
-        // Assert
-        response.EnsureSuccessStatusCode();
-        var captures = await response.Content.ReadFromJsonAsync<List<CaptureDto>>();
-        Assert.NotNull(captures);
+        var result = await controller.GetById("capture-1");
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        Assert.Same(expected, ok.Value);
     }
 
     [Fact]
-    public async Task Create_ReturnsCreatedCapture_WithValidRequest()
+    public async Task GetById_ReturnsNotFound_WhenMissing()
     {
-        // Arrange
-        var client = _factory.CreateClient();
+        var mediator = new FakeMediator((request, _) =>
+        {
+            Assert.IsType<GetCaptureByIdQuery>(request);
+            return Task.FromResult<object?>(null);
+        });
+
+        var controller = new CapturesController(mediator, NullLogger<CapturesController>.Instance);
+
+        var result = await controller.GetById("missing");
+
+        Assert.IsType<NotFoundResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task Create_ReturnsCreatedAtAction_WithCapture()
+    {
         var request = new CreateCaptureRequest
         {
-            Text = "Test capture"
-        };
-
-        // Act
-        var response = await client.PostAsJsonAsync("/api/captures", request);
-
-        // Assert
-        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        var capture = await response.Content.ReadFromJsonAsync<CaptureDto>();
-        Assert.NotNull(capture);
-        Assert.NotNull(capture.Id);
-        Assert.Equal("Test capture", capture.Text);
-        Assert.True(capture.CreatedAt > 0);
-    }
-
-    [Fact]
-    public async Task GetById_ReturnsCapture_WhenExists()
-    {
-        // Arrange
-        var client = _factory.CreateClient();
-        var createRequest = new CreateCaptureRequest { Text = "Test capture" };
-        var createResponse = await client.PostAsJsonAsync("/api/captures", createRequest);
-        var createdCapture = await createResponse.Content.ReadFromJsonAsync<CaptureDto>();
-
-        // Act
-        var response = await client.GetAsync($"/api/captures/{createdCapture!.Id}");
-
-        // Assert
-        response.EnsureSuccessStatusCode();
-        var capture = await response.Content.ReadFromJsonAsync<CaptureDto>();
-        Assert.NotNull(capture);
-        Assert.Equal(createdCapture.Id, capture.Id);
-        Assert.Equal("Test capture", capture.Text);
-    }
-
-    [Fact]
-    public async Task GetById_ReturnsNotFound_WhenDoesNotExist()
-    {
-        // Arrange
-        var client = _factory.CreateClient();
-
-        // Act
-        var response = await client.GetAsync("/api/captures/nonexistent-id");
-
-        // Assert
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task Update_ReturnsUpdatedCapture_WhenExists()
-    {
-        // Arrange
-        var client = _factory.CreateClient();
-        var createRequest = new CreateCaptureRequest { Text = "Original text" };
-        var createResponse = await client.PostAsJsonAsync("/api/captures", createRequest);
-        var createdCapture = await createResponse.Content.ReadFromJsonAsync<CaptureDto>();
-
-        var updateRequest = new UpdateCaptureRequest { Text = "Updated text" };
-
-        // Act
-        var response = await client.PutAsJsonAsync($"/api/captures/{createdCapture!.Id}", updateRequest);
-
-        // Assert
-        response.EnsureSuccessStatusCode();
-        var updatedCapture = await response.Content.ReadFromJsonAsync<CaptureDto>();
-        Assert.NotNull(updatedCapture);
-        Assert.Equal(createdCapture.Id, updatedCapture.Id);
-        Assert.Equal("Updated text", updatedCapture.Text);
-    }
-
-    [Fact]
-    public async Task Delete_ReturnsNoContent_WhenExists()
-    {
-        // Arrange
-        var client = _factory.CreateClient();
-        var createRequest = new CreateCaptureRequest { Text = "To be deleted" };
-        var createResponse = await client.PostAsJsonAsync("/api/captures", createRequest);
-        var createdCapture = await createResponse.Content.ReadFromJsonAsync<CaptureDto>();
-
-        // Act
-        var response = await client.DeleteAsync($"/api/captures/{createdCapture!.Id}");
-
-        // Assert
-        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
-
-        // Verify it's deleted
-        var getResponse = await client.GetAsync($"/api/captures/{createdCapture.Id}");
-        Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
-    }
-
-    [Fact]
-    public async Task Create_ReturnsBadRequest_WhenTextIsEmpty()
-    {
-        // Arrange
-        var client = _factory.CreateClient();
-        var request = new CreateCaptureRequest { Text = "" };
-
-        // Act
-        var response = await client.PostAsJsonAsync("/api/captures", request);
-
-        // Assert
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task Create_ReturnsCreatedCapture_WithTypeProperties()
-    {
-        // Arrange
-        var client = _factory.CreateClient();
-        var request = new CreateCaptureRequest
-        {
-            Text = "Test capture with type",
+            Text = "Test capture",
             InferredType = "note",
             TypeConfidence = 95.5
         };
 
-        // Act
-        var response = await client.PostAsJsonAsync("/api/captures", request);
-
-        // Assert
-        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        var capture = await response.Content.ReadFromJsonAsync<CaptureDto>();
-        Assert.NotNull(capture);
-        Assert.NotNull(capture.Id);
-        Assert.Equal("Test capture with type", capture.Text);
-        Assert.Equal("note", capture.InferredType);
-        Assert.Equal(95.5, capture.TypeConfidence);
-        Assert.True(capture.CreatedAt > 0);
-    }
-
-    [Fact]
-    public async Task Create_ReturnsCreatedCapture_WithoutTypeProperties()
-    {
-        // Arrange
-        var client = _factory.CreateClient();
-        var request = new CreateCaptureRequest
+        var created = new CaptureDto
         {
-            Text = "Test capture without type"
+            Id = "capture-1",
+            Text = "Test capture",
+            InferredType = "note",
+            TypeConfidence = 95.5,
+            CreatedAt = 123
         };
 
-        // Act
-        var response = await client.PostAsJsonAsync("/api/captures", request);
+        var mediator = new FakeMediator((message, _) =>
+        {
+            var command = Assert.IsType<CreateCaptureCommand>(message);
+            Assert.Equal("Test capture", command.Text);
+            Assert.Equal("note", command.InferredType);
+            Assert.Equal(95.5, command.TypeConfidence);
+            return Task.FromResult<object?>(created);
+        });
 
-        // Assert
-        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        var capture = await response.Content.ReadFromJsonAsync<CaptureDto>();
-        Assert.NotNull(capture);
-        Assert.NotNull(capture.Id);
-        Assert.Equal("Test capture without type", capture.Text);
-        Assert.Null(capture.InferredType);
-        Assert.Null(capture.TypeConfidence);
-        Assert.True(capture.CreatedAt > 0);
+        var controller = new CapturesController(mediator, NullLogger<CapturesController>.Instance);
+
+        var result = await controller.Create(request);
+
+        var createdAt = Assert.IsType<CreatedAtActionResult>(result.Result);
+        var dto = Assert.IsType<CaptureDto>(createdAt.Value);
+        Assert.Equal("capture-1", dto.Id);
+        Assert.Equal("Test capture", dto.Text);
+        Assert.Equal("note", dto.InferredType);
+        Assert.Equal(95.5, dto.TypeConfidence);
     }
 
     [Fact]
-    public async Task Update_ReturnsUpdatedCapture_WithTypeProperties()
+    public async Task Update_ReturnsOk_WhenExists()
     {
-        // Arrange
-        var client = _factory.CreateClient();
-        var createRequest = new CreateCaptureRequest { Text = "Original text" };
-        var createResponse = await client.PostAsJsonAsync("/api/captures", createRequest);
-        var createdCapture = await createResponse.Content.ReadFromJsonAsync<CaptureDto>();
-
-        var updateRequest = new UpdateCaptureRequest 
-        { 
+        var updateRequest = new UpdateCaptureRequest
+        {
             Text = "Updated text",
             InferredType = "action",
             TypeConfidence = 87.3
         };
 
-        // Act
-        var response = await client.PutAsJsonAsync($"/api/captures/{createdCapture!.Id}", updateRequest);
+        var updated = new CaptureDto
+        {
+            Id = "capture-1",
+            Text = "Updated text",
+            InferredType = "action",
+            TypeConfidence = 87.3,
+            CreatedAt = 123
+        };
 
-        // Assert
-        response.EnsureSuccessStatusCode();
-        var updatedCapture = await response.Content.ReadFromJsonAsync<CaptureDto>();
-        Assert.NotNull(updatedCapture);
-        Assert.Equal(createdCapture.Id, updatedCapture.Id);
-        Assert.Equal("Updated text", updatedCapture.Text);
-        Assert.Equal("action", updatedCapture.InferredType);
-        Assert.Equal(87.3, updatedCapture.TypeConfidence);
+        var mediator = new FakeMediator((message, _) =>
+        {
+            var command = Assert.IsType<UpdateCaptureCommand>(message);
+            Assert.Equal("capture-1", command.Id);
+            Assert.Equal("Updated text", command.Text);
+            Assert.Equal("action", command.InferredType);
+            Assert.Equal(87.3, command.TypeConfidence);
+            return Task.FromResult<object?>(updated);
+        });
+
+        var controller = new CapturesController(mediator, NullLogger<CapturesController>.Instance);
+
+        var result = await controller.Update("capture-1", updateRequest);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        Assert.Same(updated, ok.Value);
     }
 
     [Fact]
-    public async Task Create_ReturnsBadRequest_WhenTypeConfidenceOutOfRange()
+    public async Task Update_ReturnsNotFound_WhenMissing()
     {
-        // Arrange
-        var client = _factory.CreateClient();
-        var request = new CreateCaptureRequest
+        var mediator = new FakeMediator((message, _) =>
         {
-            Text = "Test capture",
-            InferredType = "note",
-            TypeConfidence = 150.0 // Invalid: > 100
-        };
+            Assert.IsType<UpdateCaptureCommand>(message);
+            return Task.FromResult<object?>(null);
+        });
 
-        // Act
-        var response = await client.PostAsJsonAsync("/api/captures", request);
+        var controller = new CapturesController(mediator, NullLogger<CapturesController>.Instance);
 
-        // Assert
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var result = await controller.Update("missing", new UpdateCaptureRequest { Text = "Updated" });
+
+        Assert.IsType<NotFoundResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task Delete_ReturnsNoContent_WhenDeleted()
+    {
+        var mediator = new FakeMediator((message, _) =>
+        {
+            var command = Assert.IsType<DeleteCaptureCommand>(message);
+            Assert.Equal("capture-1", command.Id);
+            return Task.FromResult<object?>(true);
+        });
+
+        var controller = new CapturesController(mediator, NullLogger<CapturesController>.Instance);
+
+        var result = await controller.Delete("capture-1");
+
+        Assert.IsType<NoContentResult>(result);
+    }
+
+    [Fact]
+    public async Task Delete_ReturnsNotFound_WhenNotDeleted()
+    {
+        var mediator = new FakeMediator((message, _) =>
+        {
+            Assert.IsType<DeleteCaptureCommand>(message);
+            return Task.FromResult<object?>(false);
+        });
+
+        var controller = new CapturesController(mediator, NullLogger<CapturesController>.Instance);
+
+        var result = await controller.Delete("missing");
+
+        Assert.IsType<NotFoundResult>(result);
     }
 }
