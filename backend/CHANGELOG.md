@@ -5,6 +5,13 @@ All notable changes to the Divergent Flow API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.5](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-api-v0.2.4...divergent-flow-api-v0.2.5) (2025-12-30)
+
+
+### Features
+
+* redis capture repository ([#167](https://github.com/jgsteeler/divergent-flow-mvp/issues/167)) ([3539697](https://github.com/jgsteeler/divergent-flow-mvp/commit/3539697419ec193c2c0893d97a76adbc277ecdfa))
+
 ## [0.2.4](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-api-v0.2.3...divergent-flow-api-v0.2.4) (2025-12-30)
 
 
