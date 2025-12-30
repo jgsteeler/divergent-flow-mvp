@@ -1,5 +1,4 @@
 ﻿using DivergentFlow.Domain.Entities;
-using DivergentFlow.Infrastructure.Repositories;
 using DivergentFlow.Infrastructure.Services;
 using Xunit;
 
@@ -25,29 +24,32 @@ public sealed class InfrastructureUnitTests
     }
 
     [Fact]
-    public async Task InMemoryCaptureRepository_CreateThenGetById_ReturnsClone()
+    public void RedisCaptureStorage_CaptureKey_IsStable()
     {
-        var repo = new InMemoryCaptureRepository();
-        var created = await repo.CreateAsync(new Capture
-        {
-            Id = "id-1",
-            Text = "hello",
-            CreatedAt = 123
-        });
-
-        created.Text = "mutated";
-
-        var fetched = await repo.GetByIdAsync("id-1");
-
-        Assert.NotNull(fetched);
-        Assert.Equal("hello", fetched!.Text);
+        var key = DivergentFlow.Infrastructure.Repositories.RedisCaptureStorage.CaptureKey("id-1");
+        Assert.Equal("capture:id-1", key);
     }
 
     [Fact]
-    public async Task InMemoryCaptureRepository_UpdateMissing_ReturnsNull()
+    public void RedisCaptureStorage_SerializeRoundTrip_Works()
     {
-        var repo = new InMemoryCaptureRepository();
-        var updated = await repo.UpdateAsync("missing", new Capture { Id = "id", Text = "x", CreatedAt = 1 });
-        Assert.Null(updated);
+        var original = new Capture
+        {
+            Id = "id-1",
+            Text = "hello",
+            CreatedAt = 123,
+            InferredType = "note",
+            TypeConfidence = 0.5
+        };
+
+        var json = DivergentFlow.Infrastructure.Repositories.RedisCaptureStorage.Serialize(original);
+        var roundTripped = DivergentFlow.Infrastructure.Repositories.RedisCaptureStorage.Deserialize(json);
+
+        Assert.NotNull(roundTripped);
+        Assert.Equal(original.Id, roundTripped!.Id);
+        Assert.Equal(original.Text, roundTripped.Text);
+        Assert.Equal(original.CreatedAt, roundTripped.CreatedAt);
+        Assert.Equal(original.InferredType, roundTripped.InferredType);
+        Assert.Equal(original.TypeConfidence, roundTripped.TypeConfidence);
     }
 }

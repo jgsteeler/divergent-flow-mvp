@@ -1,5 +1,6 @@
 using DivergentFlow.Api.Extensions;
 using DivergentFlow.Api.Middleware;
+using DivergentFlow.Application.Abstractions;
 using DivergentFlow.Application.DependencyInjection;
 using DivergentFlow.Infrastructure.DependencyInjection;
 using dotenv.net;
@@ -42,6 +43,17 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
+// One-time startup diagnostic: log which capture repository implementation is active.
+// This helps diagnose "201 Created but nothing in Redis" scenarios.
+using (var scope = app.Services.CreateScope())
+{
+    var repository = scope.ServiceProvider.GetRequiredService<ICaptureRepository>();
+    var repositoryType = repository.GetType();
+    app.Logger.LogInformation(
+        "Active ICaptureRepository implementation: {RepositoryType}",
+        repositoryType.FullName);
+}
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())

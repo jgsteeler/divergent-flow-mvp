@@ -67,6 +67,10 @@ cd frontend
 npm run dev
 ```
 
+### Backend Setup
+
+Backend setup (Redis env vars, running the API) is documented in [backend/README.md](backend/README.md).
+
 ### Build
 
 ```bash
