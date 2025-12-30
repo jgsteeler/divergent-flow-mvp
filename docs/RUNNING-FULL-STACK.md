@@ -9,6 +9,20 @@ This guide explains how to run both the frontend and backend together.
 
 ## Quick Start
 
+### One-time: Configure Backend Environment
+
+The backend loads a local `backend/.env` file automatically (if present).
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+Set Redis values in `backend/.env`:
+
+- `REDIS_URL` (host:port)
+- `REDIS_TOKEN` (optional for local Redis)
+- `REDIS_SSL` (`true` for Upstash; `false` for local Redis)
+
 ### Terminal 1: Start the Backend API
 
 ```bash
@@ -85,6 +99,8 @@ If the frontend can't connect to the backend:
 1. Verify the backend is running: `curl http://localhost:5100/api/captures`
 2. Check for firewall issues
 3. Verify the API URL in the frontend code matches the backend port
+
+If the API fails at startup, check that Redis env vars are set (see "Configure Backend Environment" above).
 
 ## Development Workflow
 

@@ -20,7 +20,6 @@ This is a .NET 10 Web API that provides backend services for the Divergent Flow 
 
 - **.NET 10.0** - Latest .NET framework
 - **ASP.NET Core Web API** - Web API framework
-- **Redis.OM** - Redis object mapping for .NET
 - **StackExchange.Redis** - Redis client
 - **Upstash Redis** - Serverless Redis hosting
 - **Swashbuckle** - Swagger/OpenAPI documentation
@@ -196,14 +195,11 @@ This allows for easy swapping of implementations and comprehensive testing.
 
 ### Dependency Injection
 
-Services and repositories are registered in `ServiceCollectionExtensions.cs`:
+Services are registered via extension methods:
 
 ```csharp
-// Register repository
-services.AddSingleton<ICaptureRepository, RedisCaptureRepository>();
-
-// Register service
-services.AddScoped<ICaptureService, CaptureService>();
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure();
 ```
 
 This allows for:
