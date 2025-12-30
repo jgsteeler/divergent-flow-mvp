@@ -5,6 +5,13 @@ All notable changes to the Divergent Flow API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.4](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-api-v0.2.3...divergent-flow-api-v0.2.4) (2025-12-30)
+
+
+### Features
+
+* solid architeture ([#159](https://github.com/jgsteeler/divergent-flow-mvp/issues/159)) ([4d2af17](https://github.com/jgsteeler/divergent-flow-mvp/commit/4d2af17d5af75d66c39a7b19d89c57ab82fc9583))
+
 ## [0.2.3](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-api-v0.2.2...divergent-flow-api-v0.2.3) (2025-12-29)
 
 
