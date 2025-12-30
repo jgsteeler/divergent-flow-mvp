@@ -61,7 +61,8 @@ public sealed class CreateCaptureHandler : IRequestHandler<CreateCaptureCommand,
             Text = request.Text,
             CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
             InferredType = request.InferredType,
-            TypeConfidence = request.TypeConfidence
+            TypeConfidence = request.TypeConfidence,
+            IsMigrated = false
         };
 
         _logger.LogDebug(
