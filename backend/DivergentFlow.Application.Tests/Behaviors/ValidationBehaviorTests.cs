@@ -129,7 +129,7 @@ public sealed class ValidationBehaviorTests
         var validators = new IValidator<TestRequest>[] { validator };
         var behavior = new ValidationBehavior<TestRequest, string>(validators);
         var request = new TestRequest("test");
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.Cancel();
         RequestHandlerDelegate<string> next = () => Task.FromResult("success");
 
