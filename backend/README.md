@@ -9,6 +9,7 @@ This is a .NET 10 Web API that provides backend services for the Divergent Flow 
 ## Features
 
 - ✅ RESTful API endpoints for capture management
+- ✅ Background type inference workflow with eventual consistency
 - ✅ Swagger/OpenAPI documentation
 - ✅ CORS enabled for frontend integration
 - ✅ Dependency injection architecture
@@ -215,10 +216,48 @@ CORS is configured to allow requests from the frontend:
 - `http://localhost:5173` (Vite dev server)
 - `http://localhost:5000` (Alternative port)
 
+## Background Type Inference Workflow
+
+The API includes a background service that automatically re-infers types for captures with low confidence scores. This implements an eventual consistency model:
+
+### How It Works
+
+1. When a capture is created via `POST /api/captures`, the API immediately returns a response without blocking
+2. A background service (BackgroundTypeInferenceService) runs periodically (default: every 60 seconds)
+3. It queries for non-migrated captures with:
+   - `null` TypeConfidence, OR
+   - TypeConfidence < configured threshold (default: 0.95)
+4. For each eligible capture, it calls the type inference service
+5. If the new confidence is higher than the existing confidence, it updates the capture
+6. Otherwise, it skips the update
+
+### Configuration
+
+Configure the background service in `appsettings.json` or via environment variables:
+
+```json
+{
+  "TypeInference": {
+    "ConfidenceThreshold": 0.95,
+    "ProcessingIntervalSeconds": 60
+  }
+}
+```
+
+Or via environment variables:
+```bash
+TypeInference__ConfidenceThreshold=0.95
+TypeInference__ProcessingIntervalSeconds=60
+```
+
+### Future Enhancements
+
+Currently, the basic inference service returns fixed values (MVP). As learning models are built from user confirmations in the review queue, this background workflow will automatically pick up the improved inference results.
+
 ## Future Enhancements
 
 - [ ] Authentication & Authorization
-- [ ] Type inference endpoints
+- [x] Background type inference workflow
 - [ ] Property validation endpoints
 - [ ] LLM integration for intelligent processing
 - [ ] Rate limiting
