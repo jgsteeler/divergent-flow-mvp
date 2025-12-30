@@ -163,7 +163,7 @@ public sealed class UpdateCaptureHandlerTests
             TypeConfidence: 85.0
         );
 
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.Cancel();
 
         // Act & Assert
