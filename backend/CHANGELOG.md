@@ -5,6 +5,13 @@ All notable changes to the Divergent Flow API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-api-v1.1.0...divergent-flow-api-v1.2.0) (2025-12-30)
+
+
+### Features
+
+* implement Upstash Redis REST support and update configuration ([#174](https://github.com/jgsteeler/divergent-flow-mvp/issues/174)) ([85e0abe](https://github.com/jgsteeler/divergent-flow-mvp/commit/85e0abe84219a463230ca7c8631c7c9acb7e486b))
+
 ## [1.1.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-api-v1.0.0...divergent-flow-api-v1.1.0) (2025-12-30)
 
 
