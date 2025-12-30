@@ -15,15 +15,15 @@ public sealed class BackgroundTypeInferenceServiceTests
         var captures = new List<Capture>
         {
             new Capture { Id = "1", Text = "Test 1", CreatedAt = 1000, IsMigrated = false, TypeConfidence = null },
-            new Capture { Id = "2", Text = "Test 2", CreatedAt = 1001, IsMigrated = false, TypeConfidence = 0.5 },
-            new Capture { Id = "3", Text = "Test 3", CreatedAt = 1002, IsMigrated = false, TypeConfidence = 0.96 },
-            new Capture { Id = "4", Text = "Test 4", CreatedAt = 1003, IsMigrated = true, TypeConfidence = 0.5 },
+            new Capture { Id = "2", Text = "Test 2", CreatedAt = 1001, IsMigrated = false, TypeConfidence = 50 },
+            new Capture { Id = "3", Text = "Test 3", CreatedAt = 1002, IsMigrated = false, TypeConfidence = 96 },
+            new Capture { Id = "4", Text = "Test 4", CreatedAt = 1003, IsMigrated = true, TypeConfidence = 50 },
         };
 
         var repository = new FakeCaptureRepository(captures);
 
         // Act
-        var result = await repository.GetCapturesNeedingReInferenceAsync(0.95);
+        var result = await repository.GetCapturesNeedingReInferenceAsync(95);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -38,13 +38,13 @@ public sealed class BackgroundTypeInferenceServiceTests
         var captures = new List<Capture>
         {
             new Capture { Id = "1", Text = "Test 1", CreatedAt = 1000, IsMigrated = true, TypeConfidence = null },
-            new Capture { Id = "2", Text = "Test 2", CreatedAt = 1001, IsMigrated = true, TypeConfidence = 0.5 },
+            new Capture { Id = "2", Text = "Test 2", CreatedAt = 1001, IsMigrated = true, TypeConfidence = 50 },
         };
 
         var repository = new FakeCaptureRepository(captures);
 
         // Act
-        var result = await repository.GetCapturesNeedingReInferenceAsync(0.95);
+        var result = await repository.GetCapturesNeedingReInferenceAsync(95);
 
         // Assert
         Assert.Empty(result);
@@ -56,14 +56,14 @@ public sealed class BackgroundTypeInferenceServiceTests
         // Arrange
         var captures = new List<Capture>
         {
-            new Capture { Id = "1", Text = "Test 1", CreatedAt = 1000, IsMigrated = false, TypeConfidence = 0.96 },
-            new Capture { Id = "2", Text = "Test 2", CreatedAt = 1001, IsMigrated = false, TypeConfidence = 0.99 },
+            new Capture { Id = "1", Text = "Test 1", CreatedAt = 1000, IsMigrated = false, TypeConfidence = 96 },
+            new Capture { Id = "2", Text = "Test 2", CreatedAt = 1001, IsMigrated = false, TypeConfidence = 99 },
         };
 
         var repository = new FakeCaptureRepository(captures);
 
         // Act
-        var result = await repository.GetCapturesNeedingReInferenceAsync(0.95);
+        var result = await repository.GetCapturesNeedingReInferenceAsync(95);
 
         // Assert
         Assert.Empty(result);
@@ -76,7 +76,7 @@ public sealed class BackgroundTypeInferenceServiceTests
         var options = new TypeInferenceOptions();
 
         // Assert
-        Assert.Equal(0.95, options.ConfidenceThreshold);
+        Assert.Equal(95, options.ConfidenceThreshold);
         Assert.Equal(60, options.ProcessingIntervalSeconds);
     }
 

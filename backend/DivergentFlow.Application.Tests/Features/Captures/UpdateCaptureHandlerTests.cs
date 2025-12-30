@@ -209,7 +209,8 @@ public sealed class UpdateCaptureHandlerTests
                 Text = updated.Text,
                 CreatedAt = _capture.CreatedAt, // Preserve original
                 InferredType = updated.InferredType,
-                TypeConfidence = updated.TypeConfidence
+                TypeConfidence = updated.TypeConfidence,
+                IsMigrated = updated.IsMigrated
             };
 
             return Task.FromResult<Capture?>(_capture);

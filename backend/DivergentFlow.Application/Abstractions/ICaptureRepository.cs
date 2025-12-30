@@ -82,7 +82,7 @@ public interface ICaptureRepository
     /// or a type confidence below the specified threshold.
     /// </summary>
     /// <param name="confidenceThreshold">
-    /// The confidence threshold (0-100). Captures with confidence below this value will be included.
+    /// The confidence threshold (0-100, e.g., 95 for 95%). Captures with confidence below this value will be included.
     /// </param>
     /// <param name="cancellationToken">
     /// A token that can be used to cancel the operation.

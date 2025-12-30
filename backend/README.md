@@ -226,7 +226,7 @@ The API includes a background service that automatically re-infers types for cap
 2. A background service (BackgroundTypeInferenceService) runs periodically (default: every 60 seconds)
 3. It queries for non-migrated captures with:
    - `null` TypeConfidence, OR
-   - TypeConfidence < configured threshold (default: 0.95)
+   - TypeConfidence < configured threshold (default: 95, range: 0-100)
 4. For each eligible capture, it calls the type inference service
 5. If the new confidence is higher than the existing confidence, it updates the capture
 6. Otherwise, it skips the update
@@ -238,7 +238,7 @@ Configure the background service in `appsettings.json` or via environment variab
 ```json
 {
   "TypeInference": {
-    "ConfidenceThreshold": 0.95,
+    "ConfidenceThreshold": 95,
     "ProcessingIntervalSeconds": 60
   }
 }
@@ -246,7 +246,7 @@ Configure the background service in `appsettings.json` or via environment variab
 
 Or via environment variables:
 ```bash
-TypeInference__ConfidenceThreshold=0.95
+TypeInference__ConfidenceThreshold=95
 TypeInference__ProcessingIntervalSeconds=60
 ```
 

@@ -12,9 +12,9 @@ public sealed class TypeInferenceOptions
 
     /// <summary>
     /// Gets or sets the confidence threshold below which captures will be re-inferred.
-    /// Default is 0.95 (95%).
+    /// Range: 0-100 (e.g., 95 = 95%). Default is 95.
     /// </summary>
-    public double ConfidenceThreshold { get; set; } = 0.95;
+    public double ConfidenceThreshold { get; set; } = 95;
 
     /// <summary>
     /// Gets or sets the interval in seconds between background re-inference runs.
