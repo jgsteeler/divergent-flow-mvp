@@ -1,11 +1,13 @@
 using DivergentFlow.Application.Abstractions;
 using DivergentFlow.Infrastructure.Repositories;
 using DivergentFlow.Infrastructure.Services;
+using DivergentFlow.Infrastructure.Services.Upstash;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using System.Net;
+using System.Net.Http.Headers;
 
 namespace DivergentFlow.Infrastructure.DependencyInjection;
 
@@ -143,10 +145,73 @@ public static class ServiceCollectionExtensions
     /// <returns>The same <see cref="IServiceCollection"/> instance to allow for method chaining.</returns>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
+        // If this is an Upstash endpoint, prefer REST API.
+        // - Avoids TCP/TLS/SNI pitfalls in some hosting environments
+        // - Enables use of Upstash REST tokens (standard + readonly)
+        services.AddSingleton<UpstashRedisRestOptionsProvider>();
+
+        services.AddHttpClient("UpstashRedisWrite", (sp, client) =>
+        {
+            var options = sp.GetRequiredService<UpstashRedisRestOptionsProvider>().Options;
+            if (options is null)
+            {
+                return;
+            }
+
+            client.BaseAddress = options.BaseUri;
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", options.WriteToken);
+        });
+
+        services.AddHttpClient("UpstashRedisRead", (sp, client) =>
+        {
+            var options = sp.GetRequiredService<UpstashRedisRestOptionsProvider>().Options;
+            if (options is null)
+            {
+                return;
+            }
+
+            client.BaseAddress = options.BaseUri;
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+                "Bearer",
+                options.ReadToken ?? options.WriteToken);
+        });
+
+        services.AddScoped<IUpstashRedisRestReadClient>(sp =>
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            return new UpstashRedisRestClient(factory.CreateClient("UpstashRedisRead"));
+        });
+
+        services.AddScoped<IUpstashRedisRestWriteClient>(sp =>
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            return new UpstashRedisRestClient(factory.CreateClient("UpstashRedisWrite"));
+        });
+
+        services.AddScoped<ICaptureRepository>(sp =>
+        {
+            var upstashOptions = sp.GetRequiredService<UpstashRedisRestOptionsProvider>().Options;
+            if (upstashOptions is not null)
+            {
+                return ActivatorUtilities.CreateInstance<UpstashRestCaptureRepository>(sp);
+            }
+
+            return ActivatorUtilities.CreateInstance<RedisCaptureRepository>(sp);
+        });
+
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
             var configuration = sp.GetRequiredService<IConfiguration>();
             var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("Redis");
+
+            // If we're using Upstash REST, this TCP connection isn't needed.
+            var upstash = sp.GetRequiredService<UpstashRedisRestOptionsProvider>().Options;
+            if (upstash is not null)
+            {
+                logger.LogInformation("Upstash REST is configured; TCP Redis multiplexer will not be used.");
+                throw new InvalidOperationException(
+                    "IConnectionMultiplexer should not be resolved when Upstash REST is configured.");
+            }
 
             var rawConnectionString =
                 configuration["REDIS_CONNECTION_STRING"]
@@ -180,8 +245,6 @@ public static class ServiceCollectionExtensions
 
             return ConnectionMultiplexer.Connect(options);
         });
-
-        services.AddScoped<ICaptureRepository, RedisCaptureRepository>();
         services.AddSingleton<ITypeInferenceService, BasicTypeInferenceService>();
         return services;
     }

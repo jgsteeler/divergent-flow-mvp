@@ -1,6 +1,7 @@
 ﻿using DivergentFlow.Domain.Entities;
 using DivergentFlow.Infrastructure.DependencyInjection;
 using DivergentFlow.Infrastructure.Services;
+using DivergentFlow.Infrastructure.Services.Upstash;
 using System.Net;
 using Xunit;
 
@@ -91,5 +92,31 @@ public sealed class InfrastructureUnitTests
         Assert.Equal("fly-div-flo.upstash.io", options.SslHost);
         Assert.Equal("default", options.User);
         Assert.Equal("token", options.Password);
+    }
+
+    [Fact]
+    public void UpstashRedisRestUri_BuildBaseUri_NormalizesHostPortToHttpsWithTrailingSlash()
+    {
+        var uri = UpstashRedisRestUri.BuildBaseUri("fly-div-flo.upstash.io:6379");
+        Assert.Equal("https", uri.Scheme);
+        Assert.Equal("fly-div-flo.upstash.io", uri.Host);
+        Assert.Equal(6379, uri.Port);
+        Assert.EndsWith("/", uri.AbsoluteUri);
+    }
+
+    [Fact]
+    public void UpstashRedisRestClient_ParseResponse_ExtractsResult()
+    {
+        var parsed = UpstashRedisRestClient.ParseResponse("{\"result\":\"OK\"}");
+        Assert.Null(parsed.Error);
+        Assert.NotNull(parsed.Result);
+        Assert.Equal("OK", parsed.Result!.Value.GetString());
+    }
+
+    [Fact]
+    public void UpstashRedisRestClient_ParseResponse_ExtractsError()
+    {
+        var parsed = UpstashRedisRestClient.ParseResponse("{\"error\":\"WRONGPASS invalid password\"}");
+        Assert.Equal("WRONGPASS invalid password", parsed.Error);
     }
 }
