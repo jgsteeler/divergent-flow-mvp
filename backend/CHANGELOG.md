@@ -5,6 +5,14 @@ All notable changes to the Divergent Flow API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-api-v1.2.0...divergent-flow-api-v1.3.0) (2026-01-02)
+
+
+### Features
+
+* **domain:** define Item and Collection entities as first-class domain concepts ([#186](https://github.com/jgsteeler/divergent-flow-mvp/issues/186)) ([7a4c7b3](https://github.com/jgsteeler/divergent-flow-mvp/commit/7a4c7b3e2107296df28cc6715fcb0f2bbae46d14))
+* **inference:** implement background type inference workflow ([#177](https://github.com/jgsteeler/divergent-flow-mvp/issues/177)) ([61a8f7d](https://github.com/jgsteeler/divergent-flow-mvp/commit/61a8f7db7cc577ccfc04dcd7ff5a4b902564d83b))
+
 ## [1.2.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-api-v1.1.0...divergent-flow-api-v1.2.0) (2025-12-30)
 
 
