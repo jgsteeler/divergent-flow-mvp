@@ -29,4 +29,9 @@ public sealed class CaptureDto
     /// Gets or sets the confidence score (0-100) for the inferred type, if available.
     /// </summary>
     public double? TypeConfidence { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the capture has been migrated/processed to its final state.
+    /// </summary>
+    public bool IsMigrated { get; set; }
 }

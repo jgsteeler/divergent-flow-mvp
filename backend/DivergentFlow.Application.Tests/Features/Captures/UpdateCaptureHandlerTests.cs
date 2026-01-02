@@ -209,13 +209,21 @@ public sealed class UpdateCaptureHandlerTests
                 Text = updated.Text,
                 CreatedAt = _capture.CreatedAt, // Preserve original
                 InferredType = updated.InferredType,
-                TypeConfidence = updated.TypeConfidence
+                TypeConfidence = updated.TypeConfidence,
+                IsMigrated = updated.IsMigrated
             };
 
             return Task.FromResult<Capture?>(_capture);
         }
 
         public Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IReadOnlyList<Capture>> GetCapturesNeedingReInferenceAsync(
+            double confidenceThreshold,
+            CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
@@ -253,6 +261,13 @@ public sealed class UpdateCaptureHandlerTests
         }
 
         public Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IReadOnlyList<Capture>> GetCapturesNeedingReInferenceAsync(
+            double confidenceThreshold,
+            CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }

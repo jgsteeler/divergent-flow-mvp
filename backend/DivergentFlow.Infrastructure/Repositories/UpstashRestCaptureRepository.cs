@@ -137,4 +137,27 @@ public sealed class UpstashRestCaptureRepository : ICaptureRepository
 
         return deleted > 0;
     }
+
+    public async Task<IReadOnlyList<Capture>> GetCapturesNeedingReInferenceAsync(
+        double confidenceThreshold,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        // TODO: For better scalability, implement database-level filtering using Redis queries
+        // or indexing to avoid loading all captures into memory. This MVP implementation
+        // fetches all and filters in-memory, which is acceptable for small datasets but
+        // should be optimized before reaching production scale.
+        
+        // Get all captures and filter in memory
+        var allCaptures = await GetAllAsync(cancellationToken).ConfigureAwait(false);
+
+        // Filter for non-migrated captures with null confidence or confidence below threshold
+        var capturesNeedingInference = allCaptures
+            .Where(c => !c.IsMigrated && 
+                       (c.TypeConfidence == null || c.TypeConfidence < confidenceThreshold))
+            .ToList();
+
+        return capturesNeedingInference;
+    }
 }

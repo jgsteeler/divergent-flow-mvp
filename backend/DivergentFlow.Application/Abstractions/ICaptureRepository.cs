@@ -76,4 +76,21 @@ public interface ICaptureRepository
     /// <c>true</c> if a capture was deleted; otherwise, <c>false</c>.
     /// </returns>
     Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves all non-migrated <see cref="Capture"/> entries that have a null type confidence
+    /// or a type confidence below the specified threshold.
+    /// </summary>
+    /// <param name="confidenceThreshold">
+    /// The confidence threshold (0-100, e.g., 95 for 95%). Captures with confidence below this value will be included.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A read-only list containing all captures that need re-inference.
+    /// </returns>
+    Task<IReadOnlyList<Capture>> GetCapturesNeedingReInferenceAsync(
+        double confidenceThreshold,
+        CancellationToken cancellationToken = default);
 }

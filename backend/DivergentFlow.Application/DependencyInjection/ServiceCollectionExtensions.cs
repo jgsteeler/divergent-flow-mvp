@@ -1,5 +1,8 @@
 using System.Reflection;
+using DivergentFlow.Application.Abstractions;
 using DivergentFlow.Application.Behaviors;
+using DivergentFlow.Application.Configuration;
+using DivergentFlow.Application.Services;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,6 +29,15 @@ public static class ServiceCollectionExtensions
         services.AddValidatorsFromAssembly(assembly);
 
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
+        // Register type inference workflow services
+        services.AddSingleton<ITypeInferenceWorkflowTrigger, SimpleTypeInferenceWorkflowTrigger>();
+        services.AddHostedService<BackgroundTypeInferenceService>();
+
+        // Register configuration options
+        services.AddOptions<TypeInferenceOptions>()
+            .BindConfiguration(TypeInferenceOptions.SectionName)
+            .ValidateOnStart();
 
         return services;
     }
