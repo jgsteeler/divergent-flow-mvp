@@ -22,22 +22,25 @@ public sealed class SimpleTypeInferenceWorkflowTrigger : ITypeInferenceWorkflowT
 
     public void TriggerInferenceWorkflow(string captureId)
     {
-        // Enqueue asynchronously without blocking the caller.
-        var enqueueTask = _queue.EnqueueAsync(captureId);
+        // Fire and forget - enqueue asynchronously without blocking
+        _ = EnqueueAsync(captureId);
+    }
 
-        // Log success when the enqueue operation completes.
-        enqueueTask.ContinueWith(
-            _ => _logger.LogDebug(
+    private async Task EnqueueAsync(string captureId)
+    {
+        try
+        {
+            await _queue.EnqueueAsync(captureId);
+            _logger.LogDebug(
                 "Type inference workflow triggered for item {ItemId}. Enqueued for background processing.",
-                captureId),
-            TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.ExecuteSynchronously);
-
-        // Log failures so that exceptions are observed and not lost.
-        enqueueTask.ContinueWith(
-            t => _logger.LogError(
-                t.Exception,
+                captureId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
                 "Failed to enqueue item {ItemId} for type inference",
-                captureId),
-            TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
+                captureId);
+        }
     }
 }

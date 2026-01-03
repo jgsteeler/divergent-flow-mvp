@@ -279,7 +279,7 @@ public static class ServiceCollectionExtensions
             }
 
             // Return a no-op implementation if Redis is not available
-            return new NoOpProjectionWriter();
+            return ActivatorUtilities.CreateInstance<NoOpProjectionWriter>(sp);
         });
 
         services.AddSingleton<ITypeInferenceService, BasicTypeInferenceService>();
@@ -288,13 +288,28 @@ public static class ServiceCollectionExtensions
 
     /// <summary>
     /// No-op implementation of IProjectionWriter for when Redis is not available.
+    /// Logs projection write attempts at debug level for observability.
     /// </summary>
     private sealed class NoOpProjectionWriter : IProjectionWriter
     {
+        private readonly ILogger<NoOpProjectionWriter> _logger;
+
+        public NoOpProjectionWriter(ILogger<NoOpProjectionWriter> logger)
+        {
+            _logger = logger;
+            _logger.LogWarning("NoOpProjectionWriter is being used - Redis projection writes will be skipped");
+        }
+
         public Task SyncItemAsync(Domain.Entities.Item item, CancellationToken cancellationToken = default)
-            => Task.CompletedTask;
+        {
+            _logger.LogDebug("Skipping projection write for item {ItemId} - Redis not available", item.Id);
+            return Task.CompletedTask;
+        }
 
         public Task SyncCollectionAsync(Domain.Entities.Collection collection, CancellationToken cancellationToken = default)
-            => Task.CompletedTask;
+        {
+            _logger.LogDebug("Skipping projection write for collection {CollectionId} - Redis not available", collection.Id);
+            return Task.CompletedTask;
+        }
     }
 }

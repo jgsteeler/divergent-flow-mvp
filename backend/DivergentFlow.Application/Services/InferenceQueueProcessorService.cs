@@ -17,27 +17,31 @@ public sealed class InferenceQueueProcessorService : BackgroundService
     private readonly IInferenceQueue _queue;
     private readonly ILogger<InferenceQueueProcessorService> _logger;
     private readonly TypeInferenceOptions _options;
+    private readonly IHostApplicationLifetime _applicationLifetime;
 
     public InferenceQueueProcessorService(
         IServiceProvider serviceProvider,
         IInferenceQueue queue,
         ILogger<InferenceQueueProcessorService> logger,
-        IOptions<TypeInferenceOptions> options)
+        IOptions<TypeInferenceOptions> options,
+        IHostApplicationLifetime applicationLifetime)
     {
         _serviceProvider = serviceProvider;
         _queue = queue;
         _logger = logger;
         _options = options.Value;
+        _applicationLifetime = applicationLifetime;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        // Wait for the application to be fully started before processing
+        // This ensures all dependencies are initialized
+        await WaitForApplicationStartedAsync(stoppingToken);
+
         _logger.LogInformation(
             "InferenceQueueProcessorService started. ConfidenceThreshold={ConfidenceThreshold}",
             _options.ConfidenceThreshold);
-
-        // Wait a short delay on startup to allow the application to fully initialize
-        await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -130,5 +134,18 @@ public sealed class InferenceQueueProcessorService : BackgroundService
             _logger.LogError(ex, "Failed to process item {ItemId}", itemId);
             // Don't rethrow - continue processing other items
         }
+    }
+
+    private async Task WaitForApplicationStartedAsync(CancellationToken stoppingToken)
+    {
+        var applicationStartedSource = new TaskCompletionSource();
+        
+        using var registration = _applicationLifetime.ApplicationStarted.Register(() =>
+        {
+            applicationStartedSource.TrySetResult();
+        });
+
+        // Wait for the application to be fully started
+        await applicationStartedSource.Task.WaitAsync(stoppingToken);
     }
 }
