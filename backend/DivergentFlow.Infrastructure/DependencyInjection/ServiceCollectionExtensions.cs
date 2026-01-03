@@ -275,7 +275,7 @@ public static class ServiceCollectionExtensions
             catch (Exception ex)
             {
                 var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("ProjectionWriter");
-                logger.LogWarning(ex, "Redis not available; projection writer will be null");
+                logger.LogWarning(ex, "Redis not available; using no-op projection writer");
             }
 
             // Return a no-op implementation if Redis is not available
