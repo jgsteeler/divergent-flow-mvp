@@ -4,22 +4,41 @@ using Microsoft.Extensions.Logging;
 namespace DivergentFlow.Application.Services;
 
 /// <summary>
-/// Simple implementation of the type inference workflow trigger that logs the event.
-/// The actual processing is handled by the BackgroundTypeInferenceService periodically.
+/// Implementation of the type inference workflow trigger that enqueues items for processing.
+/// Items are processed asynchronously by the InferenceQueueProcessorService.
 /// </summary>
 public sealed class SimpleTypeInferenceWorkflowTrigger : ITypeInferenceWorkflowTrigger
 {
+    private readonly IInferenceQueue _queue;
     private readonly ILogger<SimpleTypeInferenceWorkflowTrigger> _logger;
 
-    public SimpleTypeInferenceWorkflowTrigger(ILogger<SimpleTypeInferenceWorkflowTrigger> logger)
+    public SimpleTypeInferenceWorkflowTrigger(
+        IInferenceQueue queue,
+        ILogger<SimpleTypeInferenceWorkflowTrigger> logger)
     {
+        _queue = queue;
         _logger = logger;
     }
 
     public void TriggerInferenceWorkflow(string captureId)
     {
-        _logger.LogDebug(
-            "Type inference workflow triggered for capture {CaptureId}. Will be processed by background service.",
-            captureId);
+        // Fire and forget - enqueue asynchronously without blocking
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await _queue.EnqueueAsync(captureId);
+                _logger.LogDebug(
+                    "Type inference workflow triggered for item {ItemId}. Enqueued for background processing.",
+                    captureId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Failed to enqueue item {ItemId} for type inference",
+                    captureId);
+            }
+        });
     }
 }

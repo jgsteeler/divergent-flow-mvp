@@ -44,15 +44,19 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-// One-time startup diagnostic: log which capture repository implementation is active.
-// This helps diagnose "201 Created but nothing in Redis" scenarios.
+// One-time startup diagnostic: log which repositories are active.
 using (var scope = app.Services.CreateScope())
 {
-    var repository = scope.ServiceProvider.GetRequiredService<ICaptureRepository>();
-    var repositoryType = repository.GetType();
+    var captureRepository = scope.ServiceProvider.GetRequiredService<ICaptureRepository>();
+    var itemRepository = scope.ServiceProvider.GetRequiredService<IItemRepository>();
+    
     app.Logger.LogInformation(
         "Active ICaptureRepository implementation: {RepositoryType}",
-        repositoryType.FullName);
+        captureRepository.GetType().FullName);
+    
+    app.Logger.LogInformation(
+        "Active IItemRepository implementation: {RepositoryType}",
+        itemRepository.GetType().FullName);
 }
 
 // Configure the HTTP request pipeline
