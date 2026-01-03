@@ -12,15 +12,18 @@ public sealed class UpdateItemHandler : IRequestHandler<UpdateItemCommand, ItemD
     private readonly IItemRepository _repository;
     private readonly IMapper _mapper;
     private readonly ILogger<UpdateItemHandler> _logger;
+    private readonly ITypeInferenceWorkflowTrigger _workflowTrigger;
 
     public UpdateItemHandler(
         IItemRepository repository,
         IMapper mapper,
-        ILogger<UpdateItemHandler> logger)
+        ILogger<UpdateItemHandler> logger,
+        ITypeInferenceWorkflowTrigger workflowTrigger)
     {
         _repository = repository;
         _mapper = mapper;
         _logger = logger;
+        _workflowTrigger = workflowTrigger;
     }
 
     public async Task<ItemDto?> Handle(UpdateItemCommand request, CancellationToken cancellationToken)
@@ -34,12 +37,23 @@ public sealed class UpdateItemHandler : IRequestHandler<UpdateItemCommand, ItemD
             return null;
         }
 
+        // Track if text changed to trigger re-inference
+        var textChanged = !string.Equals(existing.Text, request.Text, StringComparison.Ordinal);
+
         existing.Text = request.Text;
         existing.InferredType = request.InferredType;
         existing.TypeConfidence = request.TypeConfidence;
         existing.CollectionId = request.CollectionId;
 
         var updated = await _repository.UpdateAsync(request.Id, existing, cancellationToken);
+        
+        // Trigger re-inference if text changed (non-blocking)
+        if (updated is not null && textChanged)
+        {
+            _logger.LogDebug("Text changed for item {ItemId}, triggering re-inference", request.Id);
+            _workflowTrigger.TriggerInferenceWorkflow(updated.Id);
+        }
+        
         return updated == null ? null : _mapper.Map<ItemDto>(updated);
     }
 }

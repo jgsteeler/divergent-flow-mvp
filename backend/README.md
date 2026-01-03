@@ -8,12 +8,13 @@ This is a .NET 10 Web API that provides backend services for the Divergent Flow 
 
 ## Features
 
-- ✅ RESTful API endpoints for capture management
-- ✅ Background type inference workflow with eventual consistency
+- ✅ RESTful API endpoints for capture and item management
+- ✅ MongoDB persistence as system of record
+- ✅ Background type inference queue with asynchronous processing
+- ✅ Redis projection cache for eventual consistency (optional)
 - ✅ Swagger/OpenAPI documentation
 - ✅ CORS enabled for frontend integration
 - ✅ Dependency injection architecture
-- ✅ Redis data storage with Upstash integration
 - ✅ Repository pattern for data persistence
 - ✅ Zero authentication (will be added in future phases)
 
@@ -21,8 +22,9 @@ This is a .NET 10 Web API that provides backend services for the Divergent Flow 
 
 - **.NET 10.0** - Latest .NET framework
 - **ASP.NET Core Web API** - Web API framework
-- **StackExchange.Redis** - Redis client
-- **Upstash Redis** - Serverless Redis hosting
+- **MongoDB.Driver** - MongoDB client for data persistence
+- **StackExchange.Redis** - Redis client (optional, for projection cache)
+- **Upstash Redis** - Serverless Redis hosting (optional)
 - **Swashbuckle** - Swagger/OpenAPI documentation
 - **xUnit** - Testing framework
 - **Moq** - Mocking framework for tests
@@ -34,11 +36,41 @@ This is a .NET 10 Web API that provides backend services for the Divergent Flow 
 
 - .NET 10 SDK or later
 - Any IDE (Visual Studio, VS Code, Rider, etc.)
-- Upstash Redis account (for production) or local Redis (for development)
+- MongoDB (local or Atlas) - **Required**
+- Redis (local or Upstash) - Optional, for projection cache
 
-### Setting Up Redis
+### Setting Up MongoDB (Required)
 
-This API uses Redis for data persistence via Upstash (serverless Redis hosting).
+This API uses MongoDB as the primary data store (system of record).
+
+**See [MONGODB-SETUP.md](MONGODB-SETUP.md) for complete MongoDB setup instructions.**
+
+Quick start for local development:
+
+```bash
+# macOS
+brew tap mongodb/brew
+brew install mongodb-community@8.0
+brew services start mongodb-community@8.0
+
+# Ubuntu/Debian
+# See MONGODB-SETUP.md for full instructions
+
+# Or use Docker
+docker run -d -p 27017:27017 --name mongodb mongo:8
+```
+
+Then set environment variables in `.env`:
+```bash
+MONGODB_CONNECTION_STRING=mongodb://localhost:27017
+MONGODB_DATABASE_NAME=divergent_flow
+```
+
+### Setting Up Redis (Optional)
+
+Redis is used as a projection cache for eventual consistency. The API will work without Redis.
+
+This API uses Redis for projection caching via Upstash (serverless Redis hosting) or local Redis.
 
 #### Option 1: Using Upstash Redis (Recommended for Production)
 
@@ -91,7 +123,68 @@ This provides an interactive UI to test all API endpoints.
 
 ## API Endpoints
 
-### Captures
+### Items (Unified Domain Model)
+
+Items are the foundational unit of user-created content. "Capture" is the default item type.
+
+#### GET /api/items
+
+Get all items
+
+- **Response**: `200 OK` with array of `ItemDto`
+
+#### GET /api/items/{id}
+
+Get a specific item by ID
+
+- **Parameters**: `id` (string) - Item ID
+- **Response**: `200 OK` with `ItemDto` or `404 Not Found`
+
+#### POST /api/items
+
+Create a new item (automatically enqueued for background type inference)
+
+- **Request Body**: `CreateItemRequest`
+
+  ```json
+  {
+    "text": "Your item text here",
+    "inferredType": null,
+    "typeConfidence": null,
+    "collectionId": null
+  }
+  ```
+
+- **Response**: `201 Created` with `ItemDto`
+
+#### PUT /api/items/{id}
+
+Update an existing item (re-enqueued for inference if text changes)
+
+- **Parameters**: `id` (string) - Item ID
+- **Request Body**: `UpdateItemRequest`
+
+  ```json
+  {
+    "text": "Updated item text",
+    "inferredType": "note",
+    "typeConfidence": 85,
+    "collectionId": null
+  }
+  ```
+
+- **Response**: `200 OK` with `ItemDto` or `404 Not Found`
+
+#### DELETE /api/items/{id}
+
+Delete an item
+
+- **Parameters**: `id` (string) - Item ID
+- **Response**: `204 No Content` or `404 Not Found`
+
+### Captures (Legacy Compatibility)
+
+The `/api/captures` endpoints remain for backward compatibility and map to the same underlying Item entities.
 
 #### GET /api/captures
 
@@ -144,7 +237,22 @@ Delete a capture
 
 ## Data Models
 
-### CaptureDto
+### ItemDto
+
+```csharp
+{
+  "id": "string",                // UUID
+  "type": "capture",             // Item type (default: "capture")
+  "text": "string",              // Item content
+  "createdAt": 1234567890,       // Unix timestamp in milliseconds
+  "inferredType": "note",        // Inferred type (e.g., "note", "action", "reminder")
+  "typeConfidence": 85.5,        // Confidence level (0-100)
+  "lastReviewedAt": 1234567890,  // Unix timestamp (null if not reviewed)
+  "collectionId": "string"       // Collection ID (null if not in a collection)
+}
+```
+
+### CaptureDto (Legacy)
 
 ```csharp
 {
@@ -160,54 +268,57 @@ Delete a capture
 backend/
 ├── DivergentFlow.Api/
 │   ├── Controllers/
-│   │   └── CapturesController.cs    # API endpoints
+│   │   ├── CapturesController.cs    # Legacy capture endpoints
+│   │   └── ItemsController.cs       # Item endpoints (primary)
 │   └── Program.cs                    # Application startup
-├── DivergentFlow.Domain/             # Core domain entities
-├── DivergentFlow.Application/        # Use-cases, handlers, abstractions
-├── DivergentFlow.Infrastructure/     # Redis + external services implementations
-├── DivergentFlow.Api.Tests/
-│   └── CapturesControllerTests.cs   # API tests
+├── DivergentFlow.Domain/             # Core domain entities (Item, Collection)
+├── DivergentFlow.Application/        # Use-cases, handlers, abstractions, queue
+├── DivergentFlow.Infrastructure/     # MongoDB, Redis implementations
+├── DivergentFlow.Api.Tests/          # API tests
 ├── DivergentFlow.Application.Tests/  # Application-layer unit tests
 ├── DivergentFlow.Infrastructure.Tests/ # Infrastructure-layer unit tests
 ├── DivergentFlow.sln                 # Solution file
+├── MONGODB-SETUP.md                  # MongoDB setup guide
 └── version.txt                       # Version tracking for releases
 ```
 
 ## Architecture
 
-The API follows a layered/clean architecture pattern:
+The API follows a CQRS-inspired layered/clean architecture pattern:
 
 1. **Api** - HTTP controllers
-2. **Application** - Use-cases (MediatR handlers), validation, abstractions
-3. **Domain** - Core entities
-4. **Infrastructure** - Concrete integrations (Redis, etc.)
+2. **Application** - Use-cases (MediatR handlers), validation, abstractions, background processing
+3. **Domain** - Core entities (Item, Collection)
+4. **Infrastructure** - Concrete integrations (MongoDB, Redis)
 
-### Layered Architecture
+### Data Flow
 
+#### Write Path (Command)
 ```
-Controller → MediatR Handler → Repository → Redis/Storage
+Controller → MediatR Handler → MongoDB (system of record)
+                              ↓
+                    Enqueue for background inference
+                              ↓
+                    Background Worker → Type Inference
+                              ↓
+                    Update MongoDB → Sync to Redis (projection cache)
+```
+
+#### Read Path (Query)
+```
+Controller → MediatR Handler → MongoDB (direct read)
 ```
 
 - **Controllers** depend on **MediatR**
-- **Handlers** depend on **abstractions** (e.g. `ICaptureRepository`)
-- **Infrastructure** provides concrete implementations (Redis)
-
-This allows for easy swapping of implementations and comprehensive testing.
-
-### Dependency Injection
-
-Services are registered via extension methods:
-
-```csharp
-builder.Services.AddApplication();
-builder.Services.AddInfrastructure();
-```
+- **Handlers** depend on **abstractions** (e.g. `IItemRepository`, `IInferenceQueue`)
+- **Infrastructure** provides concrete implementations (MongoDB, Redis)
 
 This allows for:
 
-- Easy swapping of implementations (e.g., Redis → PostgreSQL)
+- Easy swapping of implementations (e.g., MongoDB → PostgreSQL)
 - Comprehensive unit testing with mocks
 - Clear separation of concerns
+- Asynchronous processing with eventual consistency
 
 ## CORS Configuration
 
@@ -218,25 +329,44 @@ CORS is configured to allow requests from the frontend:
 
 ## Background Type Inference Workflow
 
-The API includes a background service that automatically re-infers types for captures with low confidence scores. This implements an eventual consistency model:
+The API includes two background services for type inference:
 
-### How It Works
+### 1. InferenceQueueProcessorService (Primary - New)
 
-1. When a capture is created via `POST /api/captures`, the API immediately returns a response without blocking
-2. A background service (BackgroundTypeInferenceService) runs periodically (default: every 60 seconds)
-3. It queries for non-migrated captures with:
+Processes items from an in-process queue asynchronously:
+
+1. When an item is created via `POST /api/items`, it's immediately enqueued
+2. When an item is updated and text changes, it's re-enqueued
+3. The background worker dequeues items one at a time
+4. For each item:
+   - Loads the item from MongoDB
+   - Runs type inference
+   - Updates the item in MongoDB if confidence improves
+   - Syncs the updated item to Redis projection cache (if available)
+
+### 2. BackgroundTypeInferenceService (Periodic - Existing)
+
+Runs periodically to catch any items that weren't processed:
+
+1. Runs every 60 seconds (configurable)
+2. Queries for non-migrated captures with:
    - `null` TypeConfidence, OR
-   - TypeConfidence < configured threshold (default: 95, range: 0-100)
-4. For each eligible capture, it calls the type inference service
-5. If the new confidence is higher than the existing confidence, it updates the capture
-6. Otherwise, it skips the update
+   - TypeConfidence < configured threshold (default: 95)
+3. For each eligible capture, runs type inference
+4. Updates if new confidence is higher than existing
 
 ### Configuration
 
-Configure the background service in `appsettings.json` or via environment variables:
+Configure in `appsettings.json` or via environment variables:
 
 ```json
 {
+  "MongoDB": {
+    "ConnectionString": "mongodb://localhost:27017",
+    "DatabaseName": "divergent_flow",
+    "ItemsCollectionName": "items",
+    "CollectionsCollectionName": "collections"
+  },
   "TypeInference": {
     "ConfidenceThreshold": 95,
     "ProcessingIntervalSeconds": 60
@@ -246,6 +376,11 @@ Configure the background service in `appsettings.json` or via environment variab
 
 Or via environment variables:
 ```bash
+# MongoDB
+MongoDB__ConnectionString=mongodb://localhost:27017
+MongoDB__DatabaseName=divergent_flow
+
+# Type Inference
 TypeInference__ConfidenceThreshold=95
 TypeInference__ProcessingIntervalSeconds=60
 ```
@@ -257,12 +392,13 @@ Currently, the basic inference service returns fixed values (MVP). As learning m
 ## Future Enhancements
 
 - [ ] Authentication & Authorization
-- [x] Background type inference workflow
+- [x] MongoDB persistence as system of record
+- [x] Background type inference queue with asynchronous processing
+- [x] Redis projection cache for eventual consistency
 - [ ] Property validation endpoints
 - [ ] LLM integration for intelligent processing
 - [ ] Rate limiting
 - [ ] Enhanced logging and monitoring
-- [ ] Redis connection pooling optimization
 - [ ] Data migration utilities
 
 ## Development
@@ -313,7 +449,27 @@ Notes:
 - In `Development`, the API also allows `localhost`/`127.0.0.1` on any port to keep local Vite workflows frictionless.
 - In `Staging` and `Production`, the API fails closed if `CORS_ALLOWED_ORIGINS` is not set.
 
-### Redis
+### MongoDB (Required)
+
+**See [MONGODB-SETUP.md](MONGODB-SETUP.md) for complete setup instructions.**
+
+Required environment variables:
+
+- `MONGODB_CONNECTION_STRING`: MongoDB connection string
+- `MONGODB_DATABASE_NAME`: Database name
+
+Optional environment variables:
+
+- `MONGODB_ITEMS_COLLECTION`: Items collection name (default: "items")
+- `MONGODB_COLLECTIONS_COLLECTION`: Collections collection name (default: "collections")
+
+Or use the double-underscore notation:
+```bash
+MongoDB__ConnectionString=mongodb://localhost:27017
+MongoDB__DatabaseName=divergent_flow
+```
+
+### Redis (Optional - Projection Cache)
 
 This project supports two Redis connectivity modes:
 
@@ -346,9 +502,10 @@ Alternative configuration:
 
 **Important Notes:**
 
-- The API will throw an exception at startup if no Redis configuration is provided
-- For Upstash REST: copy the **HTTPS REST URL** + **REST token** from the Upstash console.
-- For local Redis: use `localhost:6379` and leave token empty if no auth is configured.
+- **MongoDB is required** - The API will fail to start without MongoDB configuration
+- **Redis is optional** - The API will work without Redis; a no-op projection writer is used
+- For Upstash REST: copy the **HTTPS REST URL** + **REST token** from the Upstash console
+- For local Redis: use `localhost:6379` and leave token empty if no auth is configured
 
 ## Contributing
 
