@@ -209,16 +209,9 @@ public static class ServiceCollectionExtensions
             return new UpstashRedisRestClient(factory.CreateClient("UpstashRedisWrite"));
         });
 
-        services.AddScoped<ICaptureRepository>(sp =>
-        {
-            var upstashOptions = sp.GetRequiredService<UpstashRedisRestOptionsProvider>().Options;
-            if (upstashOptions is not null)
-            {
-                return ActivatorUtilities.CreateInstance<UpstashRestCaptureRepository>(sp);
-            }
-
-            return ActivatorUtilities.CreateInstance<RedisCaptureRepository>(sp);
-        });
+        // Captures API is preserved, but persistence is unified:
+        // a "capture" is stored as an Item document with Type == "capture".
+        services.AddScoped<ICaptureRepository, MongoCaptureRepository>();
 
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {

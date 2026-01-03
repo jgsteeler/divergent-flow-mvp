@@ -4,6 +4,7 @@ using DivergentFlow.Application.Abstractions;
 using DivergentFlow.Application.DependencyInjection;
 using DivergentFlow.Infrastructure.DependencyInjection;
 using dotenv.net;
+using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,11 +15,24 @@ var builder = WebApplication.CreateBuilder(args);
 // - Only sets variables that aren't already set in the process environment
 // - Ignores missing .env files (doesn't throw exceptions)
 DotEnv.Load(new DotEnvOptions(
-    envFilePaths: new[] { Path.Combine(builder.Environment.ContentRootPath, ".env") },
+    // Prefer a service-local .env, but also support backend/.env (common in this repo).
+    envFilePaths:
+    [
+        Path.Combine(builder.Environment.ContentRootPath, ".env"),
+        Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, "..", ".env"))
+    ],
     ignoreExceptions: true,
     overwriteExistingVars: false,
     probeLevelsToSearch: 4
 ));
+
+// Important: the EnvironmentVariables configuration provider loads once at startup.
+// Since dotenv.net sets environment variables at runtime, reload configuration so
+// builder.Configuration can see values from backend/.env (e.g. REDIS_URL).
+if (builder.Configuration is IConfigurationRoot configurationRoot)
+{
+    configurationRoot.Reload();
+}
 
 // Add services to the container
 builder.Services.AddControllers();
