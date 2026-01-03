@@ -71,10 +71,18 @@ exit
    cp .env.example .env
    ```
 
-2. Edit `.env` and set MongoDB variables:
+2. Edit `.env` and set MongoDB variables (minimum configuration):
    ```bash
+   # MongoDB (Required)
    MONGODB_CONNECTION_STRING=mongodb://localhost:27017
    MONGODB_DATABASE_NAME=divergent_flow
+   
+   # CORS
+   CORS_ALLOWED_ORIGINS=http://localhost:5173
+   
+   # Redis (Optional - comment out if not using)
+   # REDIS_URL=localhost:6379
+   # REDIS_TOKEN=
    ```
 
 #### Option B: Using environment variables
