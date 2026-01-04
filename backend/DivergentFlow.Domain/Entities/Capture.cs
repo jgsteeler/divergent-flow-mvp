@@ -21,6 +21,11 @@ public sealed class Capture
     public required long CreatedAt { get; set; }
     
     /// <summary>
+    /// Gets or sets the Unix timestamp (milliseconds) when the capture was last updated.
+    /// </summary>
+    public long? UpdatedAt { get; set; }
+    
+    /// <summary>
     /// Gets or sets the inferred type of the capture (e.g., "action", "note", "question").
     /// </summary>
     public string? InferredType { get; set; }
