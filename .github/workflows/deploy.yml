@@ -1,0 +1,155 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+# Prevent multiple deploys from overlapping
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  # Step 1: Version management
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      backend_release_created: >-
+        ${{ steps.release.outputs.backend--release_created }}
+      frontend_release_created: >-
+        ${{ steps.release.outputs.frontend--release_created }}
+      releases_created: ${{ steps.release.outputs.releases_created }}
+    steps:
+      - name: Run Release Please
+        id: release
+        uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: .github/release-please-config.json
+          manifest-file: .github/.release-please-manifest.json
+
+  # Step 2: Deploy backend to staging (always)
+  deploy-backend-staging:
+    runs-on: ubuntu-latest
+    needs: release-please
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy to Staging
+        working-directory: backend
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          flyctl deploy --config fly.staging.toml --remote-only
+
+  # Step 3: Deploy frontend to staging (always)
+  deploy-frontend-staging:
+    runs-on: ubuntu-latest
+    needs: release-please
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+
+      - name: Deploy to Netlify Staging
+        uses: nwtgck/actions-netlify@v3
+        with:
+          publish-dir: './frontend/dist'
+          production-deploy: false
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: 'Deploy from GitHub Actions - staging'
+          enable-pull-request-comment: false
+          enable-commit-comment: false
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_STAGING_SITE_ID }}
+
+  # Step 4: Promote to production (only if release was created)
+  promote-to-production:
+    runs-on: ubuntu-latest
+    needs: [release-please, deploy-backend-staging, deploy-frontend-staging]
+    if: needs.release-please.outputs.releases_created == 'true'
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Promote Backend to Production
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          echo "Getting staging image reference..."
+          IMAGE_REF=$(flyctl status \
+            --app divergent-flow-api-staging \
+            --json | jq -r '.ImageRef')
+          echo "Staging image: $IMAGE_REF"
+
+          if [ -z "$IMAGE_REF" ] || [ "$IMAGE_REF" = "null" ]; then
+            echo "Error: Could not get staging image reference"
+            exit 1
+          fi
+
+          echo "Promoting image to production..."
+          cd backend
+          flyctl deploy --app divergent-flow-api --image "$IMAGE_REF"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build Frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Deploy Frontend to Production
+        uses: nwtgck/actions-netlify@v3
+        with:
+          publish-dir: './frontend/dist'
+          production-deploy: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: >-
+            Production deploy -
+            Release ${{ needs.release-please.outputs.frontend--tag_name }}
+          enable-pull-request-comment: false
+          enable-commit-comment: false
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_PROD_SITE_ID }}

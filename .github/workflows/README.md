@@ -44,9 +44,101 @@ See [COMMIT-GUIDELINES.md](../../COMMIT-GUIDELINES.md) for quick reference.
 
 ---
 
-## Release Please
+## Unified Deployment Workflow
 
-The `release-please.yml` workflow automates version management and changelog generation using [Release Please](https://github.com/googleapis/release-please).
+The `deploy.yml` workflow provides a complete CI/CD pipeline with version management, staging deployments, and production promotions.
+
+### Architecture Overview
+
+This workflow implements a **two-environment strategy** with static URLs:
+
+- **Staging Environment**: Always deployed from `main` branch
+  - Backend: `divergent-flow-api-staging` (Fly.io)
+  - Frontend: Static staging URL via dedicated Netlify site
+- **Production Environment**: Promoted only on releases
+  - Backend: `divergent-flow-api` (Fly.io) - Binary image promotion
+  - Frontend: Dedicated Netlify production site
+
+### Workflow Steps
+
+1. **Version Management** (Release Please)
+   - Analyzes conventional commits on `main` branch
+   - Creates/updates release PR with version bumps and changelog
+   - Sets `releases_created` flag when release PR is merged
+
+2. **Deploy to Staging** (Always runs)
+   - **Backend**: Builds and deploys to Fly.io staging app
+   - **Frontend**: Builds React app and deploys to Netlify staging site
+
+3. **Promote to Production** (Only on release)
+   - **Backend**: Promotes exact staging container image (binary promotion, no rebuild)
+   - **Frontend**: Rebuilds and deploys to Netlify production site
+   - Triggered when `releases_created == true`
+
+### Key Features
+
+- ✅ **Binary Promotion**: Backend production uses the exact container that passed staging health checks
+- ✅ **Static URLs**: Both staging and production have unchanging URLs (no dynamic preview URLs)
+- ✅ **Consistent Deploys**: Staging and production always deploy from the same code state
+- ✅ **Concurrency Control**: Prevents overlapping deploys with `concurrency` group
+- ✅ **Image Validation**: Uses `jq` to extract and validate Fly.io image references
+
+### GitHub Secrets Required
+
+Add these secrets in **Settings > Secrets and variables > Actions**:
+
+- `FLY_API_TOKEN`: Fly.io deploy token
+- `NETLIFY_AUTH_TOKEN`: Netlify personal access token
+- `NETLIFY_STAGING_SITE_ID`: API ID for staging Netlify site
+- `NETLIFY_PROD_SITE_ID`: API ID for production Netlify site
+
+### Netlify Setup
+
+1. **Create Two Sites** in Netlify:
+   - Site A (Production): e.g., `my-app-prod`
+   - Site B (Staging): e.g., `my-app-staging`
+   
+2. **Disable Auto-Deploys** on both sites:
+   - Go to **Site Settings > Build & deploy > Continuous Deployment**
+   - Set **Build settings** to "Stop builds"
+   - This prevents Netlify from building automatically; GitHub Actions controls all deploys
+
+3. **Get Site IDs**:
+   - Go to **Site Settings > General > Site details**
+   - Copy the **API ID** for each site
+   - Add as GitHub secrets
+
+### When It Runs
+
+- **Trigger**: Every push to `main` branch
+- **Staging**: Always deploys (provides continuous feedback)
+- **Production**: Only deploys when release PR is merged
+
+### Technical Details
+
+**Image Promotion Command:**
+```bash
+# Get staging image reference
+IMAGE_REF=$(flyctl status --app divergent-flow-api-staging --json | jq -r '.ImageRef')
+
+# Deploy to production using staging image
+flyctl deploy --app divergent-flow-api --image "$IMAGE_REF"
+```
+
+This ensures the exact Docker image that passed staging health checks is deployed to production.
+
+### Migration Notes
+
+The following workflows have been archived (renamed to `.disabled`):
+- `release-please.yml.disabled` - Now integrated into `deploy.yml`
+- `deploy-backend-fly.yml.disabled` - Replaced by unified deployment
+- `deploy-backend-fly-staging.yml.disabled` - Staging now part of unified flow
+
+---
+
+## Release Please (Integrated)
+
+Version management is now integrated into the `deploy.yml` workflow using [Release Please](https://github.com/googleapis/release-please).
 
 ### How It Works
 
