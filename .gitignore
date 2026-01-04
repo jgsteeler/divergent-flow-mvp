@@ -69,5 +69,10 @@ _pkginfo.txt
 # *.sln (removed - solution files should be in version control)
 local.docs/
 
-# Local-only Docker dev setup (kept local)
-docker/
+# Local-only Docker dev files
+docker_local/
+docker/.env
+docker/certs/
+
+# Local dev TLS certs/keys (never commit)
+backend/certs/

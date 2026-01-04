@@ -4,7 +4,6 @@ using DivergentFlow.Application.Abstractions;
 using DivergentFlow.Application.DependencyInjection;
 using DivergentFlow.Infrastructure.DependencyInjection;
 using dotenv.net;
-using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,7 +27,7 @@ DotEnv.Load(new DotEnvOptions(
 
 // Important: the EnvironmentVariables configuration provider loads once at startup.
 // Since dotenv.net sets environment variables at runtime, reload configuration so
-// builder.Configuration can see values from backend/.env (e.g. REDIS_URL).
+// builder.Configuration can see values from backend/.env (e.g. UPSTASH_REDIS_REST_URL).
 if (builder.Configuration is IConfigurationRoot configurationRoot)
 {
     configurationRoot.Reload();

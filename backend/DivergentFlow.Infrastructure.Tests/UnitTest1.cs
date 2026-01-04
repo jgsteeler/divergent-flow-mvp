@@ -1,5 +1,4 @@
 ﻿using DivergentFlow.Domain.Entities;
-using DivergentFlow.Infrastructure.DependencyInjection;
 using DivergentFlow.Infrastructure.Services;
 using DivergentFlow.Infrastructure.Services.Upstash;
 using System.Net;
@@ -54,44 +53,6 @@ public sealed class InfrastructureUnitTests
         Assert.Equal(original.CreatedAt, roundTripped.CreatedAt);
         Assert.Equal(original.InferredType, roundTripped.InferredType);
         Assert.Equal(original.TypeConfidence, roundTripped.TypeConfidence);
-    }
-
-    [Fact]
-    public void BuildRedisOptions_ParsesRedissUrl_WithCredentials_AndTls()
-    {
-        var options = ServiceCollectionExtensions.BuildRedisOptions(
-            "rediss://default:token@fly-div-flo.upstash.io:6379",
-            redisToken: null,
-            redisSslRaw: null);
-
-        var endpoint = Assert.Single(options.EndPoints);
-        var dns = Assert.IsType<DnsEndPoint>(endpoint);
-        Assert.Equal("fly-div-flo.upstash.io", dns.Host);
-        Assert.Equal(6379, dns.Port);
-
-        Assert.True(options.Ssl);
-        Assert.Equal("fly-div-flo.upstash.io", options.SslHost);
-        Assert.Equal("default", options.User);
-        Assert.Equal("token", options.Password);
-    }
-
-    [Fact]
-    public void BuildRedisOptions_UsesTokenAndSslOverride_ForHostPortStyle()
-    {
-        var options = ServiceCollectionExtensions.BuildRedisOptions(
-            "fly-div-flo.upstash.io:6379",
-            redisToken: "token",
-            redisSslRaw: "true");
-
-        var endpoint = Assert.Single(options.EndPoints);
-        var dns = Assert.IsType<DnsEndPoint>(endpoint);
-        Assert.Equal("fly-div-flo.upstash.io", dns.Host);
-        Assert.Equal(6379, dns.Port);
-
-        Assert.True(options.Ssl);
-        Assert.Equal("fly-div-flo.upstash.io", options.SslHost);
-        Assert.Equal("default", options.User);
-        Assert.Equal("token", options.Password);
     }
 
     [Fact]

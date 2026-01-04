@@ -11,7 +11,7 @@ This is a .NET 10 Web API that provides backend services for the Divergent Flow 
 - ✅ RESTful API endpoints for capture and item management
 - ✅ MongoDB persistence as system of record
 - ✅ Background type inference queue with asynchronous processing
-- ✅ Redis projection cache for eventual consistency (optional)
+- ✅ Redis projection cache for eventual consistency (optional, via Upstash REST)
 - ✅ Swagger/OpenAPI documentation
 - ✅ CORS enabled for frontend integration
 - ✅ Dependency injection architecture
@@ -23,8 +23,7 @@ This is a .NET 10 Web API that provides backend services for the Divergent Flow 
 - **.NET 10.0** - Latest .NET framework
 - **ASP.NET Core Web API** - Web API framework
 - **MongoDB.Driver** - MongoDB client for data persistence
-- **StackExchange.Redis** - Redis client (optional, for projection cache)
-- **Upstash Redis** - Serverless Redis hosting (optional)
+- **Upstash Redis (REST)** - Serverless Redis hosting (optional)
 - **Swashbuckle** - Swagger/OpenAPI documentation
 - **xUnit** - Testing framework
 - **Moq** - Mocking framework for tests
@@ -37,7 +36,7 @@ This is a .NET 10 Web API that provides backend services for the Divergent Flow 
 - .NET 10 SDK or later
 - Any IDE (Visual Studio, VS Code, Rider, etc.)
 - MongoDB (local or Atlas) - **Required**
-- Redis (local or Upstash) - Optional, for projection cache
+- Upstash Redis (REST) - Optional, for projection cache
 
 ### Setting Up MongoDB (Required)
 
@@ -61,6 +60,7 @@ docker run -d -p 27017:27017 --name mongodb mongo:8
 ```
 
 Then set environment variables in `.env`:
+
 ```bash
 MONGODB_CONNECTION_STRING=mongodb://localhost:27017
 MONGODB_DATABASE_NAME=divergent_flow
@@ -70,37 +70,18 @@ MONGODB_DATABASE_NAME=divergent_flow
 
 Redis is used as a projection cache for eventual consistency. The API will work without Redis.
 
-This API uses Redis for projection caching via Upstash (serverless Redis hosting) or local Redis.
+This API supports Redis via Upstash REST (one connectivity mode across environments).
 
-#### Option 1: Using Upstash Redis (Recommended for Production)
+#### Using Upstash Redis (REST)
 
 1. Create a free account at [Upstash](https://upstash.com/)
 2. Create a new Redis database
 3. Copy the connection details:
-   - **Redis URL**: The host:port (e.g., `fly-div-flo-staging.upstash.io:6379`)
-   - **Redis Token**: The password/token from your Upstash dashboard
+
+- **REST URL**: HTTPS REST URL from the Upstash console (e.g., `https://us1-merry-cat-32748.upstash.io`)
+- **REST Token**: Upstash REST token (Bearer)
+
 4. Set environment variables (see Configuration section below)
-
-#### Option 2: Using Local Redis (Development)
-
-1. Install Redis locally:
-
-   ```bash
-   # macOS
-   brew install redis
-   brew services start redis
-   
-   # Ubuntu/Debian
-   sudo apt install redis-server
-   sudo systemctl start redis
-   
-   # Windows (use WSL or Docker)
-   docker run -d -p 6379:6379 redis
-   ```
-
-2. Set environment variables:
-   - `REDIS_URL=localhost:6379`
-   - `REDIS_TOKEN=` (leave empty for local Redis with no auth)
 
 ### Running the API
 
@@ -294,6 +275,7 @@ The API follows a CQRS-inspired layered/clean architecture pattern:
 ### Data Flow
 
 #### Write Path (Command)
+
 ```
 Controller → MediatR Handler → MongoDB (system of record)
                               ↓
@@ -305,6 +287,7 @@ Controller → MediatR Handler → MongoDB (system of record)
 ```
 
 #### Read Path (Query)
+
 ```
 Controller → MediatR Handler → MongoDB (direct read)
 ```
@@ -375,6 +358,7 @@ Configure in `appsettings.json` or via environment variables:
 ```
 
 Or via environment variables:
+
 ```bash
 # MongoDB
 MongoDB__ConnectionString=mongodb://localhost:27017
@@ -464,6 +448,7 @@ Optional environment variables:
 - `MONGODB_COLLECTIONS_COLLECTION`: Collections collection name (default: "collections")
 
 Or use the double-underscore notation:
+
 ```bash
 MongoDB__ConnectionString=mongodb://localhost:27017
 MongoDB__DatabaseName=divergent_flow
@@ -471,41 +456,21 @@ MongoDB__DatabaseName=divergent_flow
 
 ### Redis (Optional - Projection Cache)
 
-This project supports two Redis connectivity modes:
+This project supports a single Redis connectivity mode:
 
-- **Local Docker Redis (TCP via StackExchange.Redis)**
 - **Upstash Redis (REST API via HttpClient)**
 
-#### Upstash (REST) configuration (recommended for Upstash)
+#### Upstash (REST) configuration
 
 - `UPSTASH_REDIS_REST_URL`: HTTPS REST URL from the Upstash console (e.g. `https://us1-merry-cat-32748.upstash.io`)
 - `UPSTASH_REDIS_REST_TOKEN`: Upstash REST token (Bearer)
 - `UPSTASH_REDIS_REST_READONLY_TOKEN`: optional readonly token
-
-Back-compat:
-
-- `REDIS_URL` + `REDIS_TOKEN` can also be used for Upstash REST if you already have those wired as secrets.
-
-#### Local Docker Redis (TCP) configuration
-
-The `.env.example` file includes these TCP-related variables:
-
-- `REDIS_URL`: Redis endpoint in `host:port` format (e.g. `redis:6379` in docker-compose or `localhost:6379` when running the API directly)
-- `REDIS_TOKEN`: Redis password/token (optional for local Redis without auth)
-- Optional: `REDIS_SSL`: `true`/`false` override (helpful for hosted Redis)
-
-Alternative configuration:
-
-- `REDIS_CONNECTION_STRING` (StackExchange.Redis format)
-- `ConnectionStrings:Redis` (appsettings / environment)
-- `Redis:ConnectionString` (appsettings / environment)
 
 **Important Notes:**
 
 - **MongoDB is required** - The API will fail to start without MongoDB configuration
 - **Redis is optional** - The API will work without Redis; a no-op projection writer is used
 - For Upstash REST: copy the **HTTPS REST URL** + **REST token** from the Upstash console
-- For local Redis: use `localhost:6379` and leave token empty if no auth is configured
 
 ## Contributing
 
