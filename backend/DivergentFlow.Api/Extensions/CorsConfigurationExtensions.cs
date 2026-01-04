@@ -1,4 +1,5 @@
 using DivergentFlow.Api.Utilities;
+using Microsoft.Extensions.Configuration;
 
 namespace DivergentFlow.Api.Extensions;
 
@@ -17,9 +18,12 @@ public static class CorsConfigurationExtensions
     /// Environment variables:
     /// - CORS_ALLOWED_ORIGINS: comma-separated list of allowed origins (e.g. https://app.example.com,http://localhost:5173)
     /// </summary>
-    public static IServiceCollection AddCorsPolicy(this IServiceCollection services, IWebHostEnvironment environment)
+    public static IServiceCollection AddCorsPolicy(
+        this IServiceCollection services,
+        IWebHostEnvironment environment,
+        IConfiguration configuration)
     {
-        var allowedOrigins = EnvironmentHelper.ParseOrigins(Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS"));
+        var allowedOrigins = EnvironmentHelper.ParseOrigins(configuration["CORS_ALLOWED_ORIGINS"]);
 
         services.AddCors(options =>
         {

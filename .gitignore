@@ -76,3 +76,6 @@ docker/certs/
 
 # Local dev TLS certs/keys (never commit)
 backend/certs/
+
+# Development-only app settings
+backend/DivergentFlow.Api/appsettings.Development.json
