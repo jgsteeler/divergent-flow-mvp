@@ -69,7 +69,7 @@ export function CaptureList({ captures, onBack, isLoading, error }: CaptureListP
                 {capture.inferredType && (
                   <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-accent/10 text-accent-foreground">
                     <span className="capitalize">{capture.inferredType}</span>
-                    {capture.typeConfidence != null && (
+                    {capture.typeConfidence !== null && capture.typeConfidence !== undefined && (
                       <span className="text-[10px] opacity-75">
                         {Math.round(capture.typeConfidence)}%
                       </span>
