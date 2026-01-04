@@ -7,6 +7,14 @@
 
 * **infrastructure:** add MongoDB persistence with async inference queue ([#190](https://github.com/jgsteeler/divergent-flow-mvp/issues/190)) ([f93646d](https://github.com/jgsteeler/divergent-flow-mvp/commit/f93646d527b41ffc5b6a0a8049a37e5aa2c55769))
 
+
+## [4.2.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-ui-v4.1.0...divergent-flow-ui-v4.2.0) (2025-12-28)
+
+
+### Features
+
+* **cors:** implement CORS policy with environment variable configura… ([#144](https://github.com/jgsteeler/divergent-flow-mvp/issues/144)) ([850c93e](https://github.com/jgsteeler/divergent-flow-mvp/commit/850c93e464443bc86841756d05c55ba345b3a332))
+
 ## [4.1.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/v4.0.0...v4.1.0) (2025-12-27)
 
 ### Features
