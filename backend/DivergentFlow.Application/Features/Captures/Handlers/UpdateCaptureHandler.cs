@@ -29,6 +29,7 @@ public sealed class UpdateCaptureHandler : IRequestHandler<UpdateCaptureCommand,
         existing.Text = request.Text;
         existing.InferredType = request.InferredType;
         existing.TypeConfidence = request.TypeConfidence;
+        existing.UpdatedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
         var saved = await _repository.UpdateAsync(request.Id, existing, cancellationToken);
         return saved is null ? null : _mapper.Map<CaptureDto>(saved);
