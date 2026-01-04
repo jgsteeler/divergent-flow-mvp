@@ -60,7 +60,7 @@ public sealed class CreateCaptureHandler : IRequestHandler<CreateCaptureCommand,
             Id = Guid.NewGuid().ToString(),
             Text = request.Text,
             CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-            UpdatedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            UpdatedAt = null, // Only set when capture is actually updated
             InferredType = request.InferredType,
             TypeConfidence = request.TypeConfidence,
             IsMigrated = false
