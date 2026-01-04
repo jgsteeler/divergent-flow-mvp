@@ -105,6 +105,7 @@ public sealed class BackgroundTypeInferenceService : BackgroundService
 
                     capture.InferredType = result.InferredType;
                     capture.TypeConfidence = result.Confidence;
+                    capture.UpdatedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
                     await repository.UpdateAsync(capture.Id, capture, cancellationToken);
                     updatedCount++;

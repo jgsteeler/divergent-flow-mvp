@@ -59,12 +59,32 @@ export function CaptureList({ captures, onBack, isLoading, error }: CaptureListP
               <p className="text-sm text-foreground whitespace-pre-wrap">
                 {capture.text}
               </p>
-              <time 
-                dateTime={new Date(capture.createdAt).toISOString()}
-                className="text-xs text-muted-foreground mt-2 block"
-              >
-                {new Date(capture.createdAt).toLocaleString()}
-              </time>
+              <div className="flex flex-wrap items-center gap-3 mt-3 text-xs text-muted-foreground">
+                <time 
+                  dateTime={new Date(capture.createdAt).toISOString()}
+                  title={`Created: ${new Date(capture.createdAt).toLocaleString()}`}
+                >
+                  {new Date(capture.createdAt).toLocaleDateString()}
+                </time>
+                {capture.inferredType && (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-accent/10 text-accent-foreground">
+                    <span className="capitalize">{capture.inferredType}</span>
+                    {capture.typeConfidence != null && (
+                      <span className="text-[10px] opacity-75">
+                        {Math.round(capture.typeConfidence)}%
+                      </span>
+                    )}
+                  </span>
+                )}
+                {capture.updatedAt && capture.updatedAt !== capture.createdAt && (
+                  <span 
+                    className="text-[10px] opacity-75"
+                    title={`Updated: ${new Date(capture.updatedAt).toLocaleString()}`}
+                  >
+                    Updated {new Date(capture.updatedAt).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
             </motion.div>
           ))}
         </div>

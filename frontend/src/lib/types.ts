@@ -3,6 +3,7 @@ export interface Capture {
   id: string
   text: string
   createdAt: number
+  updatedAt?: number | null
   inferredType?: string | null
   typeConfidence?: number | null
   isMigrated?: boolean
