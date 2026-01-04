@@ -1,10 +1,13 @@
 using DivergentFlow.Application.Abstractions;
+using DivergentFlow.Application.Configuration;
 using DivergentFlow.Infrastructure.Repositories;
 using DivergentFlow.Infrastructure.Services;
 using DivergentFlow.Infrastructure.Services.Upstash;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using MongoDB.Driver;
 using StackExchange.Redis;
 using System.Net;
 using System.Net.Http.Headers;
@@ -145,6 +148,24 @@ public static class ServiceCollectionExtensions
     /// <returns>The same <see cref="IServiceCollection"/> instance to allow for method chaining.</returns>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
+        // Register MongoDB
+        services.AddSingleton<IMongoClient>(sp =>
+        {
+            var settings = sp.GetRequiredService<IOptions<MongoDbSettings>>().Value;
+            return new MongoClient(settings.ConnectionString);
+        });
+
+        services.AddSingleton<IMongoDatabase>(sp =>
+        {
+            var client = sp.GetRequiredService<IMongoClient>();
+            var settings = sp.GetRequiredService<IOptions<MongoDbSettings>>().Value;
+            return client.GetDatabase(settings.DatabaseName);
+        });
+
+        // Register MongoDB repositories
+        services.AddScoped<IItemRepository, MongoItemRepository>();
+        services.AddScoped<ICollectionRepository, MongoCollectionRepository>();
+
         // If this is an Upstash endpoint, prefer REST API.
         // - Avoids TCP/TLS/SNI pitfalls in some hosting environments
         // - Enables use of Upstash REST tokens (standard + readonly)
@@ -188,16 +209,9 @@ public static class ServiceCollectionExtensions
             return new UpstashRedisRestClient(factory.CreateClient("UpstashRedisWrite"));
         });
 
-        services.AddScoped<ICaptureRepository>(sp =>
-        {
-            var upstashOptions = sp.GetRequiredService<UpstashRedisRestOptionsProvider>().Options;
-            if (upstashOptions is not null)
-            {
-                return ActivatorUtilities.CreateInstance<UpstashRestCaptureRepository>(sp);
-            }
-
-            return ActivatorUtilities.CreateInstance<RedisCaptureRepository>(sp);
-        });
+        // Captures API is preserved, but persistence is unified:
+        // a "capture" is stored as an Item document with Type == "capture".
+        services.AddScoped<ICaptureRepository, MongoCaptureRepository>();
 
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
@@ -245,7 +259,57 @@ public static class ServiceCollectionExtensions
 
             return ConnectionMultiplexer.Connect(options);
         });
+
+        // Register Redis projection writer (optional - only if Redis is available)
+        services.AddScoped<IProjectionWriter>(sp =>
+        {
+            try
+            {
+                // Only create projection writer if Redis is available
+                var redis = sp.GetService<IConnectionMultiplexer>();
+                if (redis is not null)
+                {
+                    return ActivatorUtilities.CreateInstance<RedisProjectionWriter>(sp);
+                }
+            }
+            catch (Exception ex)
+            {
+                var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("ProjectionWriter");
+                logger.LogWarning(ex, "Redis not available; using no-op projection writer");
+            }
+
+            // Return a no-op implementation if Redis is not available
+            return ActivatorUtilities.CreateInstance<NoOpProjectionWriter>(sp);
+        });
+
         services.AddSingleton<ITypeInferenceService, BasicTypeInferenceService>();
         return services;
+    }
+
+    /// <summary>
+    /// No-op implementation of IProjectionWriter for when Redis is not available.
+    /// Logs projection write attempts at debug level for observability.
+    /// </summary>
+    private sealed class NoOpProjectionWriter : IProjectionWriter
+    {
+        private readonly ILogger<NoOpProjectionWriter> _logger;
+
+        public NoOpProjectionWriter(ILogger<NoOpProjectionWriter> logger)
+        {
+            _logger = logger;
+            _logger.LogWarning("NoOpProjectionWriter is being used - Redis projection writes will be skipped");
+        }
+
+        public Task SyncItemAsync(Domain.Entities.Item item, CancellationToken cancellationToken = default)
+        {
+            _logger.LogDebug("Skipping projection write for item {ItemId} - Redis not available", item.Id);
+            return Task.CompletedTask;
+        }
+
+        public Task SyncCollectionAsync(Domain.Entities.Collection collection, CancellationToken cancellationToken = default)
+        {
+            _logger.LogDebug("Skipping projection write for collection {CollectionId} - Redis not available", collection.Id);
+            return Task.CompletedTask;
+        }
     }
 }

@@ -34,9 +34,18 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ITypeInferenceWorkflowTrigger, SimpleTypeInferenceWorkflowTrigger>();
         services.AddHostedService<BackgroundTypeInferenceService>();
 
+        // Register inference queue and processor
+        services.AddSingleton<IInferenceQueue, InProcessInferenceQueue>();
+        services.AddHostedService<InferenceQueueProcessorService>();
+
         // Register configuration options
         services.AddOptions<TypeInferenceOptions>()
             .BindConfiguration(TypeInferenceOptions.SectionName)
+            .ValidateOnStart();
+
+        services.AddOptions<Configuration.MongoDbSettings>()
+            .BindConfiguration(Configuration.MongoDbSettings.SectionName)
+            .ValidateDataAnnotations()
             .ValidateOnStart();
 
         return services;
