@@ -39,8 +39,8 @@ public static class ServiceCollectionExtensions
         services.AddHostedService<InferenceQueueProcessorService>();
 
         // Register configuration options
-        services.AddOptions<TypeInferenceOptions>()
-            .BindConfiguration(TypeInferenceOptions.SectionName)
+        services.AddOptions<InferenceOptions>()
+            .BindConfiguration(InferenceOptions.SectionName)
             .ValidateOnStart();
 
         services.AddOptions<Configuration.MongoDbSettings>()

@@ -1,6 +1,7 @@
 using DivergentFlow.Api.Extensions;
 using DivergentFlow.Api.Tests.TestDoubles;
 using Microsoft.AspNetCore.Cors.Infrastructure;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Xunit;
@@ -56,7 +57,12 @@ public sealed class CorsPolicyTests
     private static CorsPolicy GetDefaultCorsPolicy(string environmentName)
     {
         var services = new ServiceCollection();
-        services.AddCorsPolicy(new FakeWebHostEnvironment { EnvironmentName = environmentName });
+
+        var configuration = new ConfigurationBuilder()
+            .AddEnvironmentVariables()
+            .Build();
+
+        services.AddCorsPolicy(new FakeWebHostEnvironment { EnvironmentName = environmentName }, configuration);
         var provider = services.BuildServiceProvider();
 
         var corsOptions = provider.GetRequiredService<IOptions<CorsOptions>>().Value;

@@ -1,29 +1,24 @@
 using DivergentFlow.Domain.Entities;
 using DivergentFlow.Infrastructure.Services;
+using DivergentFlow.Infrastructure.Services.Upstash;
 using Microsoft.Extensions.Logging;
 using Moq;
-using StackExchange.Redis;
 using Xunit;
 
 namespace DivergentFlow.Infrastructure.Tests.Services;
 
 public sealed class RedisProjectionWriterTests
 {
-    private readonly Mock<IConnectionMultiplexer> _mockRedis;
-    private readonly Mock<IDatabase> _mockDatabase;
+    private readonly Mock<IUpstashRedisRestWriteClient> _mockWrite;
     private readonly Mock<ILogger<RedisProjectionWriter>> _mockLogger;
     private readonly RedisProjectionWriter _writer;
 
     public RedisProjectionWriterTests()
     {
-        _mockRedis = new Mock<IConnectionMultiplexer>();
-        _mockDatabase = new Mock<IDatabase>();
+        _mockWrite = new Mock<IUpstashRedisRestWriteClient>();
         _mockLogger = new Mock<ILogger<RedisProjectionWriter>>();
 
-        _mockRedis.Setup(r => r.GetDatabase(It.IsAny<int>(), It.IsAny<object>()))
-            .Returns(_mockDatabase.Object);
-
-        _writer = new RedisProjectionWriter(_mockRedis.Object, _mockLogger.Object);
+        _writer = new RedisProjectionWriter(_mockWrite.Object, _mockLogger.Object);
     }
 
     [Fact]
@@ -38,28 +33,22 @@ public sealed class RedisProjectionWriterTests
             CreatedAt = 1000
         };
 
-        _mockDatabase
-            .Setup(db => db.StringSetAsync(
-                It.Is<RedisKey>(k => k.ToString() == "item:test-item"),
-                It.IsAny<RedisValue>(),
-                It.IsAny<TimeSpan?>(),
-                It.IsAny<bool>(),
-                It.IsAny<When>(),
-                It.IsAny<CommandFlags>()))
-            .ReturnsAsync(true);
+        _mockWrite
+            .Setup(w => w.SetAsync(
+                It.Is<string>(k => k == "item:test-item"),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
         // Act
         await _writer.SyncItemAsync(item);
 
         // Assert
-        _mockDatabase.Verify(
-            db => db.StringSetAsync(
-                It.Is<RedisKey>(k => k.ToString() == "item:test-item"),
-                It.IsAny<RedisValue>(),
-                null,
-                false,
-                When.Always,
-                CommandFlags.None),
+        _mockWrite.Verify(
+            w => w.SetAsync(
+                It.Is<string>(k => k == "item:test-item"),
+                It.Is<string>(payload => !string.IsNullOrWhiteSpace(payload)),
+                It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -75,15 +64,12 @@ public sealed class RedisProjectionWriterTests
             CreatedAt = 1000
         };
 
-        _mockDatabase
-            .Setup(db => db.StringSetAsync(
-                It.IsAny<RedisKey>(),
-                It.IsAny<RedisValue>(),
-                It.IsAny<TimeSpan?>(),
-                It.IsAny<bool>(),
-                It.IsAny<When>(),
-                It.IsAny<CommandFlags>()))
-            .ThrowsAsync(new RedisConnectionException(ConnectionFailureType.UnableToConnect, "Connection failed"));
+        _mockWrite
+            .Setup(w => w.SetAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new UpstashRedisRestException("Connection failed"));
 
         // Act - Should not throw
         await _writer.SyncItemAsync(item);
@@ -103,28 +89,22 @@ public sealed class RedisProjectionWriterTests
             CreatedAt = 2000
         };
 
-        _mockDatabase
-            .Setup(db => db.StringSetAsync(
-                It.Is<RedisKey>(k => k.ToString() == "collection:test-coll"),
-                It.IsAny<RedisValue>(),
-                It.IsAny<TimeSpan?>(),
-                It.IsAny<bool>(),
-                It.IsAny<When>(),
-                It.IsAny<CommandFlags>()))
-            .ReturnsAsync(true);
+        _mockWrite
+            .Setup(w => w.SetAsync(
+                It.Is<string>(k => k == "collection:test-coll"),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
         // Act
         await _writer.SyncCollectionAsync(collection);
 
         // Assert
-        _mockDatabase.Verify(
-            db => db.StringSetAsync(
-                It.Is<RedisKey>(k => k.ToString() == "collection:test-coll"),
-                It.IsAny<RedisValue>(),
-                null,
-                false,
-                When.Always,
-                CommandFlags.None),
+        _mockWrite.Verify(
+            w => w.SetAsync(
+                It.Is<string>(k => k == "collection:test-coll"),
+                It.Is<string>(payload => !string.IsNullOrWhiteSpace(payload)),
+                It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -139,15 +119,12 @@ public sealed class RedisProjectionWriterTests
             CreatedAt = 2000
         };
 
-        _mockDatabase
-            .Setup(db => db.StringSetAsync(
-                It.IsAny<RedisKey>(),
-                It.IsAny<RedisValue>(),
-                It.IsAny<TimeSpan?>(),
-                It.IsAny<bool>(),
-                It.IsAny<When>(),
-                It.IsAny<CommandFlags>()))
-            .ThrowsAsync(new RedisConnectionException(ConnectionFailureType.UnableToConnect, "Connection failed"));
+        _mockWrite
+            .Setup(w => w.SetAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new UpstashRedisRestException("Connection failed"));
 
         // Act - Should not throw
         await _writer.SyncCollectionAsync(collection);

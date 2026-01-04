@@ -1,8 +1,8 @@
 using System.Text.Json;
 using DivergentFlow.Application.Abstractions;
 using DivergentFlow.Domain.Entities;
+using DivergentFlow.Infrastructure.Services.Upstash;
 using Microsoft.Extensions.Logging;
-using StackExchange.Redis;
 
 namespace DivergentFlow.Infrastructure.Services;
 
@@ -13,7 +13,7 @@ namespace DivergentFlow.Infrastructure.Services;
 /// </summary>
 public sealed class RedisProjectionWriter : IProjectionWriter
 {
-    private readonly IConnectionMultiplexer _redis;
+    private readonly IUpstashRedisRestWriteClient _write;
     private readonly ILogger<RedisProjectionWriter> _logger;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -23,10 +23,10 @@ public sealed class RedisProjectionWriter : IProjectionWriter
     };
 
     public RedisProjectionWriter(
-        IConnectionMultiplexer redis,
+        IUpstashRedisRestWriteClient write,
         ILogger<RedisProjectionWriter> logger)
     {
-        _redis = redis;
+        _write = write;
         _logger = logger;
     }
 
@@ -34,11 +34,10 @@ public sealed class RedisProjectionWriter : IProjectionWriter
     {
         try
         {
-            var db = _redis.GetDatabase();
             var key = $"item:{item.Id}";
             var json = JsonSerializer.Serialize(item, JsonOptions);
-            
-            await db.StringSetAsync(key, json);
+
+            await _write.SetAsync(key, json, cancellationToken).ConfigureAwait(false);
             
             _logger.LogDebug("Synced item {ItemId} to Redis projection", item.Id);
         }
@@ -56,11 +55,10 @@ public sealed class RedisProjectionWriter : IProjectionWriter
     {
         try
         {
-            var db = _redis.GetDatabase();
             var key = $"collection:{collection.Id}";
             var json = JsonSerializer.Serialize(collection, JsonOptions);
-            
-            await db.StringSetAsync(key, json);
+
+            await _write.SetAsync(key, json, cancellationToken).ConfigureAwait(false);
             
             _logger.LogDebug("Synced collection {CollectionId} to Redis projection", collection.Id);
         }

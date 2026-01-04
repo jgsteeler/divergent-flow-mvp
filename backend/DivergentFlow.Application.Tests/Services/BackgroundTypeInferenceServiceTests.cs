@@ -70,10 +70,10 @@ public sealed class BackgroundTypeInferenceServiceTests
     }
 
     [Fact]
-    public void TypeInferenceOptions_HasCorrectDefaults()
+    public void InferenceOptions_HasCorrectDefaults()
     {
         // Arrange & Act
-        var options = new TypeInferenceOptions();
+        var options = new InferenceOptions();
 
         // Assert
         Assert.Equal(95, options.ConfidenceThreshold);

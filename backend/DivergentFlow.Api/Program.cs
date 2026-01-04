@@ -4,7 +4,6 @@ using DivergentFlow.Application.Abstractions;
 using DivergentFlow.Application.DependencyInjection;
 using DivergentFlow.Infrastructure.DependencyInjection;
 using dotenv.net;
-using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,18 +26,15 @@ DotEnv.Load(new DotEnvOptions(
 ));
 
 // Important: the EnvironmentVariables configuration provider loads once at startup.
-// Since dotenv.net sets environment variables at runtime, reload configuration so
-// builder.Configuration can see values from backend/.env (e.g. REDIS_URL).
-if (builder.Configuration is IConfigurationRoot configurationRoot)
-{
-    configurationRoot.Reload();
-}
+// Since dotenv.net sets environment variables at runtime, add an env-var provider
+// after DotEnv.Load so builder.Configuration sees values from backend/.env.
+builder.Configuration.AddEnvironmentVariables();
 
 // Add services to the container
 builder.Services.AddControllers();
 
 // Add CORS policy (environment-driven)
-builder.Services.AddCorsPolicy(builder.Environment);
+builder.Services.AddCorsPolicy(builder.Environment, builder.Configuration);
 
 // Register services for dependency injection using extension method
 builder.Services.AddApplication();
