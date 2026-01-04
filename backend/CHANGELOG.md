@@ -5,6 +5,13 @@ All notable changes to the Divergent Flow API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-api-v1.3.0...divergent-flow-api-v1.4.0) (2026-01-04)
+
+
+### Features
+
+* **infrastructure:** add MongoDB persistence with async inference queue ([#190](https://github.com/jgsteeler/divergent-flow-mvp/issues/190)) ([f93646d](https://github.com/jgsteeler/divergent-flow-mvp/commit/f93646d527b41ffc5b6a0a8049a37e5aa2c55769))
+
 ## [1.3.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-api-v1.2.0...divergent-flow-api-v1.3.0) (2026-01-02)
 
 
