@@ -23,7 +23,7 @@ public sealed class InferenceQueueProcessorServiceTests
     private readonly Mock<IProjectionWriter> _mockProjectionWriter;
     private readonly Mock<ILogger<InferenceQueueProcessorService>> _mockLogger;
     private readonly Mock<IHostApplicationLifetime> _mockLifetime;
-    private readonly TypeInferenceOptions _options;
+    private readonly InferenceOptions _options;
 
     public InferenceQueueProcessorServiceTests()
     {
@@ -37,13 +37,13 @@ public sealed class InferenceQueueProcessorServiceTests
         _mockLogger = new Mock<ILogger<InferenceQueueProcessorService>>();
         _mockLifetime = new Mock<IHostApplicationLifetime>();
 
-        _options = new TypeInferenceOptions
+        _options = new InferenceOptions
         {
             ConfidenceThreshold = 95,
             ProcessingIntervalSeconds = 60
         };
 
-        var mockOptions = new Mock<IOptions<TypeInferenceOptions>>();
+        var mockOptions = new Mock<IOptions<InferenceOptions>>();
         mockOptions.Setup(o => o.Value).Returns(_options);
 
         // Setup service provider chain
@@ -112,7 +112,7 @@ public sealed class InferenceQueueProcessorServiceTests
     public void Constructor_InitializesSuccessfully()
     {
         // Arrange & Act
-        var mockOptions = new Mock<IOptions<TypeInferenceOptions>>();
+        var mockOptions = new Mock<IOptions<InferenceOptions>>();
         mockOptions.Setup(o => o.Value).Returns(_options);
 
         var service = new InferenceQueueProcessorService(

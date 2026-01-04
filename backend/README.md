@@ -350,7 +350,7 @@ Configure in `appsettings.json` or via environment variables:
     "ItemsCollectionName": "items",
     "CollectionsCollectionName": "collections"
   },
-  "TypeInference": {
+  "Inference": {
     "ConfidenceThreshold": 95,
     "ProcessingIntervalSeconds": 60
   }
@@ -364,9 +364,9 @@ Or via environment variables:
 MongoDB__ConnectionString=mongodb://localhost:27017
 MongoDB__DatabaseName=divergent_flow
 
-# Type Inference
-TypeInference__ConfidenceThreshold=95
-TypeInference__ProcessingIntervalSeconds=60
+# Inference
+Inference__ConfidenceThreshold=95
+Inference__ProcessingIntervalSeconds=60
 ```
 
 ### Future Enhancements

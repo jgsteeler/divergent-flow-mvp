@@ -16,14 +16,14 @@ public sealed class InferenceQueueProcessorService : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly IInferenceQueue _queue;
     private readonly ILogger<InferenceQueueProcessorService> _logger;
-    private readonly TypeInferenceOptions _options;
+    private readonly InferenceOptions _options;
     private readonly IHostApplicationLifetime _applicationLifetime;
 
     public InferenceQueueProcessorService(
         IServiceProvider serviceProvider,
         IInferenceQueue queue,
         ILogger<InferenceQueueProcessorService> logger,
-        IOptions<TypeInferenceOptions> options,
+        IOptions<InferenceOptions> options,
         IHostApplicationLifetime applicationLifetime)
     {
         _serviceProvider = serviceProvider;

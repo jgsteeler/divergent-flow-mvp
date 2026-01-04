@@ -15,12 +15,12 @@ public sealed class BackgroundTypeInferenceService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<BackgroundTypeInferenceService> _logger;
-    private readonly TypeInferenceOptions _options;
+    private readonly InferenceOptions _options;
 
     public BackgroundTypeInferenceService(
         IServiceProvider serviceProvider,
         ILogger<BackgroundTypeInferenceService> logger,
-        IOptions<TypeInferenceOptions> options)
+        IOptions<InferenceOptions> options)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
