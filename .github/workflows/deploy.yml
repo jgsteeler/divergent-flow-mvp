@@ -92,7 +92,7 @@ jobs:
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_STAGING_SITE_ID }}
 
   # Step 4: Promote to production (only if release was created)
-  promote-to-production:
+  deploy-backend-prod:
     runs-on: ubuntu-latest
     needs: [release-please, deploy-backend-staging, deploy-frontend-staging]
     if: needs.release-please.outputs.releases_created == 'true'
@@ -105,25 +105,13 @@ jobs:
       - name: Setup Flyctl
         uses: superfly/flyctl-actions/setup-flyctl@master
 
-      - name: Promote Backend to Production
+      - name: Deploy to Prod
+        working-directory: backend
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: |
-          echo "Getting staging image reference..."
-          IMAGE_REF=$(flyctl status \
-            --app divergent-flow-api-staging \
-            --json | jq -r '.ImageRef')
-          echo "Staging image: $IMAGE_REF"
-
-          if [ -z "$IMAGE_REF" ] || [ "$IMAGE_REF" = "null" ]; then
-            echo "Error: Could not get staging image reference"
-            exit 1
-          fi
-
-          echo "Promoting image to production..."
-          cd backend
-          flyctl deploy --app divergent-flow-api --image "$IMAGE_REF"
-
+          flyctl deploy --config fly.toml --remote-only
+  
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
