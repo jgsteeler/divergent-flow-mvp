@@ -78,6 +78,28 @@ cd frontend
 npm run build
 ```
 
+## Deployment
+
+This project uses automated CI/CD deployment:
+
+- **Staging**: Automatically deploys on every push to `main`
+- **Production**: Automatically deploys when release PR is merged
+
+### Setup Deployment
+
+See [.github/DEPLOYMENT-SETUP.md](./.github/DEPLOYMENT-SETUP.md) for complete setup instructions including:
+- Netlify site configuration
+- GitHub secrets setup
+- Fly.io app creation
+- Environment variables
+
+### Deployment Architecture
+
+- **Backend**: .NET API on Fly.io (staging + production)
+- **Frontend**: React on Netlify (staging + production)
+- **Strategy**: Binary promotion for backend, separate builds for frontend
+- **Workflow**: `.github/workflows/deploy.yml`
+
 ## Tech Stack
 
 - **Frontend**: React 19, TypeScript, Vite
