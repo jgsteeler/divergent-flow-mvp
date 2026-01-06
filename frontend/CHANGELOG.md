@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.4.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-ui-v4.3.0...divergent-flow-ui-v4.4.0) (2026-01-06)
+
+
+### Features
+
+* **capture:** add confidence display and updatedAt field ([064b712](https://github.com/jgsteeler/divergent-flow-mvp/commit/064b712d2eadceacc5cf8ebae223de64cc115bf0))
+
 ## [4.3.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-ui-v4.2.0...divergent-flow-ui-v4.3.0) (2026-01-04)
 
 
