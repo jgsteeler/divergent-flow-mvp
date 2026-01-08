@@ -9,11 +9,38 @@ export interface CreateItemRequest {
   collectionId?: string | null
 }
 
+export interface ApiRequestOptions {
+  userId?: string
+  accessToken?: string | null
+}
+
+/**
+ * Create headers for API requests
+ * Includes authentication token and user ID when available
+ */
+function createHeaders(options?: ApiRequestOptions): HeadersInit {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  }
+
+  // Add user ID header (defaults to 'local' if not provided)
+  headers['X-User-Id'] = options?.userId || 'local'
+
+  // Add authorization header if access token is provided
+  if (options?.accessToken) {
+    headers['Authorization'] = `Bearer ${options.accessToken}`
+  }
+
+  return headers
+}
+
 /**
  * Fetch all items from the API
  */
-export async function fetchItems(): Promise<Item[]> {
-  const response = await fetch(`${API_URL}/api/items`)
+export async function fetchItems(options?: ApiRequestOptions): Promise<Item[]> {
+  const response = await fetch(`${API_URL}/api/items`, {
+    headers: createHeaders(options),
+  })
 
   if (!response.ok) {
     throw new Error(`Failed to fetch items: ${response.statusText}`)
@@ -25,12 +52,13 @@ export async function fetchItems(): Promise<Item[]> {
 /**
  * Create a new item via the API
  */
-export async function createItem(request: CreateItemRequest): Promise<Item> {
+export async function createItem(
+  request: CreateItemRequest,
+  options?: ApiRequestOptions
+): Promise<Item> {
   const response = await fetch(`${API_URL}/api/items`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: createHeaders(options),
     body: JSON.stringify(request),
   })
 

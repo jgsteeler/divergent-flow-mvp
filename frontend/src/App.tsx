@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CaptureInput } from "@/components/CaptureInput";
 import { CaptureList } from "@/components/CaptureList";
+import { AuthButton } from "@/components/AuthButton";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
@@ -30,9 +31,12 @@ function App() {
     <div className="min-h-screen bg-background p-4 md:p-8">
       <Toaster />
       <div className="max-w-4xl mx-auto space-y-8">
-        <header className="text-center space-y-2">
-          <h1 className="text-2xl font-bold">Divergent Flow</h1>
-          <p className="text-sm text-muted-foreground">Capture your thoughts</p>
+        <header className="flex justify-between items-center">
+          <div className="text-center flex-1 space-y-2">
+            <h1 className="text-2xl font-bold">Divergent Flow</h1>
+            <p className="text-sm text-muted-foreground">Capture your thoughts</p>
+          </div>
+          <AuthButton />
         </header>
 
         {view === "capture" ? (

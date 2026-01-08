@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import App from "./App.tsx";
 import { ErrorFallback } from "./ErrorFallback.tsx";
+import { AuthProvider } from "./components/AuthProvider.tsx";
 
 import "./main.css";
 import "./styles/theme.css";
@@ -23,9 +24,11 @@ if (container) {
   const root = createRoot(container);
   root.render(
     <ErrorBoundary FallbackComponent={ErrorFallback}>
-      <QueryClientProvider client={queryClient}>
-        <App />
-      </QueryClientProvider>
+      <AuthProvider>
+        <QueryClientProvider client={queryClient}>
+          <App />
+        </QueryClientProvider>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }
