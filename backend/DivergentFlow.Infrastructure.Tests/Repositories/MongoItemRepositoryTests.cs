@@ -268,7 +268,7 @@ public sealed class MongoItemRepositoryTests
             .ReturnsAsync(mockCursor.Object);
 
         // Act
-        var result = await _repository.GetItemsNeedingReInferenceAsync(UserId, 80);
+        var result = await _repository.GetItemsNeedingReInferenceAsync(UserId, 95);
 
         // Assert
         Assert.Equal(2, result.Count);
