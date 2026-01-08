@@ -11,6 +11,7 @@ namespace DivergentFlow.Infrastructure.Tests.Repositories;
 
 public sealed class MongoItemRepositoryTests
 {
+    private const string UserId = "local";
     private readonly Mock<IMongoDatabase> _mockDatabase;
     private readonly Mock<IMongoCollection<Item>> _mockCollection;
     private readonly Mock<ILogger<MongoItemRepository>> _mockLogger;
@@ -49,8 +50,8 @@ public sealed class MongoItemRepositoryTests
         // Arrange
         var items = new List<Item>
         {
-            new Item { Id = "1", Type = "capture", Text = "Test 1", CreatedAt = 1000 },
-            new Item { Id = "2", Type = "capture", Text = "Test 2", CreatedAt = 2000 }
+            new Item { Id = "1", Type = "capture", Text = "Test 1", CreatedAt = 1000, UserId = UserId },
+            new Item { Id = "2", Type = "capture", Text = "Test 2", CreatedAt = 2000, UserId = UserId }
         };
 
         var mockCursor = new Mock<IAsyncCursor<Item>>();
@@ -67,7 +68,7 @@ public sealed class MongoItemRepositoryTests
             .ReturnsAsync(mockCursor.Object);
 
         // Act
-        var result = await _repository.GetAllAsync();
+        var result = await _repository.GetAllAsync(UserId);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -79,7 +80,7 @@ public sealed class MongoItemRepositoryTests
     public async Task GetByIdAsync_WithValidId_ReturnsItem()
     {
         // Arrange
-        var item = new Item { Id = "test-id", Type = "capture", Text = "Test", CreatedAt = 1000 };
+        var item = new Item { Id = "test-id", Type = "capture", Text = "Test", CreatedAt = 1000, UserId = UserId };
 
         var mockCursor = new Mock<IAsyncCursor<Item>>();
         mockCursor.Setup(c => c.Current).Returns(new List<Item> { item });
@@ -95,7 +96,7 @@ public sealed class MongoItemRepositoryTests
             .ReturnsAsync(mockCursor.Object);
 
         // Act
-        var result = await _repository.GetByIdAsync("test-id");
+        var result = await _repository.GetByIdAsync(UserId, "test-id");
 
         // Assert
         Assert.NotNull(result);
@@ -121,7 +122,7 @@ public sealed class MongoItemRepositoryTests
             .ReturnsAsync(mockCursor.Object);
 
         // Act
-        var result = await _repository.GetByIdAsync("nonexistent");
+        var result = await _repository.GetByIdAsync(UserId, "nonexistent");
 
         // Assert
         Assert.Null(result);
@@ -141,12 +142,13 @@ public sealed class MongoItemRepositoryTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _repository.CreateAsync(item);
+        var result = await _repository.CreateAsync(UserId, item);
 
         // Assert
         Assert.NotNull(result);
         Assert.Equal(item.Id, result.Id);
         Assert.Equal(item.Text, result.Text);
+        Assert.Equal(UserId, result.UserId);
         _mockCollection.Verify(
             c => c.InsertOneAsync(item, null, default),
             Times.Once);
@@ -170,7 +172,7 @@ public sealed class MongoItemRepositoryTests
             .ReturnsAsync(mockResult.Object);
 
         // Act
-        var result = await _repository.UpdateAsync("update-id", item);
+        var result = await _repository.UpdateAsync(UserId, "update-id", item);
 
         // Assert
         Assert.NotNull(result);
@@ -196,7 +198,7 @@ public sealed class MongoItemRepositoryTests
             .ReturnsAsync(mockResult.Object);
 
         // Act
-        var result = await _repository.UpdateAsync("nonexistent", item);
+        var result = await _repository.UpdateAsync(UserId, "nonexistent", item);
 
         // Assert
         Assert.Null(result);
@@ -216,7 +218,7 @@ public sealed class MongoItemRepositoryTests
             .ReturnsAsync(mockResult.Object);
 
         // Act
-        var result = await _repository.DeleteAsync("delete-id");
+        var result = await _repository.DeleteAsync(UserId, "delete-id");
 
         // Assert
         Assert.True(result);
@@ -236,7 +238,7 @@ public sealed class MongoItemRepositoryTests
             .ReturnsAsync(mockResult.Object);
 
         // Act
-        var result = await _repository.DeleteAsync("nonexistent");
+        var result = await _repository.DeleteAsync(UserId, "nonexistent");
 
         // Assert
         Assert.False(result);
@@ -248,8 +250,8 @@ public sealed class MongoItemRepositoryTests
         // Arrange
         var items = new List<Item>
         {
-            new Item { Id = "1", Type = "capture", Text = "Test 1", CreatedAt = 1000, TypeConfidence = null },
-            new Item { Id = "2", Type = "capture", Text = "Test 2", CreatedAt = 2000, TypeConfidence = 50 }
+            new Item { Id = "1", Type = "capture", Text = "Test 1", CreatedAt = 1000, TypeConfidence = null, UserId = UserId },
+            new Item { Id = "2", Type = "capture", Text = "Test 2", CreatedAt = 2000, TypeConfidence = 50, UserId = UserId }
         };
 
         var mockCursor = new Mock<IAsyncCursor<Item>>();
@@ -266,7 +268,7 @@ public sealed class MongoItemRepositoryTests
             .ReturnsAsync(mockCursor.Object);
 
         // Act
-        var result = await _repository.GetItemsNeedingReInferenceAsync(95);
+        var result = await _repository.GetItemsNeedingReInferenceAsync(UserId, 80);
 
         // Assert
         Assert.Equal(2, result.Count);

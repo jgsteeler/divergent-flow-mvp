@@ -10,16 +10,18 @@ public sealed class GetAllItemsHandler : IRequestHandler<GetAllItemsQuery, IRead
 {
     private readonly IItemRepository _repository;
     private readonly IMapper _mapper;
+    private readonly IUserContext _userContext;
 
-    public GetAllItemsHandler(IItemRepository repository, IMapper mapper)
+    public GetAllItemsHandler(IItemRepository repository, IMapper mapper, IUserContext userContext)
     {
         _repository = repository;
         _mapper = mapper;
+        _userContext = userContext;
     }
 
     public async Task<IReadOnlyList<ItemDto>> Handle(GetAllItemsQuery request, CancellationToken cancellationToken)
     {
-        var items = await _repository.GetAllAsync(cancellationToken);
+        var items = await _repository.GetAllAsync(_userContext.UserId, cancellationToken);
         return items.Select(i => _mapper.Map<ItemDto>(i)).ToList();
     }
 }

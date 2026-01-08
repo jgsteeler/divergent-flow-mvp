@@ -10,16 +10,18 @@ public sealed class GetCollectionByIdHandler : IRequestHandler<GetCollectionById
 {
     private readonly ICollectionRepository _repository;
     private readonly IMapper _mapper;
+    private readonly IUserContext _userContext;
 
-    public GetCollectionByIdHandler(ICollectionRepository repository, IMapper mapper)
+    public GetCollectionByIdHandler(ICollectionRepository repository, IMapper mapper, IUserContext userContext)
     {
         _repository = repository;
         _mapper = mapper;
+        _userContext = userContext;
     }
 
     public async Task<CollectionDto?> Handle(GetCollectionByIdQuery request, CancellationToken cancellationToken)
     {
-        var collection = await _repository.GetByIdAsync(request.Id, cancellationToken);
+        var collection = await _repository.GetByIdAsync(_userContext.UserId, request.Id, cancellationToken);
         return collection == null ? null : _mapper.Map<CollectionDto>(collection);
     }
 }

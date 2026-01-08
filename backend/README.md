@@ -81,7 +81,7 @@ This API supports Redis via Upstash REST (one connectivity mode across environme
 - **REST URL**: HTTPS REST URL from the Upstash console (e.g., `https://us1-merry-cat-32748.upstash.io`)
 - **REST Token**: Upstash REST token (Bearer)
 
-4. Set environment variables (see Configuration section below)
+1. Set environment variables (see Configuration section below)
 
 ### Running the API
 
@@ -283,7 +283,7 @@ Controller → MediatR Handler → MongoDB (system of record)
                               ↓
                     Background Worker → Type Inference
                               ↓
-                    Update MongoDB → Sync to Redis (projection cache)
+                    Update MongoDB → (Optional) Sync to Redis (projection cache)
 ```
 
 #### Read Path (Query)
@@ -310,6 +310,19 @@ CORS is configured to allow requests from the frontend:
 - `http://localhost:5173` (Vite dev server)
 - `http://localhost:5000` (Alternative port)
 
+## User Identity (Work In Progress)
+
+The backend is being prepared for multi-user support. Today, requests are scoped to a user id:
+
+- Header: `X-User-Id`
+- Default (when header is missing): `local`
+
+Notes:
+
+- Existing persisted documents may have `UserId = null`. For now, the `local` user can read those legacy documents.
+- Background inference work items carry `userId` in the in-process queue.
+- The periodic catch-up service currently processes the default user (`local`) only.
+
 ## Background Type Inference Workflow
 
 The API includes two background services for type inference:
@@ -325,7 +338,8 @@ Processes items from an in-process queue asynchronously:
    - Loads the item from MongoDB
    - Runs type inference
    - Updates the item in MongoDB if confidence improves
-   - Syncs the updated item to Redis projection cache (if available)
+
+- Optionally syncs the updated item to a Redis projection cache (if enabled)
 
 ### 2. BackgroundTypeInferenceService (Periodic - Existing)
 

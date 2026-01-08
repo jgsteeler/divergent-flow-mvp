@@ -10,16 +10,18 @@ public sealed class GetCaptureByIdHandler : IRequestHandler<GetCaptureByIdQuery,
 {
     private readonly ICaptureRepository _repository;
     private readonly IMapper _mapper;
+    private readonly IUserContext _userContext;
 
-    public GetCaptureByIdHandler(ICaptureRepository repository, IMapper mapper)
+    public GetCaptureByIdHandler(ICaptureRepository repository, IMapper mapper, IUserContext userContext)
     {
         _repository = repository;
         _mapper = mapper;
+        _userContext = userContext;
     }
 
     public async Task<CaptureDto?> Handle(GetCaptureByIdQuery request, CancellationToken cancellationToken)
     {
-        var capture = await _repository.GetByIdAsync(request.Id, cancellationToken);
+        var capture = await _repository.GetByIdAsync(_userContext.UserId, request.Id, cancellationToken);
         return capture is null ? null : _mapper.Map<CaptureDto>(capture);
     }
 }

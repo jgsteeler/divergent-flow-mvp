@@ -16,7 +16,7 @@ public interface ICollectionRepository
     /// <returns>
     /// A read-only list containing all collections.
     /// </returns>
-    Task<IReadOnlyList<Collection>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Collection>> GetAllAsync(string userId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves a single <see cref="Collection"/> by its identifier.
@@ -30,7 +30,7 @@ public interface ICollectionRepository
     /// <returns>
     /// The matching collection if found; otherwise, <c>null</c>.
     /// </returns>
-    Task<Collection?> GetByIdAsync(string id, CancellationToken cancellationToken = default);
+    Task<Collection?> GetByIdAsync(string userId, string id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Creates a new <see cref="Collection"/> entry.
@@ -44,7 +44,7 @@ public interface ICollectionRepository
     /// <returns>
     /// The created collection, including any values assigned by the underlying store.
     /// </returns>
-    Task<Collection> CreateAsync(Collection collection, CancellationToken cancellationToken = default);
+    Task<Collection> CreateAsync(string userId, Collection collection, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Updates an existing <see cref="Collection"/> entry.
@@ -61,7 +61,7 @@ public interface ICollectionRepository
     /// <returns>
     /// The updated collection if the entry exists; otherwise, <c>null</c>.
     /// </returns>
-    Task<Collection?> UpdateAsync(string id, Collection updated, CancellationToken cancellationToken = default);
+    Task<Collection?> UpdateAsync(string userId, string id, Collection updated, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes a <see cref="Collection"/> entry by its identifier.
@@ -75,5 +75,5 @@ public interface ICollectionRepository
     /// <returns>
     /// <c>true</c> if a collection was deleted; otherwise, <c>false</c>.
     /// </returns>
-    Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default);
+    Task<bool> DeleteAsync(string userId, string id, CancellationToken cancellationToken = default);
 }

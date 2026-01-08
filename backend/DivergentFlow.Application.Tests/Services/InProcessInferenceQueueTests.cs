@@ -21,23 +21,26 @@ public sealed class InProcessInferenceQueueTests
     public async Task EnqueueAsync_EnqueuesItemSuccessfully()
     {
         // Arrange
+        var userId = "local";
         var itemId = "test-item-1";
 
         // Act
-        await _queue.EnqueueAsync(itemId);
+        await _queue.EnqueueAsync(userId, itemId);
 
         // Assert - if we can dequeue, the item was enqueued
-        var dequeuedId = await _queue.DequeueAsync();
-        Assert.Equal(itemId, dequeuedId);
+        var workItem = await _queue.DequeueAsync();
+        Assert.Equal(userId, workItem.UserId);
+        Assert.Equal(itemId, workItem.ItemId);
     }
 
     [Fact]
     public async Task DequeueAsync_ReturnsItemsInFifoOrder()
     {
         // Arrange
-        await _queue.EnqueueAsync("item-1");
-        await _queue.EnqueueAsync("item-2");
-        await _queue.EnqueueAsync("item-3");
+        var userId = "local";
+        await _queue.EnqueueAsync(userId, "item-1");
+        await _queue.EnqueueAsync(userId, "item-2");
+        await _queue.EnqueueAsync(userId, "item-3");
 
         // Act
         var first = await _queue.DequeueAsync();
@@ -45,9 +48,9 @@ public sealed class InProcessInferenceQueueTests
         var third = await _queue.DequeueAsync();
 
         // Assert
-        Assert.Equal("item-1", first);
-        Assert.Equal("item-2", second);
-        Assert.Equal("item-3", third);
+        Assert.Equal("item-1", first.ItemId);
+        Assert.Equal("item-2", second.ItemId);
+        Assert.Equal("item-3", third.ItemId);
     }
 
     [Fact]
@@ -66,11 +69,12 @@ public sealed class InProcessInferenceQueueTests
     public async Task Queue_SupportsMultipleWriters()
     {
         // Arrange & Act - Simulate multiple writers
+        var userId = "local";
         var tasks = new List<Task>();
         for (int i = 0; i < 10; i++)
         {
             var itemId = $"item-{i}";
-            tasks.Add(Task.Run(async () => await _queue.EnqueueAsync(itemId)));
+            tasks.Add(Task.Run(async () => await _queue.EnqueueAsync(userId, itemId)));
         }
 
         await Task.WhenAll(tasks);
@@ -79,7 +83,7 @@ public sealed class InProcessInferenceQueueTests
         var dequeuedItems = new List<string>();
         for (int i = 0; i < 10; i++)
         {
-            dequeuedItems.Add(await _queue.DequeueAsync());
+            dequeuedItems.Add((await _queue.DequeueAsync()).ItemId);
         }
 
         Assert.Equal(10, dequeuedItems.Count);

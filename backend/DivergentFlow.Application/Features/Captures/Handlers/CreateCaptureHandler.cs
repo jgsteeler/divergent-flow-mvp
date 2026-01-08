@@ -18,6 +18,7 @@ public sealed class CreateCaptureHandler : IRequestHandler<CreateCaptureCommand,
     private readonly IMapper _mapper;
     private readonly ILogger<CreateCaptureHandler> _logger;
     private readonly ITypeInferenceWorkflowTrigger _workflowTrigger;
+    private readonly IUserContext _userContext;
 
     
     
@@ -28,12 +29,14 @@ public sealed class CreateCaptureHandler : IRequestHandler<CreateCaptureCommand,
         ICaptureRepository repository,
         IMapper mapper,
         ILogger<CreateCaptureHandler> logger,
-        ITypeInferenceWorkflowTrigger workflowTrigger)
+        ITypeInferenceWorkflowTrigger workflowTrigger,
+        IUserContext userContext)
     {
         _repository = repository;
         _mapper = mapper;
         _logger = logger;
         _workflowTrigger = workflowTrigger;
+        _userContext = userContext;
     }
 
     
@@ -57,6 +60,7 @@ public sealed class CreateCaptureHandler : IRequestHandler<CreateCaptureCommand,
 
         var capture = new Capture
         {
+            UserId = _userContext.UserId,
             Id = Guid.NewGuid().ToString(),
             Text = request.Text,
             CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
@@ -71,7 +75,7 @@ public sealed class CreateCaptureHandler : IRequestHandler<CreateCaptureCommand,
             capture.Id,
             capture.CreatedAt);
 
-        var created = await _repository.CreateAsync(capture, cancellationToken);
+        var created = await _repository.CreateAsync(_userContext.UserId, capture, cancellationToken);
 
         _logger.LogDebug(
             "CreateAsync returned capture {CaptureId} (sameId={SameId})",
@@ -79,7 +83,7 @@ public sealed class CreateCaptureHandler : IRequestHandler<CreateCaptureCommand,
             string.Equals(created.Id, capture.Id, StringComparison.Ordinal));
 
         // Trigger background re-inference workflow (non-blocking)
-        _workflowTrigger.TriggerInferenceWorkflow(created.Id);
+        _workflowTrigger.TriggerInferenceWorkflow(_userContext.UserId, created.Id);
 
         return _mapper.Map<CaptureDto>(created);
     }

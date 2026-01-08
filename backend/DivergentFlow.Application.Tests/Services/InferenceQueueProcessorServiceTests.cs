@@ -71,6 +71,7 @@ public sealed class InferenceQueueProcessorServiceTests
     public async Task ProcessItemAsync_UpdatesItemWhenConfidenceImproves()
     {
         // Arrange
+        var userId = "local";
         var itemId = "test-item";
         var item = new Item
         {
@@ -78,7 +79,8 @@ public sealed class InferenceQueueProcessorServiceTests
             Type = "capture",
             Text = "Buy groceries",
             CreatedAt = 1000,
-            TypeConfidence = 70
+            TypeConfidence = 70,
+            UserId = userId
         };
 
         var inferenceResult = new TypeInferenceResult
@@ -88,7 +90,7 @@ public sealed class InferenceQueueProcessorServiceTests
         };
 
         _mockItemRepository
-            .Setup(r => r.GetByIdAsync(itemId, It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetByIdAsync(userId, itemId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(item);
 
         _mockInferenceService
@@ -96,8 +98,8 @@ public sealed class InferenceQueueProcessorServiceTests
             .ReturnsAsync(inferenceResult);
 
         _mockItemRepository
-            .Setup(r => r.UpdateAsync(itemId, It.IsAny<Item>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string id, Item updated, CancellationToken ct) => updated);
+            .Setup(r => r.UpdateAsync(userId, itemId, It.IsAny<Item>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string u, string id, Item updated, CancellationToken ct) => updated);
 
         // Note: We can't easily test the full ExecuteAsync method due to its infinite loop
         // and private ProcessItemAsync method, but we can verify the interactions

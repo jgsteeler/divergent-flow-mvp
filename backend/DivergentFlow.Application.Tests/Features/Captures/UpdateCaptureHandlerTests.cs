@@ -12,11 +12,13 @@ namespace DivergentFlow.Application.Tests.Features.Captures;
 public sealed class UpdateCaptureHandlerTests
 {
     private readonly IMapper _mapper;
+    private readonly IUserContext _userContext;
 
     public UpdateCaptureHandlerTests()
     {
         var config = new MapperConfiguration(cfg => cfg.AddProfile<CaptureMappingProfile>());
         _mapper = config.CreateMapper();
+        _userContext = new FakeUserContext("local");
     }
 
     [Fact]
@@ -33,7 +35,7 @@ public sealed class UpdateCaptureHandlerTests
         };
 
         var repository = new FakeCaptureRepository(existingCapture);
-        var handler = new UpdateCaptureHandler(repository, _mapper);
+        var handler = new UpdateCaptureHandler(repository, _mapper, _userContext);
 
         var command = new UpdateCaptureCommand(
             Id: "capture-1",
@@ -59,7 +61,7 @@ public sealed class UpdateCaptureHandlerTests
     {
         // Arrange
         var repository = new FakeCaptureRepository(null);
-        var handler = new UpdateCaptureHandler(repository, _mapper);
+        var handler = new UpdateCaptureHandler(repository, _mapper, _userContext);
 
         var command = new UpdateCaptureCommand(
             Id: "non-existing",
@@ -89,7 +91,7 @@ public sealed class UpdateCaptureHandlerTests
         };
 
         var repository = new FakeCaptureRepository(existingCapture);
-        var handler = new UpdateCaptureHandler(repository, _mapper);
+        var handler = new UpdateCaptureHandler(repository, _mapper, _userContext);
 
         var command = new UpdateCaptureCommand(
             Id: "capture-1",
@@ -123,7 +125,7 @@ public sealed class UpdateCaptureHandlerTests
         };
 
         var repository = new FakeCaptureRepository(existingCapture);
-        var handler = new UpdateCaptureHandler(repository, _mapper);
+        var handler = new UpdateCaptureHandler(repository, _mapper, _userContext);
 
         var command = new UpdateCaptureCommand(
             Id: "capture-1",
@@ -154,7 +156,7 @@ public sealed class UpdateCaptureHandlerTests
         };
 
         var repository = new CancellationAwareFakeRepository(existingCapture);
-        var handler = new UpdateCaptureHandler(repository, _mapper);
+        var handler = new UpdateCaptureHandler(repository, _mapper, _userContext);
 
         var command = new UpdateCaptureCommand(
             Id: "capture-1",
@@ -180,22 +182,22 @@ public sealed class UpdateCaptureHandlerTests
             _capture = capture;
         }
 
-        public Task<IReadOnlyList<Capture>> GetAllAsync(CancellationToken cancellationToken = default)
+        public Task<IReadOnlyList<Capture>> GetAllAsync(string userId, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
 
-        public Task<Capture?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
+        public Task<Capture?> GetByIdAsync(string userId, string id, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(_capture?.Id == id ? _capture : null);
         }
 
-        public Task<Capture> CreateAsync(Capture capture, CancellationToken cancellationToken = default)
+        public Task<Capture> CreateAsync(string userId, Capture capture, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
 
-        public Task<Capture?> UpdateAsync(string id, Capture updated, CancellationToken cancellationToken = default)
+        public Task<Capture?> UpdateAsync(string userId, string id, Capture updated, CancellationToken cancellationToken = default)
         {
             if (_capture?.Id != id)
             {
@@ -206,6 +208,7 @@ public sealed class UpdateCaptureHandlerTests
             _capture = new Capture
             {
                 Id = updated.Id,
+                UserId = userId,
                 Text = updated.Text,
                 CreatedAt = _capture.CreatedAt, // Preserve original
                 InferredType = updated.InferredType,
@@ -216,12 +219,13 @@ public sealed class UpdateCaptureHandlerTests
             return Task.FromResult<Capture?>(_capture);
         }
 
-        public Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default)
+        public Task<bool> DeleteAsync(string userId, string id, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
 
         public Task<IReadOnlyList<Capture>> GetCapturesNeedingReInferenceAsync(
+            string userId,
             double confidenceThreshold,
             CancellationToken cancellationToken = default)
         {
@@ -238,38 +242,49 @@ public sealed class UpdateCaptureHandlerTests
             _capture = capture;
         }
 
-        public Task<IReadOnlyList<Capture>> GetAllAsync(CancellationToken cancellationToken = default)
+        public Task<IReadOnlyList<Capture>> GetAllAsync(string userId, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
 
-        public Task<Capture?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
+        public Task<Capture?> GetByIdAsync(string userId, string id, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             return Task.FromResult(_capture?.Id == id ? _capture : null);
         }
 
-        public Task<Capture> CreateAsync(Capture capture, CancellationToken cancellationToken = default)
+        public Task<Capture> CreateAsync(string userId, Capture capture, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
 
-        public Task<Capture?> UpdateAsync(string id, Capture updated, CancellationToken cancellationToken = default)
+        public Task<Capture?> UpdateAsync(string userId, string id, Capture updated, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             throw new NotImplementedException();
         }
 
-        public Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default)
+        public Task<bool> DeleteAsync(string userId, string id, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
 
         public Task<IReadOnlyList<Capture>> GetCapturesNeedingReInferenceAsync(
+            string userId,
             double confidenceThreshold,
             CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
+    }
+
+    private sealed class FakeUserContext : IUserContext
+    {
+        public FakeUserContext(string userId)
+        {
+            UserId = userId;
+        }
+
+        public string UserId { get; }
     }
 }

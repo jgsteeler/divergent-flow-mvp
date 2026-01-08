@@ -10,16 +10,18 @@ public sealed class GetAllCapturesHandler : IRequestHandler<GetAllCapturesQuery,
 {
     private readonly ICaptureRepository _repository;
     private readonly IMapper _mapper;
+    private readonly IUserContext _userContext;
 
-    public GetAllCapturesHandler(ICaptureRepository repository, IMapper mapper)
+    public GetAllCapturesHandler(ICaptureRepository repository, IMapper mapper, IUserContext userContext)
     {
         _repository = repository;
         _mapper = mapper;
+        _userContext = userContext;
     }
 
     public async Task<IReadOnlyList<CaptureDto>> Handle(GetAllCapturesQuery request, CancellationToken cancellationToken)
     {
-        var captures = await _repository.GetAllAsync(cancellationToken);
+        var captures = await _repository.GetAllAsync(_userContext.UserId, cancellationToken);
         return captures.Select(c => _mapper.Map<CaptureDto>(c)).ToList();
     }
 }

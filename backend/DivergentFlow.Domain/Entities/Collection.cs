@@ -6,6 +6,14 @@ namespace DivergentFlow.Domain.Entities;
 public sealed class Collection
 {
     /// <summary>
+    /// Gets or sets the user identifier that owns this collection.
+    ///
+    /// Note: This is currently optional to avoid breaking existing persisted documents.
+    /// When user identity is fully implemented, this will become required.
+    /// </summary>
+    public string? UserId { get; set; }
+
+    /// <summary>
     /// Gets or sets the unique identifier for the collection.
     /// </summary>
     public required string Id { get; set; }

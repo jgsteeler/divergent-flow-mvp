@@ -63,7 +63,11 @@ public sealed class BackgroundTypeInferenceService : BackgroundService
         var repository = scope.ServiceProvider.GetRequiredService<ICaptureRepository>();
         var inferenceService = scope.ServiceProvider.GetRequiredService<ITypeInferenceService>();
 
+        var userContext = scope.ServiceProvider.GetService<IUserContext>();
+        var userId = userContext?.UserId ?? "local";
+
         var capturesNeedingInference = await repository.GetCapturesNeedingReInferenceAsync(
+            userId,
             _options.ConfidenceThreshold,
             cancellationToken);
 
@@ -107,7 +111,7 @@ public sealed class BackgroundTypeInferenceService : BackgroundService
                     capture.TypeConfidence = result.Confidence;
                     capture.UpdatedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
-                    await repository.UpdateAsync(capture.Id, capture, cancellationToken);
+                    await repository.UpdateAsync(userId, capture.Id, capture, cancellationToken);
                     updatedCount++;
                 }
                 else

@@ -21,17 +21,19 @@ public sealed class UpstashRestCaptureRepository : ICaptureRepository
         _logger = logger;
     }
 
-    public async Task<IReadOnlyList<Capture>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Capture>> GetAllAsync(string userId, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var ids = await _read.SMembersAsync(RedisCaptureStorage.CapturesSetKey, cancellationToken).ConfigureAwait(false);
+        var ids = await _read.SMembersAsync(
+            RedisCaptureStorage.CapturesSetKeyForUser(userId),
+            cancellationToken).ConfigureAwait(false);
         if (ids.Length == 0)
         {
             return Array.Empty<Capture>();
         }
 
-        var keys = ids.Select(RedisCaptureStorage.CaptureKey).ToArray();
+        var keys = ids.Select(id => RedisCaptureStorage.CaptureKeyForUser(userId, id)).ToArray();
         var values = await _read.MGetAsync(keys, cancellationToken).ConfigureAwait(false);
 
         var results = new List<Capture>(values.Count);
@@ -70,11 +72,11 @@ public sealed class UpstashRestCaptureRepository : ICaptureRepository
         return results;
     }
 
-    public async Task<Capture?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
+    public async Task<Capture?> GetByIdAsync(string userId, string id, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var key = RedisCaptureStorage.CaptureKey(id);
+        var key = RedisCaptureStorage.CaptureKeyForUser(userId, id);
         var json = await _read.GetAsync(key, cancellationToken).ConfigureAwait(false);
         if (string.IsNullOrWhiteSpace(json))
         {
@@ -84,29 +86,31 @@ public sealed class UpstashRestCaptureRepository : ICaptureRepository
         return RedisCaptureStorage.Deserialize(json);
     }
 
-    public async Task<Capture> CreateAsync(Capture capture, CancellationToken cancellationToken = default)
+    public async Task<Capture> CreateAsync(string userId, Capture capture, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var key = RedisCaptureStorage.CaptureKey(capture.Id);
+        capture.UserId = userId;
+        var key = RedisCaptureStorage.CaptureKeyForUser(userId, capture.Id);
         var json = RedisCaptureStorage.Serialize(capture);
 
         await _write.ExecuteTransactionAsync(
             new List<IReadOnlyList<object?>>
             {
                 new object?[] { "SET", key, json },
-                new object?[] { "SADD", RedisCaptureStorage.CapturesSetKey, capture.Id }
+                new object?[] { "SADD", RedisCaptureStorage.CapturesSetKeyForUser(userId), capture.Id }
             },
             cancellationToken).ConfigureAwait(false);
 
         return capture;
     }
 
-    public async Task<Capture?> UpdateAsync(string id, Capture updated, CancellationToken cancellationToken = default)
+    public async Task<Capture?> UpdateAsync(string userId, string id, Capture updated, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var key = RedisCaptureStorage.CaptureKey(id);
+        updated.UserId = userId;
+        var key = RedisCaptureStorage.CaptureKeyForUser(userId, id);
         var existing = await _read.GetAsync(key, cancellationToken).ConfigureAwait(false);
         if (string.IsNullOrWhiteSpace(existing))
         {
@@ -118,27 +122,28 @@ public sealed class UpstashRestCaptureRepository : ICaptureRepository
             new List<IReadOnlyList<object?>>
             {
                 new object?[] { "SET", key, json },
-                new object?[] { "SADD", RedisCaptureStorage.CapturesSetKey, id }
+                new object?[] { "SADD", RedisCaptureStorage.CapturesSetKeyForUser(userId), id }
             },
             cancellationToken).ConfigureAwait(false);
 
         return updated;
     }
 
-    public async Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteAsync(string userId, string id, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var key = RedisCaptureStorage.CaptureKey(id);
+        var key = RedisCaptureStorage.CaptureKeyForUser(userId, id);
 
         // Not strictly atomic to compute the return value, but we still perform both operations.
         var deleted = await _write.DelAsync(key, cancellationToken).ConfigureAwait(false);
-        await _write.SRemAsync(RedisCaptureStorage.CapturesSetKey, id, cancellationToken).ConfigureAwait(false);
+        await _write.SRemAsync(RedisCaptureStorage.CapturesSetKeyForUser(userId), id, cancellationToken).ConfigureAwait(false);
 
         return deleted > 0;
     }
 
     public async Task<IReadOnlyList<Capture>> GetCapturesNeedingReInferenceAsync(
+        string userId,
         double confidenceThreshold,
         CancellationToken cancellationToken = default)
     {
@@ -150,7 +155,7 @@ public sealed class UpstashRestCaptureRepository : ICaptureRepository
         // should be optimized before reaching production scale.
         
         // Get all captures and filter in memory
-        var allCaptures = await GetAllAsync(cancellationToken).ConfigureAwait(false);
+        var allCaptures = await GetAllAsync(userId, cancellationToken).ConfigureAwait(false);
 
         // Filter for non-migrated captures with null confidence or confidence below threshold
         var capturesNeedingInference = allCaptures

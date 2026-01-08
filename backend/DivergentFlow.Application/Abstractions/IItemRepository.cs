@@ -16,7 +16,7 @@ public interface IItemRepository
     /// <returns>
     /// A read-only list containing all items.
     /// </returns>
-    Task<IReadOnlyList<Item>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Item>> GetAllAsync(string userId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves a single <see cref="Item"/> by its identifier.
@@ -30,7 +30,7 @@ public interface IItemRepository
     /// <returns>
     /// The matching item if found; otherwise, <c>null</c>.
     /// </returns>
-    Task<Item?> GetByIdAsync(string id, CancellationToken cancellationToken = default);
+    Task<Item?> GetByIdAsync(string userId, string id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Creates a new <see cref="Item"/> entry.
@@ -44,7 +44,7 @@ public interface IItemRepository
     /// <returns>
     /// The created item, including any values assigned by the underlying store.
     /// </returns>
-    Task<Item> CreateAsync(Item item, CancellationToken cancellationToken = default);
+    Task<Item> CreateAsync(string userId, Item item, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Updates an existing <see cref="Item"/> entry.
@@ -61,7 +61,7 @@ public interface IItemRepository
     /// <returns>
     /// The updated item if the entry exists; otherwise, <c>null</c>.
     /// </returns>
-    Task<Item?> UpdateAsync(string id, Item updated, CancellationToken cancellationToken = default);
+    Task<Item?> UpdateAsync(string userId, string id, Item updated, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes a <see cref="Item"/> entry by its identifier.
@@ -75,7 +75,7 @@ public interface IItemRepository
     /// <returns>
     /// <c>true</c> if an item was deleted; otherwise, <c>false</c>.
     /// </returns>
-    Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default);
+    Task<bool> DeleteAsync(string userId, string id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves all <see cref="Item"/> entries that have a null type confidence
@@ -91,6 +91,7 @@ public interface IItemRepository
     /// A read-only list containing all items that need re-inference.
     /// </returns>
     Task<IReadOnlyList<Item>> GetItemsNeedingReInferenceAsync(
+        string userId,
         double confidenceThreshold,
         CancellationToken cancellationToken = default);
 }

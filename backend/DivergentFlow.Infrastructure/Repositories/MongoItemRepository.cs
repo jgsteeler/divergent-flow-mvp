@@ -16,6 +16,16 @@ public sealed class MongoItemRepository : IItemRepository
     private readonly IMongoCollection<Item> _collection;
     private readonly ILogger<MongoItemRepository> _logger;
 
+    private static FilterDefinition<Item> BuildUserFilter(string userId)
+    {
+        var userIsLocal = string.Equals(userId, "local", StringComparison.Ordinal);
+        return userIsLocal
+            ? Builders<Item>.Filter.Or(
+                Builders<Item>.Filter.Eq(i => i.UserId, userId),
+                Builders<Item>.Filter.Eq(i => i.UserId, null))
+            : Builders<Item>.Filter.Eq(i => i.UserId, userId);
+    }
+
     public MongoItemRepository(
         IMongoDatabase database,
         IOptions<MongoDbSettings> settings,
@@ -30,12 +40,12 @@ public sealed class MongoItemRepository : IItemRepository
             collectionName);
     }
 
-    public async Task<IReadOnlyList<Item>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Item>> GetAllAsync(string userId, CancellationToken cancellationToken = default)
     {
         try
         {
             var items = await _collection
-                .Find(FilterDefinition<Item>.Empty)
+                .Find(BuildUserFilter(userId))
                 .ToListAsync(cancellationToken);
             
             _logger.LogDebug("Retrieved {Count} items from MongoDB", items.Count);
@@ -48,11 +58,13 @@ public sealed class MongoItemRepository : IItemRepository
         }
     }
 
-    public async Task<Item?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
+    public async Task<Item?> GetByIdAsync(string userId, string id, CancellationToken cancellationToken = default)
     {
         try
         {
-            var filter = Builders<Item>.Filter.Eq(i => i.Id, id);
+            var filter = Builders<Item>.Filter.And(
+                BuildUserFilter(userId),
+                Builders<Item>.Filter.Eq(i => i.Id, id));
             var item = await _collection
                 .Find(filter)
                 .FirstOrDefaultAsync(cancellationToken);
@@ -71,10 +83,11 @@ public sealed class MongoItemRepository : IItemRepository
         }
     }
 
-    public async Task<Item> CreateAsync(Item item, CancellationToken cancellationToken = default)
+    public async Task<Item> CreateAsync(string userId, Item item, CancellationToken cancellationToken = default)
     {
         try
         {
+            item.UserId = userId;
             await _collection.InsertOneAsync(item, cancellationToken: cancellationToken);
             
             _logger.LogInformation(
@@ -94,11 +107,14 @@ public sealed class MongoItemRepository : IItemRepository
         }
     }
 
-    public async Task<Item?> UpdateAsync(string id, Item updated, CancellationToken cancellationToken = default)
+    public async Task<Item?> UpdateAsync(string userId, string id, Item updated, CancellationToken cancellationToken = default)
     {
         try
         {
-            var filter = Builders<Item>.Filter.Eq(i => i.Id, id);
+            updated.UserId = userId;
+            var filter = Builders<Item>.Filter.And(
+                BuildUserFilter(userId),
+                Builders<Item>.Filter.Eq(i => i.Id, id));
             var result = await _collection.ReplaceOneAsync(
                 filter,
                 updated,
@@ -124,11 +140,13 @@ public sealed class MongoItemRepository : IItemRepository
         }
     }
 
-    public async Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteAsync(string userId, string id, CancellationToken cancellationToken = default)
     {
         try
         {
-            var filter = Builders<Item>.Filter.Eq(i => i.Id, id);
+            var filter = Builders<Item>.Filter.And(
+                BuildUserFilter(userId),
+                Builders<Item>.Filter.Eq(i => i.Id, id));
             var result = await _collection.DeleteOneAsync(filter, cancellationToken);
             
             if (result.DeletedCount > 0)
@@ -148,15 +166,17 @@ public sealed class MongoItemRepository : IItemRepository
     }
 
     public async Task<IReadOnlyList<Item>> GetItemsNeedingReInferenceAsync(
+        string userId,
         double confidenceThreshold,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            var filter = Builders<Item>.Filter.Or(
-                Builders<Item>.Filter.Eq(i => i.TypeConfidence, null),
-                Builders<Item>.Filter.Lt(i => i.TypeConfidence, confidenceThreshold)
-            );
+            var filter = Builders<Item>.Filter.And(
+                BuildUserFilter(userId),
+                Builders<Item>.Filter.Or(
+                    Builders<Item>.Filter.Eq(i => i.TypeConfidence, null),
+                    Builders<Item>.Filter.Lt(i => i.TypeConfidence, confidenceThreshold)));
             
             var items = await _collection
                 .Find(filter)

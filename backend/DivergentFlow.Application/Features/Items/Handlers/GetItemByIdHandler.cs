@@ -10,16 +10,18 @@ public sealed class GetItemByIdHandler : IRequestHandler<GetItemByIdQuery, ItemD
 {
     private readonly IItemRepository _repository;
     private readonly IMapper _mapper;
+    private readonly IUserContext _userContext;
 
-    public GetItemByIdHandler(IItemRepository repository, IMapper mapper)
+    public GetItemByIdHandler(IItemRepository repository, IMapper mapper, IUserContext userContext)
     {
         _repository = repository;
         _mapper = mapper;
+        _userContext = userContext;
     }
 
     public async Task<ItemDto?> Handle(GetItemByIdQuery request, CancellationToken cancellationToken)
     {
-        var item = await _repository.GetByIdAsync(request.Id, cancellationToken);
+        var item = await _repository.GetByIdAsync(_userContext.UserId, request.Id, cancellationToken);
         return item == null ? null : _mapper.Map<ItemDto>(item);
     }
 }
