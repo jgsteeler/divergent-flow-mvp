@@ -13,6 +13,8 @@ concurrency:
 permissions:
   contents: write
   pull-requests: write
+  deployments: write
+  statuses: write
 
 jobs:
   # Step 1: Version management
@@ -61,6 +63,8 @@ jobs:
     needs: release-please
     permissions:
       contents: read
+      deployments: write
+      statuses: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -93,8 +97,8 @@ jobs:
           deploy-message: 'Deploy from GitHub Actions - staging'
           enable-pull-request-comment: false
           enable-commit-comment: false
-          enable-commit-status: false
-          enable-github-deployment: false
+          enable-commit-status: true
+          enable-github-deployment: true
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_STAGING_SITE_ID }}
@@ -106,6 +110,8 @@ jobs:
     if: needs.release-please.outputs.releases_created == 'true'
     permissions:
       contents: read
+      deployments: write
+      statuses: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -150,8 +156,8 @@ jobs:
             Release ${{ needs.release-please.outputs.frontend_tag_name }}
           enable-pull-request-comment: false
           enable-commit-comment: false
-          enable-commit-status: false
-          enable-github-deployment: false
+          enable-commit-status: true
+          enable-github-deployment: true
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_PROD_SITE_ID }}
