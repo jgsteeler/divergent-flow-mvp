@@ -209,7 +209,16 @@ fly secrets set CORS_ALLOWED_ORIGINS="https://myapp.com" \
 
 ### Frontend Environment Variables
 
-Add to Netlify site settings:
+This repo deploys a **pre-built** frontend bundle to Netlify (Netlify builds are disabled), so `VITE_*` variables must be available **during the GitHub Actions build step**.
+
+You can set these as **GitHub Actions secrets** (recommended) and the workflow will inject them into the build:
+
+- `VITE_API_URL_STAGING` (optional; defaults to `https://divergent-flow-api-staging.fly.dev`)
+- `VITE_API_URL_PROD` (optional; defaults to `https://divergent-flow-api.fly.dev`)
+
+If you instead want Netlify to build the site, re-enable Netlify builds and then configure environment variables in Netlify.
+
+Netlify site settings (only applies if Netlify builds are enabled):
 
 1. **Site Settings** > **Environment variables**
 2. Add variables for each environment

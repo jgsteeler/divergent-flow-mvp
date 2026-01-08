@@ -92,6 +92,11 @@ Add these secrets in **Settings > Secrets and variables > Actions**:
 - `NETLIFY_STAGING_SITE_ID`: API ID for staging Netlify site
 - `NETLIFY_PROD_SITE_ID`: API ID for production Netlify site
 
+Optional (recommended if you use custom API domains):
+
+- `VITE_API_URL_STAGING`: Frontend API base URL for staging builds
+- `VITE_API_URL_PROD`: Frontend API base URL for production builds
+
 ### Netlify Setup
 
 1. **Create Two Sites** in Netlify:
