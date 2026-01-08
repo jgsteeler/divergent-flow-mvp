@@ -23,6 +23,8 @@ jobs:
         ${{ steps.release.outputs.backend--release_created }}
       frontend_release_created: >-
         ${{ steps.release.outputs.frontend--release_created }}
+      frontend_tag_name: >-
+        ${{ steps.release.outputs.frontend--tag_name }}
       releases_created: ${{ steps.release.outputs.releases_created }}
     steps:
       - name: Run Release Please
@@ -91,6 +93,8 @@ jobs:
           deploy-message: 'Deploy from GitHub Actions - staging'
           enable-pull-request-comment: false
           enable-commit-comment: false
+          enable-commit-status: false
+          enable-github-deployment: false
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_STAGING_SITE_ID }}
@@ -143,9 +147,11 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           deploy-message: >-
             Production deploy -
-            Release ${{ needs.release-please.outputs.frontend--tag_name }}
+            Release ${{ needs.release-please.outputs.frontend_tag_name }}
           enable-pull-request-comment: false
           enable-commit-comment: false
+          enable-commit-status: false
+          enable-github-deployment: false
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_PROD_SITE_ID }}
