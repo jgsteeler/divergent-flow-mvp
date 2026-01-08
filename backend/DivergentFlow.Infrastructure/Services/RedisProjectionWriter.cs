@@ -34,7 +34,10 @@ public sealed class RedisProjectionWriter : IProjectionWriter
     {
         try
         {
-            var key = $"item:{item.Id}";
+            var userId = string.IsNullOrWhiteSpace(item.UserId) ? "local" : item.UserId;
+            var key = string.Equals(userId, "local", StringComparison.Ordinal)
+                ? $"item:{item.Id}"
+                : $"users:{userId}:item:{item.Id}";
             var json = JsonSerializer.Serialize(item, JsonOptions);
 
             await _write.SetAsync(key, json, cancellationToken).ConfigureAwait(false);
@@ -55,7 +58,10 @@ public sealed class RedisProjectionWriter : IProjectionWriter
     {
         try
         {
-            var key = $"collection:{collection.Id}";
+            var userId = string.IsNullOrWhiteSpace(collection.UserId) ? "local" : collection.UserId;
+            var key = string.Equals(userId, "local", StringComparison.Ordinal)
+                ? $"collection:{collection.Id}"
+                : $"users:{userId}:collection:{collection.Id}";
             var json = JsonSerializer.Serialize(collection, JsonOptions);
 
             await _write.SetAsync(key, json, cancellationToken).ConfigureAwait(false);

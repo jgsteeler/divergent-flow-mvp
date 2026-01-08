@@ -16,7 +16,7 @@ public interface ICaptureRepository
     /// <returns>
     /// A read-only list containing all captures.
     /// </returns>
-    Task<IReadOnlyList<Capture>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Capture>> GetAllAsync(string userId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves a single <see cref="Capture"/> by its identifier.
@@ -30,7 +30,7 @@ public interface ICaptureRepository
     /// <returns>
     /// The matching capture if found; otherwise, <c>null</c>.
     /// </returns>
-    Task<Capture?> GetByIdAsync(string id, CancellationToken cancellationToken = default);
+    Task<Capture?> GetByIdAsync(string userId, string id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Creates a new <see cref="Capture"/> entry.
@@ -44,7 +44,7 @@ public interface ICaptureRepository
     /// <returns>
     /// The created capture, including any values assigned by the underlying store.
     /// </returns>
-    Task<Capture> CreateAsync(Capture capture, CancellationToken cancellationToken = default);
+    Task<Capture> CreateAsync(string userId, Capture capture, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Updates an existing <see cref="Capture"/> entry.
@@ -61,7 +61,7 @@ public interface ICaptureRepository
     /// <returns>
     /// The updated capture if the entry exists; otherwise, <c>null</c>.
     /// </returns>
-    Task<Capture?> UpdateAsync(string id, Capture updated, CancellationToken cancellationToken = default);
+    Task<Capture?> UpdateAsync(string userId, string id, Capture updated, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes a <see cref="Capture"/> entry by its identifier.
@@ -75,7 +75,7 @@ public interface ICaptureRepository
     /// <returns>
     /// <c>true</c> if a capture was deleted; otherwise, <c>false</c>.
     /// </returns>
-    Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default);
+    Task<bool> DeleteAsync(string userId, string id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves all non-migrated <see cref="Capture"/> entries that have a null type confidence
@@ -91,6 +91,7 @@ public interface ICaptureRepository
     /// A read-only list containing all captures that need re-inference.
     /// </returns>
     Task<IReadOnlyList<Capture>> GetCapturesNeedingReInferenceAsync(
+        string userId,
         double confidenceThreshold,
         CancellationToken cancellationToken = default);
 }

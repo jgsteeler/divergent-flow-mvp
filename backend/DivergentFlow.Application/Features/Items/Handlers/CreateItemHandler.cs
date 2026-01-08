@@ -14,17 +14,20 @@ public sealed class CreateItemHandler : IRequestHandler<CreateItemCommand, ItemD
     private readonly IMapper _mapper;
     private readonly ILogger<CreateItemHandler> _logger;
     private readonly ITypeInferenceWorkflowTrigger _workflowTrigger;
+    private readonly IUserContext _userContext;
 
     public CreateItemHandler(
         IItemRepository repository,
         IMapper mapper,
         ILogger<CreateItemHandler> logger,
-        ITypeInferenceWorkflowTrigger workflowTrigger)
+        ITypeInferenceWorkflowTrigger workflowTrigger,
+        IUserContext userContext)
     {
         _repository = repository;
         _mapper = mapper;
         _logger = logger;
         _workflowTrigger = workflowTrigger;
+        _userContext = userContext;
     }
 
     public async Task<ItemDto> Handle(CreateItemCommand request, CancellationToken cancellationToken)
@@ -38,6 +41,7 @@ public sealed class CreateItemHandler : IRequestHandler<CreateItemCommand, ItemD
 
         var item = new Item
         {
+            UserId = _userContext.UserId,
             Id = Guid.NewGuid().ToString(),
             Type = "capture", // Default type for all new items
             Text = request.Text,
@@ -53,7 +57,7 @@ public sealed class CreateItemHandler : IRequestHandler<CreateItemCommand, ItemD
             item.Id,
             item.CreatedAt);
 
-        var created = await _repository.CreateAsync(item, cancellationToken);
+        var created = await _repository.CreateAsync(_userContext.UserId, item, cancellationToken);
 
         _logger.LogDebug(
             "CreateAsync returned item {ItemId} (sameId={SameId})",
@@ -61,7 +65,7 @@ public sealed class CreateItemHandler : IRequestHandler<CreateItemCommand, ItemD
             string.Equals(created.Id, item.Id, StringComparison.Ordinal));
 
         // Trigger background re-inference workflow (non-blocking)
-        _workflowTrigger.TriggerInferenceWorkflow(created.Id);
+        _workflowTrigger.TriggerInferenceWorkflow(_userContext.UserId, created.Id);
 
         return _mapper.Map<ItemDto>(created);
     }

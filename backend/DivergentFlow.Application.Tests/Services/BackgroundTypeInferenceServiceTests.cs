@@ -8,6 +8,8 @@ namespace DivergentFlow.Application.Tests.Services;
 
 public sealed class BackgroundTypeInferenceServiceTests
 {
+    private const string UserId = "local";
+
     [Fact]
     public async Task GetCapturesNeedingReInference_FiltersCorrectly()
     {
@@ -23,7 +25,7 @@ public sealed class BackgroundTypeInferenceServiceTests
         var repository = new FakeCaptureRepository(captures);
 
         // Act
-        var result = await repository.GetCapturesNeedingReInferenceAsync(95);
+        var result = await repository.GetCapturesNeedingReInferenceAsync(UserId, 95);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -44,7 +46,7 @@ public sealed class BackgroundTypeInferenceServiceTests
         var repository = new FakeCaptureRepository(captures);
 
         // Act
-        var result = await repository.GetCapturesNeedingReInferenceAsync(95);
+        var result = await repository.GetCapturesNeedingReInferenceAsync(UserId, 95);
 
         // Assert
         Assert.Empty(result);
@@ -63,7 +65,7 @@ public sealed class BackgroundTypeInferenceServiceTests
         var repository = new FakeCaptureRepository(captures);
 
         // Act
-        var result = await repository.GetCapturesNeedingReInferenceAsync(95);
+        var result = await repository.GetCapturesNeedingReInferenceAsync(UserId, 95);
 
         // Assert
         Assert.Empty(result);
@@ -89,23 +91,24 @@ public sealed class BackgroundTypeInferenceServiceTests
             _captures = captures;
         }
 
-        public Task<IReadOnlyList<Capture>> GetAllAsync(CancellationToken cancellationToken = default)
+        public Task<IReadOnlyList<Capture>> GetAllAsync(string userId, CancellationToken cancellationToken = default)
         {
             return Task.FromResult<IReadOnlyList<Capture>>(_captures);
         }
 
-        public Task<Capture?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
+        public Task<Capture?> GetByIdAsync(string userId, string id, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(_captures.FirstOrDefault(c => c.Id == id));
         }
 
-        public Task<Capture> CreateAsync(Capture capture, CancellationToken cancellationToken = default)
+        public Task<Capture> CreateAsync(string userId, Capture capture, CancellationToken cancellationToken = default)
         {
+            capture.UserId = userId;
             _captures.Add(capture);
             return Task.FromResult(capture);
         }
 
-        public Task<Capture?> UpdateAsync(string id, Capture updated, CancellationToken cancellationToken = default)
+        public Task<Capture?> UpdateAsync(string userId, string id, Capture updated, CancellationToken cancellationToken = default)
         {
             var existing = _captures.FirstOrDefault(c => c.Id == id);
             if (existing == null) return Task.FromResult<Capture?>(null);
@@ -115,7 +118,7 @@ public sealed class BackgroundTypeInferenceServiceTests
             return Task.FromResult<Capture?>(updated);
         }
 
-        public Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default)
+        public Task<bool> DeleteAsync(string userId, string id, CancellationToken cancellationToken = default)
         {
             var existing = _captures.FirstOrDefault(c => c.Id == id);
             if (existing == null) return Task.FromResult(false);
@@ -125,6 +128,7 @@ public sealed class BackgroundTypeInferenceServiceTests
         }
 
         public Task<IReadOnlyList<Capture>> GetCapturesNeedingReInferenceAsync(
+            string userId,
             double confidenceThreshold,
             CancellationToken cancellationToken = default)
         {

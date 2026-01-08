@@ -1,4 +1,5 @@
 using DivergentFlow.Api.Extensions;
+using DivergentFlow.Api.Identity;
 using DivergentFlow.Api.Middleware;
 using DivergentFlow.Application.Abstractions;
 using DivergentFlow.Application.DependencyInjection;
@@ -32,6 +33,10 @@ builder.Configuration.AddEnvironmentVariables();
 
 // Add services to the container
 builder.Services.AddControllers();
+
+// Minimal user identity (single-user default, multi-user ready)
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IUserContext, HeaderUserContext>();
 
 // Add CORS policy (environment-driven)
 builder.Services.AddCorsPolicy(builder.Environment, builder.Configuration);

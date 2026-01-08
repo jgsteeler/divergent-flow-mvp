@@ -48,10 +48,10 @@ public sealed class InferenceQueueProcessorService : BackgroundService
             try
             {
                 // Wait for an item to be enqueued
-                var itemId = await _queue.DequeueAsync(stoppingToken);
+                var workItem = await _queue.DequeueAsync(stoppingToken);
                 
                 // Process the item
-                await ProcessItemAsync(itemId, stoppingToken);
+                await ProcessItemAsync(workItem.UserId, workItem.ItemId, stoppingToken);
             }
             catch (OperationCanceledException)
             {
@@ -70,7 +70,7 @@ public sealed class InferenceQueueProcessorService : BackgroundService
         _logger.LogInformation("InferenceQueueProcessorService stopped");
     }
 
-    private async Task ProcessItemAsync(string itemId, CancellationToken cancellationToken)
+    private async Task ProcessItemAsync(string userId, string itemId, CancellationToken cancellationToken)
     {
         using var scope = _serviceProvider.CreateScope();
         var itemRepository = scope.ServiceProvider.GetRequiredService<IItemRepository>();
@@ -80,10 +80,13 @@ public sealed class InferenceQueueProcessorService : BackgroundService
         try
         {
             // Load the item from MongoDB
-            var item = await itemRepository.GetByIdAsync(itemId, cancellationToken);
+            var item = await itemRepository.GetByIdAsync(userId, itemId, cancellationToken);
             if (item is null)
             {
-                _logger.LogWarning("Item {ItemId} not found in MongoDB for inference processing", itemId);
+                _logger.LogWarning(
+                    "Item {ItemId} not found in MongoDB for inference processing (userId={UserId})",
+                    itemId,
+                    userId);
                 return;
             }
 
@@ -112,7 +115,7 @@ public sealed class InferenceQueueProcessorService : BackgroundService
                 }
 
                 // Update in MongoDB
-                await itemRepository.UpdateAsync(item.Id, item, cancellationToken);
+                await itemRepository.UpdateAsync(userId, item.Id, item, cancellationToken);
 
                 // Sync to Redis projection (best effort, non-blocking)
                 if (projectionWriter is not null)
@@ -131,7 +134,7 @@ public sealed class InferenceQueueProcessorService : BackgroundService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to process item {ItemId}", itemId);
+            _logger.LogError(ex, "Failed to process item {ItemId} (userId={UserId})", itemId, userId);
             // Don't rethrow - continue processing other items
         }
     }

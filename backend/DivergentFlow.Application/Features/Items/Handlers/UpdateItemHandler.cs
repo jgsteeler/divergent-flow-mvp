@@ -13,24 +13,27 @@ public sealed class UpdateItemHandler : IRequestHandler<UpdateItemCommand, ItemD
     private readonly IMapper _mapper;
     private readonly ILogger<UpdateItemHandler> _logger;
     private readonly ITypeInferenceWorkflowTrigger _workflowTrigger;
+    private readonly IUserContext _userContext;
 
     public UpdateItemHandler(
         IItemRepository repository,
         IMapper mapper,
         ILogger<UpdateItemHandler> logger,
-        ITypeInferenceWorkflowTrigger workflowTrigger)
+        ITypeInferenceWorkflowTrigger workflowTrigger,
+        IUserContext userContext)
     {
         _repository = repository;
         _mapper = mapper;
         _logger = logger;
         _workflowTrigger = workflowTrigger;
+        _userContext = userContext;
     }
 
     public async Task<ItemDto?> Handle(UpdateItemCommand request, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Handling UpdateItemCommand for item {ItemId}", request.Id);
 
-        var existing = await _repository.GetByIdAsync(request.Id, cancellationToken);
+        var existing = await _repository.GetByIdAsync(_userContext.UserId, request.Id, cancellationToken);
         if (existing == null)
         {
             _logger.LogWarning("Item {ItemId} not found", request.Id);
@@ -45,13 +48,13 @@ public sealed class UpdateItemHandler : IRequestHandler<UpdateItemCommand, ItemD
         existing.TypeConfidence = request.TypeConfidence;
         existing.CollectionId = request.CollectionId;
 
-        var updated = await _repository.UpdateAsync(request.Id, existing, cancellationToken);
+        var updated = await _repository.UpdateAsync(_userContext.UserId, request.Id, existing, cancellationToken);
         
         // Trigger re-inference if text changed (non-blocking)
         if (updated is not null && textChanged)
         {
             _logger.LogDebug("Text changed for item {ItemId}, triggering re-inference", request.Id);
-            _workflowTrigger.TriggerInferenceWorkflow(updated.Id);
+            _workflowTrigger.TriggerInferenceWorkflow(_userContext.UserId, updated.Id);
         }
         
         return updated == null ? null : _mapper.Map<ItemDto>(updated);

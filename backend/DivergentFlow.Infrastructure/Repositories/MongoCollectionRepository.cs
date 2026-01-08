@@ -16,6 +16,16 @@ public sealed class MongoCollectionRepository : ICollectionRepository
     private readonly IMongoCollection<Collection> _collection;
     private readonly ILogger<MongoCollectionRepository> _logger;
 
+    private static FilterDefinition<Collection> BuildUserFilter(string userId)
+    {
+        var userIsLocal = string.Equals(userId, "local", StringComparison.Ordinal);
+        return userIsLocal
+            ? Builders<Collection>.Filter.Or(
+                Builders<Collection>.Filter.Eq(c => c.UserId, userId),
+                Builders<Collection>.Filter.Eq(c => c.UserId, null))
+            : Builders<Collection>.Filter.Eq(c => c.UserId, userId);
+    }
+
     public MongoCollectionRepository(
         IMongoDatabase database,
         IOptions<MongoDbSettings> settings,
@@ -30,12 +40,12 @@ public sealed class MongoCollectionRepository : ICollectionRepository
             collectionName);
     }
 
-    public async Task<IReadOnlyList<Collection>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Collection>> GetAllAsync(string userId, CancellationToken cancellationToken = default)
     {
         try
         {
             var collections = await _collection
-                .Find(FilterDefinition<Collection>.Empty)
+                .Find(BuildUserFilter(userId))
                 .ToListAsync(cancellationToken);
             
             _logger.LogDebug("Retrieved {Count} collections from MongoDB", collections.Count);
@@ -48,11 +58,13 @@ public sealed class MongoCollectionRepository : ICollectionRepository
         }
     }
 
-    public async Task<Collection?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
+    public async Task<Collection?> GetByIdAsync(string userId, string id, CancellationToken cancellationToken = default)
     {
         try
         {
-            var filter = Builders<Collection>.Filter.Eq(c => c.Id, id);
+            var filter = Builders<Collection>.Filter.And(
+                BuildUserFilter(userId),
+                Builders<Collection>.Filter.Eq(c => c.Id, id));
             var collection = await _collection
                 .Find(filter)
                 .FirstOrDefaultAsync(cancellationToken);
@@ -71,10 +83,11 @@ public sealed class MongoCollectionRepository : ICollectionRepository
         }
     }
 
-    public async Task<Collection> CreateAsync(Collection collection, CancellationToken cancellationToken = default)
+    public async Task<Collection> CreateAsync(string userId, Collection collection, CancellationToken cancellationToken = default)
     {
         try
         {
+            collection.UserId = userId;
             await _collection.InsertOneAsync(collection, cancellationToken: cancellationToken);
             
             _logger.LogInformation(
@@ -94,11 +107,14 @@ public sealed class MongoCollectionRepository : ICollectionRepository
         }
     }
 
-    public async Task<Collection?> UpdateAsync(string id, Collection updated, CancellationToken cancellationToken = default)
+    public async Task<Collection?> UpdateAsync(string userId, string id, Collection updated, CancellationToken cancellationToken = default)
     {
         try
         {
-            var filter = Builders<Collection>.Filter.Eq(c => c.Id, id);
+            updated.UserId = userId;
+            var filter = Builders<Collection>.Filter.And(
+                BuildUserFilter(userId),
+                Builders<Collection>.Filter.Eq(c => c.Id, id));
             var result = await _collection.ReplaceOneAsync(
                 filter,
                 updated,
@@ -124,11 +140,13 @@ public sealed class MongoCollectionRepository : ICollectionRepository
         }
     }
 
-    public async Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteAsync(string userId, string id, CancellationToken cancellationToken = default)
     {
         try
         {
-            var filter = Builders<Collection>.Filter.Eq(c => c.Id, id);
+            var filter = Builders<Collection>.Filter.And(
+                BuildUserFilter(userId),
+                Builders<Collection>.Filter.Eq(c => c.Id, id));
             var result = await _collection.DeleteOneAsync(filter, cancellationToken);
             
             if (result.DeletedCount > 0)

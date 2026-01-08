@@ -11,16 +11,18 @@ public sealed class UpdateCaptureHandler : IRequestHandler<UpdateCaptureCommand,
 {
     private readonly ICaptureRepository _repository;
     private readonly IMapper _mapper;
+    private readonly IUserContext _userContext;
 
-    public UpdateCaptureHandler(ICaptureRepository repository, IMapper mapper)
+    public UpdateCaptureHandler(ICaptureRepository repository, IMapper mapper, IUserContext userContext)
     {
         _repository = repository;
         _mapper = mapper;
+        _userContext = userContext;
     }
 
     public async Task<CaptureDto?> Handle(UpdateCaptureCommand request, CancellationToken cancellationToken)
     {
-        var existing = await _repository.GetByIdAsync(request.Id, cancellationToken);
+        var existing = await _repository.GetByIdAsync(_userContext.UserId, request.Id, cancellationToken);
         if (existing is null)
         {
             return null;
@@ -31,7 +33,7 @@ public sealed class UpdateCaptureHandler : IRequestHandler<UpdateCaptureCommand,
         existing.TypeConfidence = request.TypeConfidence;
         existing.UpdatedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
-        var saved = await _repository.UpdateAsync(request.Id, existing, cancellationToken);
+        var saved = await _repository.UpdateAsync(_userContext.UserId, request.Id, existing, cancellationToken);
         return saved is null ? null : _mapper.Map<CaptureDto>(saved);
     }
 }

@@ -12,22 +12,25 @@ public sealed class UpdateCollectionHandler : IRequestHandler<UpdateCollectionCo
     private readonly ICollectionRepository _repository;
     private readonly IMapper _mapper;
     private readonly ILogger<UpdateCollectionHandler> _logger;
+    private readonly IUserContext _userContext;
 
     public UpdateCollectionHandler(
         ICollectionRepository repository,
         IMapper mapper,
-        ILogger<UpdateCollectionHandler> logger)
+        ILogger<UpdateCollectionHandler> logger,
+        IUserContext userContext)
     {
         _repository = repository;
         _mapper = mapper;
         _logger = logger;
+        _userContext = userContext;
     }
 
     public async Task<CollectionDto?> Handle(UpdateCollectionCommand request, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Handling UpdateCollectionCommand for collection {CollectionId}", request.Id);
 
-        var existing = await _repository.GetByIdAsync(request.Id, cancellationToken);
+        var existing = await _repository.GetByIdAsync(_userContext.UserId, request.Id, cancellationToken);
         if (existing == null)
         {
             _logger.LogWarning("Collection {CollectionId} not found", request.Id);
@@ -36,7 +39,7 @@ public sealed class UpdateCollectionHandler : IRequestHandler<UpdateCollectionCo
 
         existing.Name = request.Name;
 
-        var updated = await _repository.UpdateAsync(request.Id, existing, cancellationToken);
+        var updated = await _repository.UpdateAsync(_userContext.UserId, request.Id, existing, cancellationToken);
         return updated == null ? null : _mapper.Map<CollectionDto>(updated);
     }
 }

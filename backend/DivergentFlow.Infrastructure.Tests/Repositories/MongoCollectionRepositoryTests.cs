@@ -11,6 +11,7 @@ namespace DivergentFlow.Infrastructure.Tests.Repositories;
 
 public sealed class MongoCollectionRepositoryTests
 {
+    private const string UserId = "local";
     private readonly Mock<IMongoDatabase> _mockDatabase;
     private readonly Mock<IMongoCollection<Collection>> _mockCollection;
     private readonly Mock<ILogger<MongoCollectionRepository>> _mockLogger;
@@ -56,12 +57,13 @@ public sealed class MongoCollectionRepositoryTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _repository.CreateAsync(collection);
+        var result = await _repository.CreateAsync(UserId, collection);
 
         // Assert
         Assert.NotNull(result);
         Assert.Equal(collection.Id, result.Id);
         Assert.Equal(collection.Name, result.Name);
+        Assert.Equal(UserId, result.UserId);
         _mockCollection.Verify(
             c => c.InsertOneAsync(collection, null, default),
             Times.Once);
@@ -81,7 +83,7 @@ public sealed class MongoCollectionRepositoryTests
             .ReturnsAsync(mockResult.Object);
 
         // Act
-        var result = await _repository.DeleteAsync("coll-1");
+        var result = await _repository.DeleteAsync(UserId, "coll-1");
 
         // Assert
         Assert.True(result);
@@ -101,7 +103,7 @@ public sealed class MongoCollectionRepositoryTests
             .ReturnsAsync(mockResult.Object);
 
         // Act
-        var result = await _repository.DeleteAsync("nonexistent");
+        var result = await _repository.DeleteAsync(UserId, "nonexistent");
 
         // Assert
         Assert.False(result);
