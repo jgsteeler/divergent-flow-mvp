@@ -76,6 +76,10 @@ jobs:
 
       - name: Build
         working-directory: frontend
+        env:
+          # Vite reads VITE_* at build time and bakes it into the static bundle.
+          # If not set, the frontend falls back to localhost.
+          VITE_API_URL: ${{ secrets.VITE_API_URL_STAGING != '' && secrets.VITE_API_URL_STAGING || 'https://divergent-flow-api-staging.fly.dev' }}
         run: npm run build
 
       - name: Deploy to Netlify Staging
@@ -125,6 +129,10 @@ jobs:
 
       - name: Build Frontend
         working-directory: frontend
+        env:
+          # Vite reads VITE_* at build time and bakes it into the static bundle.
+          # If not set, the frontend falls back to localhost.
+          VITE_API_URL: ${{ secrets.VITE_API_URL_PROD != '' && secrets.VITE_API_URL_PROD || 'https://divergent-flow-api.fly.dev' }}
         run: npm run build
 
       - name: Deploy Frontend to Production
