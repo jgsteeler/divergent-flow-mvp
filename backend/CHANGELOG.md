@@ -5,6 +5,13 @@ All notable changes to the Divergent Flow API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-api-v1.5.0...divergent-flow-api-v1.6.0) (2026-01-08)
+
+
+### Features
+
+* implement user context for multi-user support ([#216](https://github.com/jgsteeler/divergent-flow-mvp/issues/216)) ([83cf3e1](https://github.com/jgsteeler/divergent-flow-mvp/commit/83cf3e17a02ff5fb9a4ca3da5fb1055362b54cda))
+
 ## [1.5.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-api-v1.4.1...divergent-flow-api-v1.5.0) (2026-01-08)
 
 
