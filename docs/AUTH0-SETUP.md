@@ -9,6 +9,8 @@ The frontend uses Auth0 with PKCE (Proof Key for Code Exchange) flow for secure 
 - No client secrets are needed in the frontend
 - Protection against authorization code interception attacks
 - Cryptographic proof for token exchange
+- Refresh tokens enabled for persistent sessions
+- Secure token storage in browser localStorage
 
 ## Prerequisites
 

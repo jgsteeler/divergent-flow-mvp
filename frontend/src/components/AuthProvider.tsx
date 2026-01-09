@@ -11,9 +11,10 @@ interface AuthProviderProps {
  * 
  * Features:
  * - PKCE flow enabled by default (no client secret needed)
- * - Offline access for refresh tokens
+ * - Refresh tokens enabled for persistent sessions
+ * - Secure token storage in localStorage
  * - Graceful fallback when Auth0 is not configured
- * - Automatic token caching
+ * - Automatic token caching and refresh
  * 
  * If Auth0 is not configured (missing env vars), the app will run
  * in unauthenticated mode with fallback to 'local' user.
@@ -41,10 +42,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Request offline_access scope for refresh tokens
         scope: 'openid profile email offline_access',
       }}
-      // Enable PKCE by default (recommended for SPAs)
+      // Enable refresh tokens for persistent sessions
       useRefreshTokens={true}
-      // Cache tokens in memory for better performance
-      cacheLocation="memory"
+      // Store tokens securely in localStorage for persistence across sessions
+      cacheLocation="localstorage"
     >
       {children}
     </Auth0Provider>
