@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.5.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-ui-v4.4.0...divergent-flow-ui-v4.5.0) (2026-01-09)
+
+
+### Features
+
+* **auth:** add Auth0 PKCE authentication flow ([#222](https://github.com/jgsteeler/divergent-flow-mvp/issues/222)) ([0fc3b64](https://github.com/jgsteeler/divergent-flow-mvp/commit/0fc3b64c3563baf7b5848d454ef579b392798700))
+
 ## [4.4.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-ui-v4.3.0...divergent-flow-ui-v4.4.0) (2026-01-06)
 
 
