@@ -12,9 +12,12 @@ interface AuthProviderProps {
  * Features:
  * - PKCE flow enabled by default (no client secret needed)
  * - Refresh tokens enabled for persistent sessions
- * - Secure token storage in localStorage
+ * - In-memory token storage for enhanced security
  * - Graceful fallback when Auth0 is not configured
  * - Automatic token caching and refresh
+ * 
+ * Security: Tokens stored in memory (not localStorage) to prevent XSS attacks.
+ * Trade-off: Users must re-authenticate when opening new tabs/windows.
  * 
  * If Auth0 is not configured (missing env vars), the app will run
  * in unauthenticated mode with fallback to 'local' user.
@@ -44,8 +47,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }}
       // Enable refresh tokens for persistent sessions
       useRefreshTokens={true}
-      // Store tokens securely in localStorage for persistence across sessions
-      cacheLocation="localstorage"
+      // Store tokens in memory for enhanced security (prevents XSS localStorage exploits)
+      // Trade-off: Users must re-authenticate when opening new tabs
+      cacheLocation="memory"
     >
       {children}
     </Auth0Provider>

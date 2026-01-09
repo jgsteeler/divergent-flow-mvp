@@ -10,7 +10,7 @@ The frontend uses Auth0 with PKCE (Proof Key for Code Exchange) flow for secure 
 - Protection against authorization code interception attacks
 - Cryptographic proof for token exchange
 - Refresh tokens enabled for persistent sessions
-- Secure token storage in browser localStorage
+- In-memory token storage for enhanced security (prevents XSS localStorage exploits)
 
 ## Prerequisites
 
@@ -198,6 +198,21 @@ In your Auth0 Application settings, add your production URLs to:
 3. Rotate credentials if accidentally exposed
 4. Enable MFA (Multi-Factor Authentication) in Auth0 for added security
 5. Review Auth0 logs regularly for suspicious activity
+
+### Token Storage Security
+
+The app uses **in-memory token storage** (`cacheLocation="memory"`) for enhanced security:
+
+**Benefits:**
+- Tokens not accessible via XSS localStorage exploits
+- No persistent storage in browser
+- Automatically cleared when tab/window closes
+
+**Trade-off:**
+- Users must re-authenticate when opening new tabs or windows
+- Sessions don't persist across browser restarts
+
+**For native apps:** When developing native mobile apps, you can use secure device storage (iOS Keychain, Android Keystore) which provides both security and persistence.
 
 ## Testing Without Auth0
 
