@@ -29,7 +29,13 @@ describe('capturesApi', () => {
       const result = await fetchCaptures()
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/captures')
+        expect.stringContaining('/api/captures'),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json',
+            'X-User-Id': 'local',
+          }),
+        })
       )
       expect(result).toEqual(mockCaptures)
     })
@@ -65,9 +71,10 @@ describe('capturesApi', () => {
         expect.stringContaining('/api/captures'),
         expect.objectContaining({
           method: 'POST',
-          headers: {
+          headers: expect.objectContaining({
             'Content-Type': 'application/json',
-          },
+            'X-User-Id': 'local',
+          }),
           body: JSON.stringify({ text: 'New capture' }),
         })
       )

@@ -71,6 +71,12 @@ npm run dev
 
 Backend setup (Redis env vars, running the API) is documented in [backend/README.md](backend/README.md).
 
+### Authentication Setup (Optional)
+
+The app supports Auth0 authentication with PKCE flow. For setup instructions, see [docs/AUTH0-SETUP.md](docs/AUTH0-SETUP.md).
+
+**Note**: The app works without Auth0 configuration for local development. User ID defaults to `'local'` when not authenticated.
+
 ### Build
 
 ```bash

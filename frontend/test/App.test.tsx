@@ -7,6 +7,27 @@ import * as capturesApi from '@/lib/api/capturesApi'
 // Mock the API module
 vi.mock('@/lib/api/capturesApi')
 
+// Mock the useAuth hook
+vi.mock('@/hooks/useAuth', () => ({
+  useAuth: () => ({
+    getUserId: () => 'test-user-id',
+    getAccessToken: async () => 'test-access-token',
+    isAuthenticated: true,
+    isLoading: false,
+    user: { sub: 'test-user-id', email: 'test@example.com' },
+    login: vi.fn(),
+    logout: vi.fn(),
+  }),
+}))
+
+// Mock the Auth0 config
+vi.mock('@/lib/auth/authConfig', () => ({
+  isAuth0Configured: () => false, // Disable Auth0 in tests
+  getAuth0Config: () => {
+    throw new Error('Auth0 not configured')
+  },
+}))
+
 // Helper to wrap component with QueryClient
 const renderWithQueryClient = (component: React.ReactElement) => {
   const queryClient = new QueryClient({
