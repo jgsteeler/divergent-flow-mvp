@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.6.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-ui-v4.5.0...divergent-flow-ui-v4.6.0) (2026-01-15)
+
+
+### Features
+
+* **workflow:** implement complete capture → review → dashboard workflow for open source launch ([#231](https://github.com/jgsteeler/divergent-flow-mvp/issues/231)) ([480ba65](https://github.com/jgsteeler/divergent-flow-mvp/commit/480ba658550076c376ca579eb183cb203a9954c0))
+
 ## [4.5.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-ui-v4.4.0...divergent-flow-ui-v4.5.0) (2026-01-09)
 
 
