@@ -7,7 +7,7 @@ on:
 
 # Prevent multiple deploys from overlapping
 concurrency:
-  group: deploy-${{ github.ref }}
+  group: deploy-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
@@ -17,9 +17,10 @@ permissions:
   statuses: write
 
 jobs:
-  # Step 1: Version management
+  # Step 1: Version management (only on main branch pushes)
   release-please:
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     outputs:
       backend_release_created: >-
         ${{ steps.release.outputs.backend--release_created }}
@@ -37,10 +38,14 @@ jobs:
           config-file: .github/release-please-config.json
           manifest-file: .github/.release-please-manifest.json
 
-  # Step 2: Deploy backend to staging (always)
+  # Step 2: Deploy backend to staging
   deploy-backend-staging:
     runs-on: ubuntu-latest
     needs: release-please
+    if: always() && (needs.release-please.result == 'success' || needs.release-please.result == 'skipped')
+    environment:
+      name: staging
+      url: https://divergent-flow-api-staging.fly.dev/health
     permissions:
       contents: read
     steps:
@@ -57,14 +62,19 @@ jobs:
         run: |
           flyctl deploy --config fly.staging.toml --remote-only
 
-  # Step 3: Deploy frontend to staging (always)
+  # Step 3: Deploy frontend to staging
   deploy-frontend-staging:
     runs-on: ubuntu-latest
     needs: release-please
+    if: always() && (needs.release-please.result == 'success' || needs.release-please.result == 'skipped')
+    environment:
+      name: staging
+      url: https://divergent-flow-staging.netlify.app
     permissions:
       contents: read
       deployments: write
       statuses: write
+      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -85,9 +95,10 @@ jobs:
         env:
           # Vite reads VITE_* at build time and bakes it into the static bundle.
           # If not set, the frontend falls back to localhost.
-          VITE_API_URL: ${{ secrets.VITE_API_URL_STAGING != '' && secrets.VITE_API_URL_STAGING || 'https://divergent-flow-api-staging.fly.dev' }}
-          VITE_AUTH0_AUDIENCE: ${{ secrets.VITE_AUTH0_AUDIENCE_PROD }}
-          
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://divergent-flow-api-staging.fly.dev' }}
+          VITE_AUTH0_DOMAIN: ${{ secrets.VITE_AUTH0_DOMAIN }}
+          VITE_AUTH0_CLIENT_ID: ${{ secrets.VITE_AUTH0_CLIENT_ID }}
+          VITE_AUTH0_AUDIENCE: ${{ secrets.VITE_AUTH0_AUDIENCE }}
         run: npm run build
 
       - name: Deploy to Netlify Staging
@@ -103,13 +114,16 @@ jobs:
           enable-github-deployment: true
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_STAGING_SITE_ID }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
 
-  # Step 4: Deploy Prod Backend(only if release was created)
+  # Step 4: Deploy backend to production (only if release was created)
   deploy-backend-prod:
     runs-on: ubuntu-latest
     needs: [release-please, deploy-backend-staging, deploy-frontend-staging]
     if: needs.release-please.outputs.releases_created == 'true'
+    environment:
+      name: production
+      url: https://divergent-flow-api.fly.dev/health
     permissions:
       contents: read
       deployments: write
@@ -127,16 +141,23 @@ jobs:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: |
           flyctl deploy --config fly.toml --remote-only
-  # Deploy Front end Prod
-  deploy-frontent-prod:
+  
+  # Step 5: Deploy frontend to production (only if release was created)
+  deploy-frontend-prod:
     runs-on: ubuntu-latest
     needs: [release-please, deploy-backend-staging, deploy-frontend-staging]
     if: needs.release-please.outputs.releases_created == 'true'
+    environment:
+      name: production
+      url: https://divergent-flow-prod.netlify.app
     permissions:
       contents: read
       deployments: write
       statuses: write
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -153,7 +174,10 @@ jobs:
         env:
           # Vite reads VITE_* at build time and bakes it into the static bundle.
           # If not set, the frontend falls back to localhost.
-          VITE_API_URL: ${{ secrets.VITE_API_URL_PROD != '' && secrets.VITE_API_URL_PROD || 'https://divergent-flow-api.fly.dev' }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://divergent-flow-api.fly.dev' }}
+          VITE_AUTH0_DOMAIN: ${{ secrets.VITE_AUTH0_DOMAIN }}
+          VITE_AUTH0_CLIENT_ID: ${{ secrets.VITE_AUTH0_CLIENT_ID }}
+          VITE_AUTH0_AUDIENCE: ${{ secrets.VITE_AUTH0_AUDIENCE }}
         run: npm run build
 
       - name: Deploy Frontend to Production
@@ -171,4 +195,4 @@ jobs:
           enable-github-deployment: true
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_PROD_SITE_ID }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}

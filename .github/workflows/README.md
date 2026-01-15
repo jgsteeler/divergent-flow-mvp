@@ -46,56 +46,84 @@ See [COMMIT-GUIDELINES.md](../../COMMIT-GUIDELINES.md) for quick reference.
 
 ## Unified Deployment Workflow
 
-The `deploy.yml` workflow provides a complete CI/CD pipeline with version management, staging deployments, and production promotions.
+The `deploy.yml` workflow provides a complete CI/CD pipeline with version management, staging deployments, and production promotions using **GitHub Environments**.
 
 ### Architecture Overview
 
-This workflow implements a **two-environment strategy** with static URLs:
+This workflow implements a **two-environment strategy** with GitHub Environments:
 
-- **Staging Environment**: Always deployed from `main` branch
+- **Staging Environment**: Deploys on PR creation/updates and main branch pushes
   - Backend: `divergent-flow-api-staging` (Fly.io)
   - Frontend: Static staging URL via dedicated Netlify site
-- **Production Environment**: Promoted only on releases
-  - Backend: `divergent-flow-api` (Fly.io) - Binary image promotion
+  - Environment URL: `https://divergent-flow-staging.netlify.app`
+  - Protection: None (deploys automatically)
+- **Production Environment**: Deploys only on releases with manual approval
+  - Backend: `divergent-flow-api` (Fly.io)
   - Frontend: Dedicated Netlify production site
+  - Environment URL: `https://divergent-flow-prod.netlify.app`
+  - Protection: **Requires manual approval from designated reviewers**
+
+### Key Benefits of GitHub Environments
+
+- ✅ **Simplified Secrets**: Single set of secrets per environment (no `_STAGING`/`_PROD` suffixes)
+- ✅ **Deployment Protection**: Manual approval required for production
+- ✅ **Environment URLs**: Direct links to deployed apps in GitHub UI
+- ✅ **Deployment History**: Track all deployments per environment
+- ✅ **Audit Trail**: See who approved production deployments and when
 
 ### Workflow Steps
 
-1. **Version Management** (Release Please)
+1. **Version Management** (Release Please) - Only on main branch pushes
    - Analyzes conventional commits on `main` branch
    - Creates/updates release PR with version bumps and changelog
    - Sets `releases_created` flag when release PR is merged
 
-2. **Deploy to Staging** (Always runs)
+2. **Deploy to Staging** (On PRs and main branch pushes)
    - **Backend**: Builds and deploys to Fly.io staging app
    - **Frontend**: Builds React app and deploys to Netlify staging site
+   - Uses `staging` environment secrets
 
-3. **Promote to Production** (Only on release)
-   - **Backend**: Promotes exact staging container image (binary promotion, no rebuild)
+3. **Promote to Production** (Only on release, requires approval)
+   - ⏸️ **Waits for manual approval** from required reviewers
+   - **Backend**: Builds and deploys to Fly.io production app
    - **Frontend**: Rebuilds and deploys to Netlify production site
+   - Uses `production` environment secrets
    - Triggered when `releases_created == true`
 
-### Key Features
+### GitHub Environments Setup
 
-- ✅ **Binary Promotion**: Backend production uses the exact container that passed staging health checks
-- ✅ **Static URLs**: Both staging and production have unchanging URLs (no dynamic preview URLs)
-- ✅ **Consistent Deploys**: Staging and production always deploy from the same code state
-- ✅ **Concurrency Control**: Prevents overlapping deploys with `concurrency` group
-- ✅ **Image Validation**: Uses `jq` to extract and validate Fly.io image references
+**Required**: Two GitHub Environments must be configured with secrets:
 
-### GitHub Secrets Required
+1. **staging** environment:
+   - No protection rules (deploys automatically)
+   - Environment URL: `https://divergent-flow-staging.netlify.app`
+   - Secrets: `FLY_API_TOKEN`, `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`, `VITE_*` variables
 
-Add these secrets in **Settings > Secrets and variables > Actions**:
+2. **production** environment:
+   - **Required reviewers**: Add maintainers who can approve production deployments
+   - Environment URL: `https://divergent-flow-prod.netlify.app`
+   - Deployment branch: `main` (optional but recommended)
+   - Secrets: Same names as staging with production values
 
-- `FLY_API_TOKEN`: Fly.io deploy token
-- `NETLIFY_AUTH_TOKEN`: Netlify personal access token
-- `NETLIFY_STAGING_SITE_ID`: API ID for staging Netlify site
-- `NETLIFY_PROD_SITE_ID`: API ID for production Netlify site
+See [ENVIRONMENTS-SETUP.md](../ENVIRONMENTS-SETUP.md) for complete setup instructions.
 
-Optional (recommended if you use custom API domains):
+### Secrets Configuration
 
-- `VITE_API_URL_STAGING`: Frontend API base URL for staging builds
-- `VITE_API_URL_PROD`: Frontend API base URL for production builds
+Secrets are configured per environment (not as repository secrets):
+
+**Staging Environment Secrets:**
+- `FLY_API_TOKEN` - Fly.io API token
+- `NETLIFY_AUTH_TOKEN` - Netlify personal access token
+- `NETLIFY_SITE_ID` - Netlify staging site API ID
+- `VITE_API_URL` - Backend API URL for staging
+- `VITE_AUTH0_DOMAIN` - Auth0 domain
+- `VITE_AUTH0_CLIENT_ID` - Auth0 client ID (staging)
+- `VITE_AUTH0_AUDIENCE` - Auth0 API audience
+
+**Production Environment Secrets:**
+- Same secret names with production-specific values
+
+This eliminates the need for `_STAGING`/`_PROD` suffixed secrets.
 
 ### Netlify Setup
 
@@ -115,9 +143,22 @@ Optional (recommended if you use custom API domains):
 
 ### When It Runs
 
-- **Trigger**: Every push to `main` branch
-- **Staging**: Always deploys (provides continuous feedback)
-- **Production**: Only deploys when release PR is merged
+- **Trigger**: 
+  - Pull requests to `main` branch (opened, synchronized, reopened)
+  - Push to `main` branch
+- **Staging**: Deploys on all triggers (provides continuous feedback)
+- **Production**: Only deploys when release PR is merged (requires manual approval)
+
+### Approval Workflow
+
+When a release PR is merged:
+
+1. Workflow queues production deployment
+2. GitHub notifies required reviewers
+3. Reviewers approve via Actions tab > Review deployments
+4. Deployment proceeds after approval
+
+This prevents accidental production deployments and provides cost control.
 
 ### Technical Details
 
