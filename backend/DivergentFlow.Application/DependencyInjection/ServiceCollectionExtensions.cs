@@ -48,6 +48,10 @@ public static class ServiceCollectionExtensions
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
+        services.AddOptions<FeatureFlagOptions>()
+            .BindConfiguration(FeatureFlagOptions.SectionName)
+            .ValidateOnStart();
+
         return services;
     }
 }

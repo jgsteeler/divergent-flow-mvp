@@ -99,6 +99,10 @@ public static class ServiceCollectionExtensions
         });
 
         services.AddSingleton<ITypeInferenceService, BasicTypeInferenceService>();
+        
+        // Register feature flags service
+        services.AddSingleton<IFeatureFlags, FeatureFlagsService>();
+        
         return services;
     }
 
