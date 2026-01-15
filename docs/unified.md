@@ -1,6 +1,14 @@
-I want you to read the below doc and come up with a plan for how to add the unified architecture to divergent flow as soon as possible 
-
 # Unified Entity System as SaaS - Architecture & Monetization
+
+> **Implementation Status**: This is the **target vision** for Divergent Flow's evolution into a full SaaS platform.
+> 
+> 📋 **See [ARCHITECTURE.md](./ARCHITECTURE.md)** for:
+> - Current MVP implementation status
+> - Gap analysis between current state and this vision
+> - Phased migration roadmap
+> - Architecture decision records
+>
+> **Current MVP**: We have a working single-user system with basic capture, inference, and review features. This document describes the end-state unified entity system we're building toward incrementally.
 
 **Goal**: Design a multi-user, multi-tenant SaaS platform based on the unified entity architecture, with pricing tiers, extensibility through plugin systems, and community-driven feature development.
 
@@ -1593,4 +1601,111 @@ Both systems can share:
 - Inference rule definitions
 - Plugin interfaces
 
-This doc can serve as both a selling document (for potential users/investors) and an implementation guide (for developm
+This doc can serve as both a selling document (for potential users/investors) and an implementation guide (for development).
+
+---
+
+## Current Implementation Status (Divergent Flow MVP)
+
+**Last Updated**: 2026-01-15
+
+### What's Already Built
+
+The current Divergent Flow MVP has laid the foundation for this unified entity system:
+
+#### ✅ **Core Entity Model** (Partial)
+- **Item entity**: The base entity type exists (`type: "capture"`)
+- **MongoDB persistence**: System of record in place
+- **Relationships**: Basic parent-child via `collectionId`
+- **Type inference**: Pattern-based inference with confidence scoring
+- **Background processing**: Async inference queue
+
+#### ✅ **Clean Architecture** (Foundation)
+- Layered architecture (API → Application → Domain → Infrastructure)
+- MediatR command/query separation
+- Repository pattern
+- Dependency injection throughout
+
+#### ✅ **ADHD-Optimized UX** (Pillar 1)
+- Quick capture UI (web)
+- Low-friction input
+- Calm, focused design
+- Framer Motion animations (200-300ms)
+
+#### 🚧 **Review Queue** (Pillar 4 - In Progress)
+- Priority-based queue
+- 3 items per session
+- Property validation (pending)
+
+### What's Coming Next
+
+Based on [ARCHITECTURE.md](./ARCHITECTURE.md) migration roadmap:
+
+#### 📅 **Phase 3.5: Entity Abstraction** (8-12 weeks)
+- Dynamic entity types (not hardcoded)
+- EntityType definitions
+- Version tracking
+- Multi-tenant preparation
+
+#### 📅 **Phase 4: Plugin System** (12-16 weeks)
+- Plugin-based inference (this doc's Pillar 3)
+- Plugin registry and marketplace
+- Sandbox execution
+- Plugin SDK
+
+#### 📅 **Phase 5: Multi-Tenancy** (8-12 weeks)
+- Tenant isolation (this doc's Part 3)
+- Subscription tiers (this doc's Part 4)
+- Team workspaces
+
+#### 📅 **Phase 6: Collaboration** (12-16 weeks)
+- Shared collections (this doc's Pillar 2)
+- Team review workflows (this doc's Pillar 4)
+- Permissions and visibility
+
+#### 📅 **Phase 7: ML Training** (16-20 weeks)
+- Custom model training (this doc's Pillar 5)
+- Model marketplace
+- GPU-backed inference
+
+#### 📅 **Phase 8: Full Platform** (Ongoing)
+- File storage (this doc's Part 2.5)
+- Advanced dashboards (this doc's Pillar 6)
+- Reflection analytics (this doc's Pillar 7)
+- All remaining features from this document
+
+### How MVP Maps to Unified System
+
+| Unified System Concept | MVP Implementation |
+|------------------------|-------------------|
+| `Entity` base model | `Item` class (partial) |
+| `entityTypeId` | `type` field (hardcoded values) |
+| `tenantId` | `userId` field (single-user mode) |
+| Dynamic attributes | Fixed C# properties |
+| Relationship graph | `collectionId` (parent only) |
+| Version history | Not yet implemented |
+| Plugin system | Hardcoded inference rules |
+| Multi-tenancy | Single tenant implied |
+| Permissions | Not yet implemented |
+
+### Key Architectural Alignment
+
+The MVP was intentionally designed with this unified system in mind:
+
+✅ **Entity-centric**: `Item` is already the foundational unit
+✅ **Clean boundaries**: Domain/Application/Infrastructure layers match this doc's design
+✅ **MongoDB**: Document model ready for flexible entity schemas
+✅ **Background processing**: Async inference queue ready for plugin system
+✅ **REST API**: Clear HTTP endpoints ready for `/api/v1/entities` evolution
+
+### Migration Philosophy
+
+**Incremental, not rewrite**. The MVP isn't being thrown away—it's the first iteration of this unified system. Each phase adds capabilities while maintaining backward compatibility.
+
+**No disruption to users**. The migration happens behind the scenes. Users keep using Divergent Flow without interruption while we progressively unlock the full unified entity system.
+
+**See [ARCHITECTURE.md](./ARCHITECTURE.md)** for the complete migration roadmap, architecture decision records, and current vs. target comparisons.
+
+---
+
+**🚀 Ready to contribute?** See [../CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines.

@@ -13,6 +13,18 @@ An ADHD-friendly brain management tool that helps you capture thoughts instantly
 - 🚧 **Phase 3 In Progress**: Review queue with priority system
 - ⏭️ **Phase 4 Next**: LLM-powered intelligent processing
 
+## 📚 Documentation
+
+**[📋 Complete Documentation Index →](./docs/DOCS-INDEX.md)**
+
+Quick links:
+- **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** - Current architecture and migration roadmap
+- **[unified.md](./docs/unified.md)** - Target vision: Unified entity system for SaaS
+- **[backend/README.md](./backend/README.md)** - Backend API documentation
+- **[AUTH0-SETUP.md](./docs/AUTH0-SETUP.md)** - Authentication setup guide
+- **[TESTING.md](./docs/TESTING.md)** - Testing guidelines
+- **[RUNNING-FULL-STACK.md](./docs/RUNNING-FULL-STACK.md)** - Full stack setup
+
 ## 🎯 Ready to Accelerate Development?
 
 **If you're looking for guidance on transitioning from Spark to AI coding agents**, start here:
@@ -109,9 +121,12 @@ See [.github/DEPLOYMENT-SETUP.md](./.github/DEPLOYMENT-SETUP.md) for complete se
 ## Tech Stack
 
 - **Frontend**: React 19, TypeScript, Vite
+- **Backend**: .NET 10 Web API, MongoDB, Redis (optional)
 - **UI**: Radix UI, Tailwind CSS, Framer Motion
 - **State**: React hooks, Spark KV storage
 - **Icons**: Phosphor Icons
+
+**Architecture**: See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) for detailed architecture documentation and roadmap to unified entity system.
 
 ## Project Structure
 
