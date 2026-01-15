@@ -4,10 +4,6 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    types: [opened, synchronize, reopened]
-    branches:
-      - main
 
 # Prevent multiple deploys from overlapping
 concurrency:
@@ -112,7 +108,7 @@ jobs:
           production-deploy: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
           deploy-message: 'Deploy from GitHub Actions - staging'
-          enable-pull-request-comment: true
+          enable-pull-request-comment: false
           enable-commit-comment: false
           enable-commit-status: true
           enable-github-deployment: true
