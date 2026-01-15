@@ -86,7 +86,7 @@ function App() {
                   className="flex items-center gap-2"
                 >
                   <List />
-                  View All ({captures.length})
+                  View Captures ({captures.length})
                 </Button>
               </div>
             )}
