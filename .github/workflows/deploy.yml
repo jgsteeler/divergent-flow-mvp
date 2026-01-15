@@ -78,6 +78,7 @@ jobs:
       contents: read
       deployments: write
       statuses: write
+      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
