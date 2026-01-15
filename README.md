@@ -103,25 +103,39 @@ npm run build
 
 ## Deployment
 
-This project uses automated CI/CD deployment:
+This project uses automated CI/CD deployment with **GitHub Environments**:
 
-- **Staging**: Automatically deploys on every push to `main`
-- **Production**: Automatically deploys when release PR is merged
+- **Staging**: Automatically deploys on PR creation/updates and pushes to `main`
+- **Production**: Deploys after manual approval when release PR is merged
 
-### Setup Deployment
+### Quick Setup
 
-See [.github/DEPLOYMENT-SETUP.md](./.github/DEPLOYMENT-SETUP.md) for complete setup instructions including:
-- Netlify site configuration
-- GitHub secrets setup
-- Fly.io app creation
-- Environment variables
+1. **Create GitHub Environments**: `staging` and `production`
+2. **Add secrets per environment** (no `_STAGING`/`_PROD` suffixes needed!)
+3. **Configure production approvals**: Add required reviewers
 
-### Deployment Architecture
+**Getting Started**: See [.github/ENVIRONMENTS-QUICKSTART.md](./.github/ENVIRONMENTS-QUICKSTART.md) for 5-minute setup
 
-- **Backend**: .NET API on Fly.io (staging + production)
-- **Frontend**: React on Netlify (staging + production)
-- **Strategy**: Binary promotion for backend, separate builds for frontend
-- **Workflow**: `.github/workflows/deploy.yml`
+### Complete Guides
+
+- **[ENVIRONMENTS-QUICKSTART.md](./.github/ENVIRONMENTS-QUICKSTART.md)** - Quick 5-minute setup guide
+- **[ENVIRONMENTS-SETUP.md](./.github/ENVIRONMENTS-SETUP.md)** - Complete environments configuration
+- **[DEPLOYMENT-SETUP.md](./.github/DEPLOYMENT-SETUP.md)** - Fly.io and Netlify setup
+
+### Deployment Flow
+
+1. **Create PR** → Staging deploys automatically → Test on staging URL
+2. **Merge PR to main** → Release Please creates release PR
+3. **Merge release PR** → Production deployment queued
+4. **Approve deployment** (Actions tab) → Production deploys
+
+### Benefits of GitHub Environments
+
+- ✅ **Simplified secrets**: One `VITE_API_URL` per environment (not `_STAGING`/`_PROD`)
+- ✅ **Manual approvals**: Prevent accidental production deployments
+- ✅ **Environment URLs**: One-click access to staging/production
+- ✅ **Cost control**: Production deployments require approval
+- ✅ **Audit trail**: See who approved each deployment
 
 ## Tech Stack
 

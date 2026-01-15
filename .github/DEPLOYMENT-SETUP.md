@@ -1,6 +1,8 @@
 # Deployment Setup Guide
 
-This guide walks you through setting up the unified CI/CD deployment pipeline for Divergent Flow.
+This guide walks you through setting up the unified CI/CD deployment pipeline for Divergent Flow with GitHub Environments.
+
+> 📘 **New to GitHub Environments?** See [ENVIRONMENTS-SETUP.md](./ENVIRONMENTS-SETUP.md) for a complete guide to configuring environments, protection rules, and approval workflows.
 
 ## Overview
 
@@ -8,6 +10,7 @@ The deployment architecture uses:
 - **Backend**: .NET API on Fly.io (staging + production apps)
 - **Frontend**: React app on Netlify (staging + production sites)
 - **CI/CD**: GitHub Actions with automated version management via Release Please
+- **Environments**: GitHub Environments for secrets management and deployment approvals
 
 ## Prerequisites
 
@@ -76,20 +79,45 @@ For **both** sites:
 4. Name it: `GitHub Actions Deploy`
 5. Copy the token (you won't see it again!)
 
-## 3. GitHub Secrets Setup
+## 3. GitHub Environments and Secrets Setup
 
-Add these secrets to your repository:
+> 📘 **Important**: This project uses GitHub Environments for secrets management and deployment approvals.
+> 
+> See [ENVIRONMENTS-SETUP.md](./ENVIRONMENTS-SETUP.md) for complete setup instructions including:
+> - Creating staging and production environments
+> - Configuring protection rules and required reviewers
+> - Setting up environment-specific secrets
+> - Configuring approval workflows
+> - Branch protection recommendations
 
-1. Go to your GitHub repository
-2. Click **Settings** > **Secrets and variables** > **Actions**
-3. Click **"New repository secret"** for each:
+### Quick Setup Summary
 
-| Secret Name | Value | Description |
-|-------------|-------|-------------|
-| `FLY_API_TOKEN` | `<your-fly-token>` | From step 1 |
-| `NETLIFY_AUTH_TOKEN` | `<your-netlify-token>` | From step 2.4 |
-| `NETLIFY_STAGING_SITE_ID` | `<staging-site-id>` | From step 2.3 |
-| `NETLIFY_PROD_SITE_ID` | `<prod-site-id>` | From step 2.3 |
+1. **Create Environments**:
+   - Go to **Settings** > **Environments**
+   - Create `staging` environment (no protection rules)
+   - Create `production` environment (with required reviewers)
+
+2. **Add Environment Secrets**:
+   
+   **Staging environment** secrets:
+   - `FLY_API_TOKEN` - Fly.io API token
+   - `NETLIFY_AUTH_TOKEN` - Netlify personal access token
+   - `NETLIFY_SITE_ID` - Staging site API ID
+   - `VITE_API_URL` - Backend API URL (staging)
+   - `VITE_AUTH0_DOMAIN` - Auth0 domain
+   - `VITE_AUTH0_CLIENT_ID` - Auth0 client ID (staging app)
+   - `VITE_AUTH0_AUDIENCE` - Auth0 API audience
+
+   **Production environment** secrets:
+   - Same secret names as staging
+   - Different values for `NETLIFY_SITE_ID`, `VITE_API_URL`, and `VITE_AUTH0_CLIENT_ID`
+
+3. **Configure Protection Rules**:
+   - Production environment: Add required reviewers (yourself and/or co-maintainers)
+   - Set environment URLs for both staging and production
+   - Optionally restrict deployment branches to `main`
+
+For detailed instructions, see [ENVIRONMENTS-SETUP.md](./ENVIRONMENTS-SETUP.md).
 
 ## 4. Verify Setup
 
@@ -119,7 +147,14 @@ Merge a release PR created by Release Please:
 
 ## 5. Workflow Behavior
 
-### On Every Push to `main`
+### On Pull Request to `main`
+
+1. ✅ Automatic staging deployment (backend + frontend)
+2. ✅ Deployment URL posted in PR comments
+3. ✅ Allows smoke testing before merge
+4. ❌ Production deploy **does not run** on PRs
+
+### On Push to `main` Branch
 
 1. ✅ Release Please analyzes commits
 2. ✅ Backend deploys to staging (`divergent-flow-api-staging`)
@@ -129,9 +164,10 @@ Merge a release PR created by Release Please:
 ### On Release PR Merge
 
 1. ✅ Release Please creates release and tags
-2. ✅ Staging deploys run first
-3. ✅ Backend: Staging image promoted to production (binary promotion)
-4. ✅ Frontend: Rebuilt and deployed to production Netlify site
+2. ✅ Staging deploys run first (already deployed from main push)
+3. ⏸️ **Production deploy waits for manual approval**
+4. ✅ After approval: Backend and frontend deploy to production
+5. ✅ GitHub release created with version tags
 
 ## 6. URLs
 
@@ -195,38 +231,31 @@ Update your DNS with the values provided by Fly.io.
 
 ### Backend Environment Variables
 
-Set secrets in Fly.io:
+Set secrets in Fly.io for each app:
 
 ```bash
 # Staging
-fly secrets set CORS_ALLOWED_ORIGINS="https://staging.myapp.com" \
+fly secrets set CORS_ALLOWED_ORIGINS="https://divergent-flow-staging.netlify.app" \
   -a divergent-flow-api-staging
 
 # Production
-fly secrets set CORS_ALLOWED_ORIGINS="https://myapp.com" \
+fly secrets set CORS_ALLOWED_ORIGINS="https://divergent-flow-prod.netlify.app" \
   -a divergent-flow-api
 ```
 
 ### Frontend Environment Variables
 
-This repo deploys a **pre-built** frontend bundle to Netlify (Netlify builds are disabled), so `VITE_*` variables must be available **during the GitHub Actions build step**.
+Frontend environment variables are configured in **GitHub Environments** (not Netlify).
 
-You can set these as **GitHub Actions secrets** (recommended) and the workflow will inject them into the build:
+The workflow builds the frontend with environment variables from GitHub Environment secrets:
+- `VITE_API_URL` - Backend API URL
+- `VITE_AUTH0_DOMAIN` - Auth0 tenant domain
+- `VITE_AUTH0_CLIENT_ID` - Auth0 application client ID
+- `VITE_AUTH0_AUDIENCE` - Auth0 API audience/identifier
 
-- `VITE_API_URL_STAGING` (optional; defaults to `https://divergent-flow-api-staging.fly.dev`)
-- `VITE_API_URL_PROD` (optional; defaults to `https://divergent-flow-api.fly.dev`)
+These are set per environment (staging/production) in GitHub. See [ENVIRONMENTS-SETUP.md](./ENVIRONMENTS-SETUP.md) for details.
 
-If you instead want Netlify to build the site, re-enable Netlify builds and then configure environment variables in Netlify.
-
-Netlify site settings (only applies if Netlify builds are enabled):
-
-1. **Site Settings** > **Environment variables**
-2. Add variables for each environment
-3. Prefix with `VITE_` for Vite to expose them:
-   - `VITE_API_URL`
-   - `VITE_APP_NAME`
-
-Note: Environment variables in Netlify are set per site, so staging and production can have different values.
+**Note**: Netlify auto-builds are disabled. GitHub Actions builds the frontend and deploys the static bundle to Netlify.
 
 ## 10. Monitoring
 
