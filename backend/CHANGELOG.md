@@ -5,6 +5,13 @@ All notable changes to the Divergent Flow API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-api-v1.6.0...divergent-flow-api-v1.7.0) (2026-01-15)
+
+
+### Features
+
+* **workflow:** implement complete capture → review → dashboard workflow for open source launch ([#231](https://github.com/jgsteeler/divergent-flow-mvp/issues/231)) ([480ba65](https://github.com/jgsteeler/divergent-flow-mvp/commit/480ba658550076c376ca579eb183cb203a9954c0))
+
 ## [1.6.0](https://github.com/jgsteeler/divergent-flow-mvp/compare/divergent-flow-api-v1.5.0...divergent-flow-api-v1.6.0) (2026-01-08)
 
 
