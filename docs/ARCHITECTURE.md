@@ -2,14 +2,55 @@
 
 **Status**: MVP → Unified Entity System Migration
 
+**Priority**: Get basic task-oriented workflow (Capture → Review → Dashboard) working ASAP for open source community launch
+
 This document describes the current architecture and the roadmap for evolving to the **Unified Entity System** outlined in [unified.md](./unified.md).
 
 ## Table of Contents
 
+- [Quick Win: Marketing-Ready MVP](#quick-win-marketing-ready-mvp) ⭐ **NEW**
 - [Current Architecture (MVP)](#current-architecture-mvp)
 - [Target Architecture (Unified Entity System)](#target-architecture-unified-entity-system)
 - [Migration Path](#migration-path)
+- [Open Source Strategy](#open-source-strategy) ⭐ **NEW**
 - [Architecture Decision Records](#architecture-decision-records)
+
+---
+
+## Quick Win: Marketing-Ready MVP
+
+**Goal**: Launch to open source community with complete basic workflow in 2-4 weeks
+
+### What We Have ✅
+- **Capture**: Working with persistent storage (Phase 1 complete)
+- **Type Inference**: Pattern-based with confidence scoring (Phase 2 complete)
+- **Backend API**: Clean architecture with .NET + MongoDB
+
+### What We Need 🎯
+- **Review Queue**: Complete basic implementation (3-5 days)
+  - Simple priority sorting
+  - 3 items per session
+  - Confirm/defer actions
+  - Mark items as reviewed
+- **Dashboard**: Build task-oriented view (5-7 days)
+  - Today's tasks (action items)
+  - Overdue items
+  - Quick stats
+  - Simple navigation
+
+### Timeline to Launch
+```
+Week 1:  Complete Review Queue + Start Dashboard
+Week 2:  Complete Dashboard + Integration testing
+Week 3:  Documentation + Screenshots + Demo
+Week 4:  Open source launch + Marketing push
+```
+
+### Open Source Positioning
+- **Base System**: Capture, Review, Dashboard (open source)
+- **Plugin Architecture**: Foundation for proprietary/community extensions
+- **Value Proposition**: ADHD-friendly task management that learns
+- **Community Opportunity**: Build plugins, extend inference, contribute features
 
 ---
 
@@ -231,15 +272,77 @@ The unified system builds on the MVP's foundation and extends all 7 pillars:
 
 ### Guiding Principles
 
-1. **Incremental Migration**: No "big bang" rewrite
-2. **Backward Compatibility**: Existing data continues to work
-3. **Zero Downtime**: Users never lose access
-4. **Feature Flags**: New capabilities gated behind flags
-5. **ADHD-First UX**: Never compromise user experience for architecture
+1. **Quick Wins First**: Get basic workflow working for open source launch
+2. **Incremental Migration**: No "big bang" rewrite
+3. **Backward Compatibility**: Existing data continues to work
+4. **ADHD-First UX**: Never compromise user experience for architecture
+5. **Community-Driven**: Enable plugin development early
 
-### Phase-by-Phase Migration
+### Phase-by-Phase Migration (UPDATED PRIORITIES)
 
-#### Phase 3.5: Prepare for Entities (8-12 weeks)
+#### Phase 3: Complete Basic Workflow (2-4 weeks) ⚡ **CURRENT PRIORITY**
+
+**Goal**: Launch-ready MVP with Capture → Review → Dashboard workflow
+
+**Tasks**:
+- [x] Capture with persistent storage (DONE - Phase 1)
+- [x] Type inference engine (DONE - Phase 2)
+- [ ] **Review Queue** (3-5 days)
+  - [ ] Simple priority calculation (unreviewed first, then by confidence)
+  - [ ] 3 items per session UI
+  - [ ] Confirm/defer/reject actions
+  - [ ] Update `lastReviewedAt` field
+  - [ ] Backend API endpoint: `GET /api/items/review-queue`
+- [ ] **Dashboard** (5-7 days)
+  - [ ] Task-oriented view (action items focus)
+  - [ ] Today's tasks section
+  - [ ] Overdue tasks section  
+  - [ ] Quick stats (total, pending, completed)
+  - [ ] Navigation between capture/review/dashboard
+  - [ ] Backend API endpoint: `GET /api/items/dashboard`
+- [ ] Integration testing
+- [ ] Documentation + screenshots
+- [ ] Demo video
+
+**Deliverables**:
+- Working Capture → Review → Dashboard workflow
+- User can manage action items end-to-end
+- Ready for open source community launch
+- Contributor onboarding docs
+
+**Success Criteria**:
+- User can capture → review → see tasks in dashboard
+- Mobile responsive
+- ADHD-friendly UX maintained
+- Clear path for contributors to extend
+
+#### Phase 3.5: Plugin Foundation (4-6 weeks) 🔌 **BROUGHT FORWARD**
+
+**Goal**: Enable plugin development for open source community
+
+**Why Accelerated**: Support open source base + proprietary plugin strategy
+
+**Tasks**:
+- [ ] Design simple plugin interface (`IPlugin`)
+- [ ] Plugin registry (in-memory, no persistence yet)
+- [ ] Example: Convert existing inference rules to "built-in plugin"
+- [ ] Plugin SDK documentation
+- [ ] Example plugin for community developers
+- [ ] Plugin loading mechanism (local file-based for MVP)
+
+**Deliverables**:
+- Basic plugin system (no marketplace yet)
+- 2-3 example plugins (inference rules, dashboard widgets)
+- Developer guide for creating plugins
+- Clear separation: base system (open source) vs plugins (can be proprietary)
+
+**Success Criteria**:
+- At least 2 working example plugins
+- Community developers can create plugins following guide
+- Plugin execution is safe (basic validation)
+- Clear license boundaries (MIT base, plugin authors choose license)
+
+#### Phase 4: Entity Abstraction (6-8 weeks)
 
 **Goal**: Introduce entity abstraction layer while maintaining current API
 
@@ -262,30 +365,24 @@ The unified system builds on the MVP's foundation and extends all 7 pillars:
 - New entities can be created alongside old items
 - Performance does not degrade
 
-#### Phase 4: Plugin-Based Inference (12-16 weeks)
+#### Phase 5: Enhanced Plugin System (8-10 weeks)
 
-**Goal**: Replace hardcoded inference with plugin system
+**Goal**: Marketplace-ready plugin system with sandboxing
 
 **Tasks**:
-- [ ] Design plugin interface (`IInferencePlugin`)
-- [ ] Create plugin registry/loader
 - [ ] Sandbox execution environment (WebWorker frontend, Process isolation backend)
 - [ ] Plugin permissions model
-- [ ] Migrate existing inference rules to plugins
 - [ ] Plugin marketplace UI (basic)
+- [ ] Plugin versioning
+- [ ] Plugin discovery and installation
 
 **Deliverables**:
-- Plugin SDK with examples
-- 5-10 built-in plugins (current inference logic)
+- Plugin marketplace (basic)
+- Safe plugin execution
 - Plugin installation UI
-- Developer documentation
+- 10+ community plugins
 
-**Success Criteria**:
-- Existing inference continues to work via plugins
-- Community can create new plugins
-- Plugin execution is isolated and safe
-
-#### Phase 5: Multi-Tenancy (8-12 weeks)
+#### Phase 6: Multi-Tenancy (8-12 weeks)
 
 **Goal**: Support multiple organizations/workspaces
 
@@ -307,7 +404,7 @@ The unified system builds on the MVP's foundation and extends all 7 pillars:
 - Query performance maintained with tenantId indexes
 - Users can create/manage multiple workspaces
 
-#### Phase 6: Collaboration Features (12-16 weeks)
+#### Phase 7: Collaboration Features (12-16 weeks)
 
 **Goal**: Team collaboration, sharing, permissions
 
@@ -370,6 +467,177 @@ The unified system builds on the MVP's foundation and extends all 7 pillars:
 - Enterprise features
 - Comprehensive documentation
 - Developer ecosystem
+
+---
+
+## Open Source Strategy
+
+### Vision: Community-Powered, Sustainably Monetized
+
+**Core Principle**: Open source base system + plugin marketplace enables both community growth and business sustainability.
+
+### What's Open Source (MIT License)
+
+**Base System** (this repository):
+- ✅ Capture, Review, Dashboard workflow
+- ✅ Type inference engine (rule-based)
+- ✅ Clean architecture foundation
+- ✅ API endpoints and data models
+- ✅ Basic plugin system
+- ✅ UI components and patterns
+- ✅ ADHD-optimized UX principles
+
+**Why Open Source**:
+- Attracts contributors and community
+- Demonstrates commitment to transparency
+- Allows self-hosting for privacy-conscious users
+- Creates network effects through plugins
+- Builds trust with ADHD community
+
+### What Can Be Proprietary
+
+**Plugins** (plugin authors choose license):
+- 🔌 Advanced ML models (custom training, better accuracy)
+- 🔌 Enterprise integrations (Salesforce, ServiceNow, etc.)
+- 🔌 Specialized workflows (legal, medical, etc.)
+- 🔌 Premium inference rules (industry-specific)
+- 🔌 Advanced dashboard widgets
+- 🔌 Team collaboration features
+- 🔌 Compliance/audit plugins (HIPAA, SOC2)
+
+**SaaS Features** (hosted service, proprietary):
+- ☁️ Multi-tenancy infrastructure
+- ☁️ Cloud hosting and scaling
+- ☁️ Managed database and backups
+- ☁️ API rate limiting and quotas
+- ☁️ Billing and subscription management
+- ☁️ Enterprise support and SLAs
+- ☁️ Advanced security features
+
+### Plugin Marketplace Business Model
+
+**For Plugin Developers**:
+- Create free or paid plugins
+- Set your own pricing
+- Revenue share: **70% developer, 30% platform**
+- MIT, Apache, or proprietary license (your choice)
+- Promotion opportunities for high-quality plugins
+
+**For Users**:
+- Browse community plugins (free)
+- Purchase premium plugins (one-time or subscription)
+- Plugin credits system
+- Money-back guarantee for paid plugins
+
+**For Platform**:
+- Transaction fees sustain development
+- Premium plugins drive engagement
+- Community plugins increase adoption
+- Network effects: more plugins = more users = more plugins
+
+### Community Engagement Strategy
+
+**Phase 3 (Current)**: Foundation
+- ✅ Open source core repository
+- ✅ Clear contribution guidelines
+- ✅ Conventional commits enforced
+- ✅ Good first issues labeled
+- 📝 Plugin developer guide (coming)
+
+**Phase 3.5**: Plugin Ecosystem Launch
+- 🔌 Plugin SDK and examples
+- 🔌 Plugin development tutorial
+- 🔌 Community plugin showcase
+- 🎁 Developer grants ($500-2000 for quality plugins)
+- 📢 Open source launch announcement
+
+**Phase 4+**: Community Growth
+- 🏆 Monthly plugin competitions
+- 📚 Plugin best practices guide
+- 🤝 Plugin developer office hours
+- 💬 Discord/Slack community
+- 📰 Blog: Plugin spotlights, case studies
+
+### Value Propositions
+
+**For Individual Users**:
+- Free core functionality (capture, review, dashboard)
+- Self-host option for privacy
+- Choose plugins that fit your needs
+- Support developers you like
+
+**For Enterprise Users**:
+- Open source = security audit possible
+- Self-host behind firewall
+- Proprietary plugins for compliance
+- Professional support available
+
+**For Developers**:
+- Contribute to meaningful open source project
+- Build plugins, earn revenue
+- Learn from clean architecture
+- Portfolio piece + community recognition
+
+**For ADHD Community**:
+- Tool designed by/for ADHD individuals
+- Transparent, not exploitative
+- Community-driven feature development
+- Affordable (free tier always available)
+
+### License Boundaries
+
+```
+┌─────────────────────────────────────────────┐
+│  Divergent Flow Core (MIT License)          │
+│  - Capture/Review/Dashboard                 │
+│  - Type inference (basic)                   │
+│  - Plugin system (runtime)                  │
+│  - API & data models                        │
+│  - UI components                            │
+└─────────────────────────────────────────────┘
+                     ↓
+        ┌────────────┴────────────┐
+        │   Plugin Interface       │
+        └────────────┬────────────┘
+                     ↓
+    ┌────────────────┴────────────────┐
+    │                                  │
+┌───▼────────────────┐   ┌────────────▼──────┐
+│ Community Plugins  │   │ Proprietary       │
+│ (Any License)      │   │ Plugins           │
+│ - Free to use      │   │ (Author's License)│
+│ - Open source      │   │ - Paid/Licensed   │
+│ - Community-built  │   │ - Closed source   │
+└────────────────────┘   └───────────────────┘
+```
+
+### Success Metrics
+
+**Community Health**:
+- GitHub stars, forks, contributors
+- Plugin submissions per month
+- Active Discord/community members
+- Contribution frequency
+
+**Business Health**:
+- Paid plugin sales
+- Hosted SaaS subscribers
+- Enterprise contracts
+- Plugin marketplace revenue
+
+### Launch Readiness Checklist
+
+For open source community launch (Phase 3 completion):
+- [ ] Working capture → review → dashboard flow
+- [ ] Clear README with screenshots
+- [ ] Contributing guidelines
+- [ ] Code of conduct
+- [ ] Good first issues (5-10 labeled)
+- [ ] Plugin architecture documented
+- [ ] Demo video (2-3 minutes)
+- [ ] License clearly stated (MIT)
+- [ ] Security policy
+- [ ] Community discussion enabled
 
 ---
 
@@ -459,40 +727,115 @@ The unified system builds on the MVP's foundation and extends all 7 pillars:
 - Usage-based allows power users to pay more
 - Enterprise tier for compliance/custom needs
 
+### ADR-005: Open Source + Plugin Marketplace Strategy
+
+**Status**: Accepted
+
+**Context**: Need to balance community growth with sustainable business model. Want to attract open source contributors while building a profitable business.
+
+**Decision**: Open source core system (MIT) + plugin marketplace with mixed free/paid plugins.
+
+**Rationale**:
+- **Community Growth**: Open source attracts contributors, builds trust, creates network effects
+- **Business Sustainability**: Plugin marketplace (70/30 split) + hosted SaaS provides revenue
+- **Flexibility**: Plugin authors choose their own licensing (MIT, proprietary, etc.)
+- **Differentiation**: ADHD-focused UX is hard to replicate, core value isn't just in code
+- **Self-Hosting**: Privacy-conscious users can self-host, enterprise can audit code
+- **Network Effects**: More plugins attract more users, more users attract more plugin developers
+
+**Alternatives Considered**:
+- **Fully Open Source**: Harder to monetize, less sustainable
+- **Fully Proprietary**: Slower adoption, less community trust
+- **Open Core (arbitrary feature split)**: Complex to maintain, unclear boundaries
+- **Dual License**: More complex, harder for contributors to understand
+
+**What's Open Source** (MIT):
+- Capture, Review, Dashboard workflow
+- Type inference engine (rule-based)
+- Plugin system runtime
+- API and data models
+- UI components
+
+**What Can Be Proprietary**:
+- Advanced ML models (plugins)
+- Enterprise integrations (plugins)
+- Hosted SaaS infrastructure
+- Multi-tenancy features
+- Enterprise support/SLAs
+
+**Consequences**:
+- Must maintain clear license boundaries
+- Plugin system must be robust and well-documented
+- Community management becomes critical
+- Need developer relations resources
+- Plugin marketplace infrastructure required
+- 70/30 revenue split reduces margins but increases ecosystem growth
+
+**Success Metrics**:
+- GitHub stars, contributors, plugin submissions
+- Plugin marketplace revenue
+- Hosted SaaS adoption
+- Community engagement
+
 ---
 
 ## Quick Reference: Current vs. Target
 
-### Feature Matrix
+### Feature Matrix (UPDATED)
 
 | Feature | MVP Status | Unified Target | Migration Phase |
 |---------|-----------|----------------|-----------------|
-| Quick capture | ✅ Live | ✅ + Multiple channels | Phase 4 |
-| Type inference | ✅ Rule-based | ✅ ML + Plugins | Phase 4 |
-| Review queue | 🚧 Basic | ✅ Collaborative | Phase 6 |
-| Collections | 🚧 Partial | ✅ Shared + Templates | Phase 6 |
-| Multi-tenancy | ❌ | ✅ Full | Phase 5 |
-| Permissions | ❌ | ✅ RBAC | Phase 6 |
-| Plugins | ❌ | ✅ Marketplace | Phase 4 |
-| ML Training | ❌ | ✅ Custom models | Phase 7 |
-| Versioning | ❌ | ✅ Audit trail | Phase 3.5 |
-| File storage | ❌ | ✅ S3/Azure | Phase 8 |
-| Real-time | ❌ | ✅ WebSockets | Phase 6 |
-| Dashboards | ⏭️ Planned | ✅ Advanced | Phase 8 |
-| Reflection | ⏭️ Planned | ✅ Team insights | Phase 8 |
+| Quick capture | ✅ Live | ✅ + Multiple channels | Phase 6 |
+| Type inference | ✅ Rule-based | ✅ ML + Plugins | Phase 3.5 (basic), Phase 5 (advanced) |
+| Review queue | 🚧 Phase 3 | ✅ Collaborative | Phase 3 (basic), Phase 7 (collaborative) |
+| **Dashboard** | **⚡ Phase 3** | ✅ Advanced | **Phase 3 (basic)**, Phase 8 (advanced) |
+| Collections | 🚧 Partial | ✅ Shared + Templates | Phase 7 |
+| **Plugins** | **⚡ Phase 3.5** | ✅ Marketplace | **Phase 3.5 (foundation)**, Phase 5 (marketplace) |
+| Multi-tenancy | ❌ | ✅ Full | Phase 6 |
+| Permissions | ❌ | ✅ RBAC | Phase 7 |
+| ML Training | ❌ | ✅ Custom models | Phase 8+ |
+| Versioning | ❌ | ✅ Audit trail | Phase 4 |
+| File storage | ❌ | ✅ S3/Azure | Phase 8+ |
+| Real-time | ❌ | ✅ WebSockets | Phase 7 |
+| Reflection | ❌ | ✅ Team insights | Phase 8+ |
+
+**Legend**:
+- ✅ Complete
+- 🚧 In Progress
+- ⚡ Current Priority
+- ❌ Not Started
 
 ### API Evolution
 
-**Current**:
+**Current (Phase 1-2)**:
 ```
 POST /api/items
 GET  /api/items
 GET  /api/items/{id}
 PUT  /api/items/{id}
 DELETE /api/items/{id}
+
+# Legacy compatibility
+POST /api/captures
+GET  /api/captures
 ```
 
-**Phase 3.5** (Add entity endpoints, maintain compatibility):
+**Phase 3** (Add review + dashboard endpoints):
+```
+# Existing endpoints continue to work
+POST /api/items
+GET  /api/items
+GET  /api/items/{id}
+PUT  /api/items/{id}
+DELETE /api/items/{id}
+
+# New endpoints
+GET  /api/items/review-queue    # Get items needing review
+PUT  /api/items/{id}/review     # Mark item as reviewed
+GET  /api/items/dashboard       # Get dashboard data (tasks, stats)
+```
+
+**Phase 4** (Add entity endpoints, maintain compatibility):
 ```
 POST /api/items             # Still works (facade)
 POST /api/entities          # New generic endpoint
@@ -502,7 +845,7 @@ DELETE /api/entities/{id}
 GET  /api/entities?query=...
 ```
 
-**Phase 4+** (Full unified API):
+**Phase 5+** (Full unified API):
 ```
 POST   /api/v1/entities
 GET    /api/v1/entities/{id}
