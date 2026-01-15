@@ -119,7 +119,7 @@ jobs:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
 
-  # Step 4: Deploy Prod Backend(only if release was created)
+  # Step 4: Deploy backend to production (only if release was created)
   deploy-backend-prod:
     runs-on: ubuntu-latest
     needs: [release-please, deploy-backend-staging, deploy-frontend-staging]
@@ -145,6 +145,7 @@ jobs:
         run: |
           flyctl deploy --config fly.toml --remote-only
   
+  # Step 5: Deploy frontend to production (only if release was created)
   deploy-frontend-prod:
     runs-on: ubuntu-latest
     needs: [release-please, deploy-backend-staging, deploy-frontend-staging]
