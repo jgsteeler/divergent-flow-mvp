@@ -39,6 +39,36 @@ public class ItemsController : ControllerBase
     }
 
     /// <summary>
+    /// Get items that need review
+    /// </summary>
+    /// <param name="limit">Maximum number of items to return (default: 3)</param>
+    /// <param name="maxConfidence">Maximum confidence threshold for including items (default: 0.75)</param>
+    /// <returns>List of items needing review</returns>
+    [HttpGet("review-queue")]
+    [ProducesResponseType(typeof(IEnumerable<ItemDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<ItemDto>>> GetReviewQueue(
+        [FromQuery] int limit = 3,
+        [FromQuery] double? maxConfidence = 0.75)
+    {
+        _logger.LogInformation("Getting review queue (limit: {Limit}, maxConfidence: {MaxConfidence})", limit, maxConfidence);
+        var items = await _mediator.Send(new GetReviewQueueQuery(limit, maxConfidence));
+        return Ok(items);
+    }
+
+    /// <summary>
+    /// Get dashboard data including metrics and task lists
+    /// </summary>
+    /// <returns>Dashboard data</returns>
+    [HttpGet("dashboard")]
+    [ProducesResponseType(typeof(DashboardDataDto), StatusCodes.Status200OK)]
+    public async Task<ActionResult<DashboardDataDto>> GetDashboard()
+    {
+        _logger.LogInformation("Getting dashboard data");
+        var dashboardData = await _mediator.Send(new GetDashboardDataQuery());
+        return Ok(dashboardData);
+    }
+
+    /// <summary>
     /// Get a specific item by ID
     /// </summary>
     /// <param name="id">The item ID</param>
@@ -101,6 +131,34 @@ public class ItemsController : ControllerBase
             InferredType: request.InferredType,
             TypeConfidence: request.TypeConfidence,
             CollectionId: request.CollectionId
+        ));
+
+        if (item == null)
+        {
+            _logger.LogWarning("Item with ID {Id} not found", id);
+            return NotFound();
+        }
+
+        return Ok(item);
+    }
+
+    /// <summary>
+    /// Mark an item as reviewed
+    /// </summary>
+    /// <param name="id">The item ID</param>
+    /// <param name="request">The review data (optional confirmed type/confidence)</param>
+    /// <returns>The updated item</returns>
+    [HttpPut("{id}/review")]
+    [ProducesResponseType(typeof(ItemDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ItemDto>> MarkReviewed(string id, [FromBody] MarkItemReviewedRequest? request = null)
+    {
+        _logger.LogInformation("Marking item {Id} as reviewed", id);
+
+        var item = await _mediator.Send(new MarkItemReviewedCommand(
+            Id: id,
+            ConfirmedType: request?.ConfirmedType,
+            ConfirmedConfidence: request?.ConfirmedConfidence
         ));
 
         if (item == null)
